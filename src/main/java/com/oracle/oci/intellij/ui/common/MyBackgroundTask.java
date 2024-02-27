@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.oracle.bmc.model.BmcException;
+import com.oracle.bmc.resourcemanager.model.Job;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.common.command.BasicCommand;
 import com.oracle.oci.intellij.ui.appstack.AppStackDashboard;
@@ -18,13 +19,14 @@ public class MyBackgroundTask {
     private static final Function<String,Boolean> isJobFinished=(jobId)->{
         try {
             while (true) {
-                String status = getJobStatus(jobId);
+                Job job = getJob(jobId);
+                String status =job.getLifecycleState().getValue();
                 if ("SUCCEEDED".equals(status)) {
                     return true;
                 } else if ("FAILED".equals(status)) {
                     return false;
                 }
-                AppStackDashboard.getInstance().populateTableData();
+                AppStackDashboard.getInstance().refreshLastJobState(status,job);
 
                 // Wait a bit before checking again
                 Thread.sleep(5000); // Sleep for 5 seconds
@@ -41,9 +43,9 @@ public class MyBackgroundTask {
 
 
 
-    private static String getJobStatus(String jobId) {
+    private static Job getJob(String jobId) {
          OracleCloudAccount.ResourceManagerClientProxy resourceManagerClient = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
-        return resourceManagerClient.getJobDetails(jobId).getLifecycleState().getValue();
+        return resourceManagerClient.getJobDetails(jobId);
     }
 
     public MyBackgroundTask(Project project) {

@@ -171,7 +171,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
       }
     });
   }
-  private JobSummary getLastJobStatus(String stackId,String compartmentId) {
+  private JobSummary getLastJob(String stackId, String compartmentId) {
     JobSummary lastAppliedJob = (JobSummary) OracleCloudAccount.getInstance().getResourceManagerClientProxy().getLastJob(stackId,compartmentId);
     return lastAppliedJob;
   }
@@ -193,6 +193,29 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
       default:
         return null; // Or a default icon
     }
+  }
+
+  public void refreshLastJobState(String newStatus , Job job) {
+    String stackId = job.getStackId();
+    int stackRow = getStackRow(stackId);
+
+    DefaultTableModel model = (DefaultTableModel) appStacksTable.getModel();
+    JobSummary jobSummary = OracleCloudAccount.getInstance().getResourceManagerClientProxy().listJobs(job.getCompartmentId(), job.getStackId()).getItems().get(0);
+    model.setValueAt(jobSummary, stackRow, 5);
+
+    // Notify the table that this particular cell has been updated
+    model.fireTableCellUpdated(stackRow, 5);
+  }
+
+
+  private int getStackRow(String stackId) {
+    for (int i = 0; i < appStackList.size(); i++) {
+      StackSummary object = appStackList.get(i);
+      if (object.getId().equals(stackId)) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   private static class LoadStackJobsAction extends AbstractAction {
@@ -442,7 +465,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
           rowData[2] = s.getTerraformVersion();
           rowData[3] = s.getLifecycleState();
           rowData[4] = s.getTimeCreated();
-          rowData[5] = getLastJobStatus(s.getId(),s.getCompartmentId());
+          rowData[5] = getLastJob(s.getId(),s.getCompartmentId());
           model.addRow(rowData);
         }
       }
@@ -486,7 +509,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
           rowData[2] = s.getTerraformVersion();
           rowData[3] = s.getLifecycleState();
           rowData[4] = s.getTimeCreated();
-          rowData[5] = getLastJobStatus(s.getId(),s.getCompartmentId());
+          rowData[5] = getLastJob(s.getId(),s.getCompartmentId());
           model.addRow(rowData);
         }
       }
@@ -497,17 +520,6 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
   }
 
 
-//  private ImageIcon getStatusImage(LifecycleState state) {
-//    if (state.equals(LifecycleState.Available) || state
-//            .equals(LifecycleState.ScaleInProgress)) {
-//      return new ImageIcon(getClass().getResource("/icons/db-available-state.png"));
-//    } else if (state.equals(LifecycleState.Terminated) || state
-//            .equals(LifecycleState.Unavailable)) {
-//      return new ImageIcon(getClass().getResource("/icons/db-unavailable-state.png"));
-//    } else {
-//      return new ImageIcon(getClass().getResource("/icons/db-inprogress-state.png"));
-//    }
-//  }
 
   public JComponent createCenterPanel() {
     return mainPanel;
