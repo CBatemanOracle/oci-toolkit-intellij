@@ -44,7 +44,7 @@ public class MyBackgroundTask {
 
 
     private static Job getJob(String jobId) {
-         OracleCloudAccount.ResourceManagerClientProxy resourceManagerClient = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
+        OracleCloudAccount.ResourceManagerClientProxy resourceManagerClient = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
         return resourceManagerClient.getJobDetails(jobId);
     }
 
@@ -52,7 +52,7 @@ public class MyBackgroundTask {
         this.project = project;
     }
 
-    public static void startBackgroundTask(Project project, String title, String processingMessage, String failedMessage , String succeededMessage ,String jobId, BasicCommand<?> runLater) {
+    public static void startBackgroundTask(Project project, String title, String processingMessage, String failedMessage , String succeededMessage ,String jobId, Runnable runLater) {
         Task.Backgroundable task = new Task.Backgroundable(project, title, false) {
 
             @Override
@@ -80,12 +80,7 @@ public class MyBackgroundTask {
             @Override
             public void onFinished() {
                 if (runLater != null){
-                    try {
-                        runLater.execute();
-                    } catch (Exception e) {
-                        String errorMessage = e.getMessage()==null?"Something went wrong ":e.getMessage();
-                        UIUtil.fireNotification(NotificationType.ERROR, errorMessage, null);
-                    }
+                    runLater.run();
                 }
 
             }
@@ -100,4 +95,4 @@ public class MyBackgroundTask {
 
 
 
-    }
+}

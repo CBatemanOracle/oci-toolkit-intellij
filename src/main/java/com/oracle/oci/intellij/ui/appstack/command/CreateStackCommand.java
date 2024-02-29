@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.ProjectManager;
 import com.oracle.bmc.resourcemanager.model.ApplyJobOperationDetails.ExecutionPlanStrategy;
@@ -19,6 +20,7 @@ import com.oracle.bmc.resourcemanager.responses.GetJobTfStateResponse;
 import com.oracle.oci.intellij.account.OracleCloudAccount.ResourceManagerClientProxy;
 import com.oracle.oci.intellij.common.Utils;
 import com.oracle.oci.intellij.common.command.AbstractBasicCommand;
+import com.oracle.oci.intellij.ui.appstack.AppStackDashboard;
 import com.oracle.oci.intellij.ui.common.MyBackgroundTask;
 import com.oracle.oci.intellij.ui.common.UIUtil;
 
@@ -111,7 +113,13 @@ public class CreateStackCommand extends AbstractBasicCommand<CreateResult> {
     /* Send request to the Client */
         CreateJobResponse createJobResponse =  resourceManagerClient.submitJob(createJobRequest);
         UIUtil.fireNotification(NotificationType.INFORMATION," The Apply Job  submitted successfully.", null);
-        MyBackgroundTask.startBackgroundTask(ProjectManager.getInstance().getDefaultProject(),"Creating Resources of \""+stackName+"\" (stack)","Creating Resources... ","Apply Job Failed please check logs","Apply job successfully applied ",createJobResponse.getJob().getId());
+        MyBackgroundTask.startBackgroundTask(ProjectManager.getInstance().getDefaultProject(),"Creating Resources of \""+stackName+"\" (stack)","Creating Resources... ","Apply Job Failed please check logs","Apply job successfully applied ",createJobResponse.getJob().getId(),()->{
+            try {
+                BrowserUtil.browse(AppStackDashboard.getUrlOutput(createJobResponse.getJob().getId()));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
 
         return createJobResponse;
 //      CreateJobOperationDetails operationDetails =

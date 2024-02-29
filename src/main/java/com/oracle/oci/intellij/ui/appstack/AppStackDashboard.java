@@ -172,6 +172,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
     });
   }
   private JobSummary getLastJob(String stackId, String compartmentId) {
+    //TODO HANDLE EXCEPTION ....
     JobSummary lastAppliedJob = (JobSummary) OracleCloudAccount.getInstance().getResourceManagerClientProxy().getLastJob(stackId,compartmentId);
     return lastAppliedJob;
   }
@@ -195,16 +196,18 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
     }
   }
 
-  public void refreshLastJobState(String newStatus , Job job) {
+  public synchronized void refreshLastJobState(String newStatus , Job job) {
     String stackId = job.getStackId();
     int stackRow = getStackRow(stackId);
+    if (stackRow != -1){
+      DefaultTableModel model = (DefaultTableModel) appStacksTable.getModel();
+      JobSummary jobSummary = OracleCloudAccount.getInstance().getResourceManagerClientProxy().listJobs(job.getCompartmentId(), job.getStackId()).getItems().get(0);
+      model.setValueAt(jobSummary, stackRow, 5);
 
-    DefaultTableModel model = (DefaultTableModel) appStacksTable.getModel();
-    JobSummary jobSummary = OracleCloudAccount.getInstance().getResourceManagerClientProxy().listJobs(job.getCompartmentId(), job.getStackId()).getItems().get(0);
-    model.setValueAt(jobSummary, stackRow, 5);
+      // Notify the table that this particular cell has been updated
+      model.fireTableCellUpdated(stackRow, 5);
+    }
 
-    // Notify the table that this particular cell has been updated
-    model.fireTableCellUpdated(stackRow, 5);
   }
 
 
@@ -284,16 +287,16 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
     @Override
     public void actionPerformed(ActionEvent event) {
       Desktop desktop = Desktop.getDesktop();
-      //todo list all the jobs of the stack and get last apply one
       JobSummary lastApplyJob = getLastApplyJob();
       String applicationUrl = null ;
         try {
-            applicationUrl =  getUrlOutput(lastApplyJob);
+            applicationUrl =  getUrlOutput(lastApplyJob.getId());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
         if (applicationUrl.isEmpty()){
+          UIUtil.fireNotification(NotificationType.ERROR,"Problem retrieving the application url , you can always  try to get url from apply job logs",null);
           return;
         }
         try {
@@ -310,16 +313,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
       }
     }
 
-    private String getUrlOutput(JobSummary lastApplyJob) throws Exception {
-      ResourceManagerClientProxy resourceManagerClientProxy = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
 
-      String jobId = lastApplyJob.getId();
-      ListJobOutputCommand cmd = new ListJobOutputCommand(resourceManagerClientProxy, null, jobId);
-      ListJobOutputCommand.ListJobOutputResult result = cmd.execute();
-      List<JobOutputSummary> outputSummaries = result.getOutputSummaries();
-      Optional<JobOutputSummary> jos = outputSummaries.stream().filter(p -> "app_url".equals(p.getOutputName())).findFirst();
-      return jos.get().getOutputValue();
-    }
 
     private JobSummary getLastApplyJob() {
       ResourceManagerClientProxy resourceManagerClientProxy = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
@@ -343,6 +337,18 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
       return null;
     }
 
+  }
+  public static String getUrlOutput(String lastApplyJobId) throws Exception {
+    ResourceManagerClientProxy resourceManagerClientProxy = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
+
+    String jobId = lastApplyJobId;
+    ListJobOutputCommand cmd = new ListJobOutputCommand(resourceManagerClientProxy, null, jobId);
+    ListJobOutputCommand.ListJobOutputResult result = cmd.execute();
+    List<JobOutputSummary> outputSummaries = result.getOutputSummaries();
+    Optional<JobOutputSummary> job = outputSummaries.stream().filter(p -> "app_url".equals(p.getOutputName())).findFirst();
+    if (job.isPresent())
+      return job.get().getOutputValue();
+    else return "";
   }
 
   private JPopupMenu getStackSummaryActionMenu(StackSummary selectedSummary) {
@@ -589,15 +595,16 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
       dashboard.createAppStackButton.setEnabled(false);
       Runnable runnable = () -> {
         YamlLoader loader = new YamlLoader();
-        dashboard.createAppStackButton.setEnabled(true);
 
         try {
           variables.set(loader.load());
         } catch (IntrospectionException | IllegalAccessException | InvocationTargetException ex) {
           throw new RuntimeException(ex);
         }
-        if (variables.get() == null)
+        if (variables.get() == null){
+          dashboard.createAppStackButton.setEnabled(true);
           return;
+        }
 
 
         try {
@@ -615,6 +622,8 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
           this.dashboard.populateTableData();
         } catch (Exception e1) {
           throw new RuntimeException(e1);
+        }finally {
+          dashboard.createAppStackButton.setEnabled(true);
         }
 
       };
@@ -653,16 +662,6 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
               });
             }
           });
-
-
-
-//        String applyJobId = createApplyJobResponse.getJob().getId();
-
-//        System.out.println(applyJobId);
-//
-//        // Get Job Terraform state GetJobTfStateRequest getJobTfStateRequest =
-//        GetJobTfStateResponse jobTfState = resourceManagerClient.getJobTfState(applyJobId);
-//        System.out.println(jobTfState.toString());
       }
 
 
@@ -863,7 +862,11 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
       }
     }
   }
-
+  public void triggerApplyAppStack() {
+    if (applyAppStackButton != null) {
+      SwingUtilities.invokeLater(() -> applyAppStackButton.doClick());
+    }
+  }
   @Override
   public String getTitle() {
     return "Application Stack";
