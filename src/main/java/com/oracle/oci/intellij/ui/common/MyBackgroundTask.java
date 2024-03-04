@@ -26,7 +26,9 @@ public class MyBackgroundTask {
                 } else if ("FAILED".equals(status)) {
                     return false;
                 }
-                AppStackDashboard.getInstance().refreshLastJobState(status,job);
+//                UIUtil.invokeLater(()->{
+                    AppStackDashboard.getInstance().refreshLastJobState(status,job);
+//                });
 
                 // Wait a bit before checking again
                 Thread.sleep(5000); // Sleep for 5 seconds
@@ -74,7 +76,11 @@ public class MyBackgroundTask {
                     UIUtil.fireNotification(NotificationType.ERROR, failedMessage, null);
                 }
                 // refresh the last job state
-                AppStackDashboard.getInstance().populateTableData();
+//                UIUtil.invokeLater(()->{
+                Job job = getJob(jobId);
+                String status =job.getLifecycleState().getValue();
+                AppStackDashboard.getInstance().refreshLastJobState(status,job);
+//                });
             }
 
             @Override

@@ -140,8 +140,9 @@ public class ReviewDialog extends DialogWrapper {
             setBorder(BorderFactory.createEmptyBorder(0,8,0,0));
 
             add(keyLabel,BorderLayout.WEST);
+            add(valueLabel,BorderLayout.CENTER);
             JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            buttonsPanel.add(valueLabel);
+//            buttonsPanel.add(valueLabel);
 
 
             String fullText = value;
@@ -218,7 +219,7 @@ public class ReviewDialog extends DialogWrapper {
                 });
                 buttonsPanel.add(copyButton);
             }
-            add(buttonsPanel,BorderLayout.CENTER);
+            add(buttonsPanel,BorderLayout.EAST);
         }
     }
 

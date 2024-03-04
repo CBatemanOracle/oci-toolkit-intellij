@@ -12,6 +12,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.oracle.bmc.resourcemanager.model.ApplyJobOperationDetails.ExecutionPlanStrategy;
 import com.oracle.bmc.resourcemanager.model.CreateApplyJobOperationDetails;
 import com.oracle.bmc.resourcemanager.model.CreateJobDetails;
+import com.oracle.bmc.resourcemanager.model.Job;
 import com.oracle.bmc.resourcemanager.model.Job.Operation;
 import com.oracle.bmc.resourcemanager.requests.CreateJobRequest;
 import com.oracle.bmc.resourcemanager.responses.CreateJobResponse;
@@ -32,6 +33,9 @@ public class CreateStackCommand extends AbstractBasicCommand<CreateResult> {
     private String zipFileAsString;
     private boolean apply ;
     private HashMap<String, String> variables;
+    private String stackName ;
+    private final String SUCCESSFUL_MESSAGE =  "Stack has been successfully deleted" ;
+
 
     public CreateStackCommand(ResourceManagerClientProxy resourceManagerClient, String compartmentId,
             String zipFilePath) throws IOException {
@@ -112,10 +116,11 @@ public class CreateStackCommand extends AbstractBasicCommand<CreateResult> {
 
     /* Send request to the Client */
         CreateJobResponse createJobResponse =  resourceManagerClient.submitJob(createJobRequest);
-        UIUtil.fireNotification(NotificationType.INFORMATION," The Apply Job  submitted successfully.", null);
-        MyBackgroundTask.startBackgroundTask(ProjectManager.getInstance().getDefaultProject(),"Creating Resources of \""+stackName+"\" (stack)","Creating Resources... ","Apply Job Failed please check logs","Apply job successfully applied ",createJobResponse.getJob().getId(),()->{
+        UIUtil.fireNotification(NotificationType.INFORMATION," The Apply Job  submitted successfully. for\""+stackName+"\" (stack)", null);
+        MyBackgroundTask.startBackgroundTask(ProjectManager.getInstance().getDefaultProject(),"Creating Resources of \""+stackName+"\" (stack)","Creating Resources... ","Apply Job Failed please check logs \""+stackName+"\" (stack)","Apply job successfully applied  \""+stackName+"\" (stack)",createJobResponse.getJob().getId(),()->{
             try {
-                BrowserUtil.browse(AppStackDashboard.getUrlOutput(createJobResponse.getJob().getId()));
+                if (createJobResponse.getJob().getLifecycleState().getValue().equals(Job.LifecycleState.Succeeded))
+                    BrowserUtil.browse(AppStackDashboard.getUrlOutput(createJobResponse.getJob().getId()));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

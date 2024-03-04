@@ -5,6 +5,7 @@ import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 
 import com.oracle.oci.intellij.ui.appstack.AppStackDashboard;
+import com.oracle.oci.intellij.ui.common.UIUtil;
 
 public class RefreshAction extends AbstractAction {
   /**
@@ -20,6 +21,8 @@ public class RefreshAction extends AbstractAction {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    appStackDashBoard.populateTableData();
+    UIUtil.schedule(()->{
+      appStackDashBoard.populateTableData();
+    });
   }
 }

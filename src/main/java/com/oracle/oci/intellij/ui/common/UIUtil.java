@@ -65,10 +65,9 @@ public class UIUtil {
     ApplicationManager.getApplication().invokeLater(runnable);
   }
   public static void schedule(Runnable runnable){
-    Thread t = new Thread(() -> {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
           runnable.run();
     });
-    t.start();
   }
 
   public static void createWebLink(JComponent component, String uri) {
