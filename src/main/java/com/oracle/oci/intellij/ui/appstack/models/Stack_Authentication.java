@@ -9,9 +9,9 @@ import java.beans.PropertyVetoException;
 
 public class Stack_Authentication extends VariableGroup {
 
-    private boolean use_existing_token;
-
-    private java.lang.Object current_user_token;
+//    private boolean use_existing_token;
+//
+//    private java.lang.Object current_user_token;
 
 
     private boolean use_existing_vault;
@@ -24,33 +24,33 @@ public class Stack_Authentication extends VariableGroup {
 
     private java.lang.Object key_id;
 
-    @PropertyOrder(1)
-    @VariableMetaData(title="Use existing authentication token",description="This token will be used by the stack to authenticate the user when connecting to the code repository or container registry.",defaultVal="true",type="boolean",required=true)
-
-    public boolean isUse_existing_token() {
-        return use_existing_token;
-    }
-
-    public void setUse_existing_token(boolean newValue) throws PropertyVetoException {
-        Object oldValue = this.use_existing_token;
-        this.use_existing_token = newValue;
-        pcs.firePropertyChange("use_existing_token", oldValue, newValue);
-        vcp.fireVetoableChange("use_existing_token", oldValue, newValue);
-
-    }
-    @PropertyOrder(2)
-    @VariableMetaData(title="User's authentication token",type="password",required=true,visible="use_existing_token")
-
-    public Object getCurrent_user_token() {
-        return current_user_token;
-    }
-
-    public void setCurrent_user_token(Object newValue) throws PropertyVetoException {
-        Object oldValue = this.current_user_token;
-        this.current_user_token = newValue;
-        pcs.firePropertyChange("current_user_token", oldValue, newValue);
-        vcp.fireVetoableChange("current_user_token", oldValue, newValue);
-    }
+//    @PropertyOrder(1)
+//    @VariableMetaData(title="Use existing authentication token",description="This token will be used by the stack to authenticate the user when connecting to the code repository or container registry.",defaultVal="true",type="boolean",required=true)
+//
+//    public boolean isUse_existing_token() {
+//        return use_existing_token;
+//    }
+//
+//    public void setUse_existing_token(boolean newValue) throws PropertyVetoException {
+//        Object oldValue = this.use_existing_token;
+//        this.use_existing_token = newValue;
+//        pcs.firePropertyChange("use_existing_token", oldValue, newValue);
+//        vcp.fireVetoableChange("use_existing_token", oldValue, newValue);
+//
+//    }
+//    @PropertyOrder(2)
+//    @VariableMetaData(title="User's authentication token",type="password",required=true,visible="use_existing_token")
+//
+//    public Object getCurrent_user_token() {
+//        return current_user_token;
+//    }
+//
+//    public void setCurrent_user_token(Object newValue) throws PropertyVetoException {
+//        Object oldValue = this.current_user_token;
+//        this.current_user_token = newValue;
+//        pcs.firePropertyChange("current_user_token", oldValue, newValue);
+//        vcp.fireVetoableChange("current_user_token", oldValue, newValue);
+//    }
     @PropertyOrder(3)
     @VariableMetaData(title="Use an existing key vault",description="This vault will be used to store the authentication token needed by the build and deploy pipelines to publish the container image to the container registry.",defaultVal="true",type="boolean",required=true)
 
