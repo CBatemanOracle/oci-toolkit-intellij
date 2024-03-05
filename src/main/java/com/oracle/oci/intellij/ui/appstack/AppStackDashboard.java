@@ -25,18 +25,27 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.table.JBTable;
+import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.bmc.model.BmcException;
 import com.oracle.bmc.resourcemanager.model.*;
 import com.oracle.bmc.resourcemanager.model.Stack;
 import com.oracle.bmc.resourcemanager.responses.CreateJobResponse;
 import com.oracle.oci.intellij.common.command.AbstractBasicCommand;
+import com.oracle.oci.intellij.ui.account.ConfigureOracleCloudDialog;
+import com.oracle.oci.intellij.ui.account.RegionAction;
 import com.oracle.oci.intellij.ui.appstack.actions.ReviewDialog;
 import com.oracle.oci.intellij.ui.appstack.command.*;
 import com.oracle.oci.intellij.ui.appstack.exceptions.JobRunningException;
 import com.oracle.oci.intellij.ui.appstack.models.Utils;
+import com.oracle.oci.intellij.ui.common.CompartmentSelection;
 import com.oracle.oci.intellij.ui.common.Icons;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,9 +79,9 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
   private JButton createAppStackButton;
   private JButton applyAppStackButton;
   private JBTable appStacksTable;
-  private JLabel profileValueLabel;
-  private JLabel compartmentValueLabel;
-  private JLabel regionValueLabel;
+  private ActionLink profileValueLabel;
+  private ActionLink compartmentValueLabel;
+  private ActionLink regionValueLabel;
   private JButton destroyAppStackButton;
   private List<StackSummary> appStackList;
   private CommandStack commandStack = new CommandStack();
@@ -111,6 +120,50 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
     if (applyAppStackButton != null) {
       applyAppStackButton.setAction(new ApplyAction(this, "Apply AppStack"));
     }
+
+    if (profileValueLabel != null){
+      profileValueLabel.setAction(new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          ConfigureOracleCloudDialog.newInstance().showAndGet();
+        }
+      });
+    }
+
+    if (compartmentValueLabel != null){
+
+      compartmentValueLabel.setAction(new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          final CompartmentSelection compartmentSelection = CompartmentSelection.newInstance();
+
+          if (compartmentSelection.showAndGet()) {
+            final Compartment selectedCompartment = compartmentSelection.getSelectedCompartment();
+            SystemPreferences.setCompartment(selectedCompartment);
+          }
+        }
+      });
+    }
+
+    if (regionValueLabel != null){
+      regionValueLabel.setAction(new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          RegionAction regionAction = new RegionAction();
+          Object source = e.getSource();
+          DataContext dataContext = ActionToolbar.getDataContextFor((Component) source);
+
+          MouseEvent simulatedMouseEvent = new MouseEvent((Component) source, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(),
+                  0, 0, 0, 1, false);
+
+          AnActionEvent anActionEvent = AnActionEvent.createFromAnAction(regionAction, simulatedMouseEvent,
+                  ActionPlaces.UNKNOWN, dataContext);
+
+          regionAction.actionPerformed(anActionEvent);
+        }
+      });
+    }
+
     resBundle = ResourceBundle.getBundle("appStackDashboard", Locale.ROOT);
   }
 
@@ -532,51 +585,6 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
 
     UIUtil.executeAndUpdateUIAsync(fetchData, updateUI);
   }
-
-//todo continue this
-  public void updateJobState(String stack ) {
-//    ((DefaultTableModel) appStacksTable.getModel()).setRowCount(0);
-//    UIUtil.showInfoInStatusBar("Refreshing stack list .");
-
-//    refreshAppStackButton.setEnabled(false);
-
-    final Runnable fetchData = () -> {
-      try {
-        String compartmentId = SystemPreferences.getCompartmentId();
-//        OracleCloudAccount.getInstance().getResourceManagerClientProxy().getLastJob();
-
-      } catch (Exception exception) {
-        appStackList = null;
-        UIUtil.fireNotification(NotificationType.ERROR, exception.getMessage(), null);
-        LogHandler.error(exception.getMessage(), exception);
-      }
-    };
-
-    final Runnable updateUI = () -> {
-      if (appStackList != null) {
-        UIUtil.showInfoInStatusBar((appStackList.size()) + " AppStack found.");
-        final DefaultTableModel model = ((DefaultTableModel) appStacksTable.getModel());
-        model.setRowCount(0);
-
-        for (StackSummary s : appStackList) {
-          final Object[] rowData = new Object[AppStackTableModel.APPSTACK_COLUMN_NAMES.length];
-//          final boolean isFreeTier =
-//                  s.getIsFreeTier() != null && s.getIsFreeTier();
-          rowData[0] = s.getDisplayName();
-          rowData[1] = s.getDescription();
-          rowData[2] = s.getTerraformVersion();
-          rowData[3] = s.getLifecycleState();
-          rowData[4] = s.getTimeCreated();
-          rowData[5] = getLastJob(s.getId(),s.getCompartmentId());
-          model.addRow(rowData);
-        }
-      }
-      refreshAppStackButton.setEnabled(true);
-    };
-
-    UIUtil.executeAndUpdateUIAsync(fetchData, updateUI);
-  }
-
 
 
   public JComponent createCenterPanel() {

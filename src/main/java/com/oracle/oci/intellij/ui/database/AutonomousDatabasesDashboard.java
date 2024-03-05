@@ -11,29 +11,36 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
 
-import javax.swing.AbstractAction;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JTable;
+import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import com.intellij.ide.DataManager;
+import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.plugins.newui.ListPluginComponent;
+import com.intellij.ide.plugins.newui.UIPluginGroup;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.components.ActionLink;
 import com.oracle.bmc.database.model.AutonomousDatabaseSummary;
 import com.oracle.bmc.database.model.AutonomousDatabaseSummary.LifecycleState;
+import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.account.SystemPreferences;
+import com.oracle.oci.intellij.ui.account.CompartmentAction;
+import com.oracle.oci.intellij.ui.account.ConfigureAction;
+import com.oracle.oci.intellij.ui.account.ConfigureOracleCloudDialog;
+import com.oracle.oci.intellij.ui.account.RegionAction;
 import com.oracle.oci.intellij.ui.common.AutonomousDatabaseConstants;
+import com.oracle.oci.intellij.ui.common.CompartmentSelection;
 import com.oracle.oci.intellij.ui.common.UIUtil;
 import com.oracle.oci.intellij.ui.database.actions.AutonomousDatabaseBasicActions;
 import com.oracle.oci.intellij.ui.database.actions.AutonomousDatabaseMoreActions;
@@ -59,9 +66,9 @@ public final class AutonomousDatabasesDashboard implements PropertyChangeListene
   private JComboBox<String> workloadCombo;
   private JButton refreshADBInstancesButton;
   private JTable adbInstancesTable;
-  private JLabel profileValueLabel;
-  private JLabel compartmentValueLabel;
-  private JLabel regionValueLabel;
+  private ActionLink profileValueLabel;
+  private ActionLink compartmentValueLabel;
+  private ActionLink regionValueLabel;
   private JButton createADBInstanceButton;
   private List<AutonomousDatabaseSummary> autonomousDatabaseInstancesList;
 
@@ -83,6 +90,48 @@ public final class AutonomousDatabasesDashboard implements PropertyChangeListene
     
     if (createADBInstanceButton != null) {
       createADBInstanceButton.setAction(new CreateAction("Create Autonomous Database"));
+    }
+    if (profileValueLabel != null){
+      profileValueLabel.setAction(new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          ConfigureOracleCloudDialog.newInstance().showAndGet();
+        }
+      });
+    }
+
+    if (compartmentValueLabel != null){
+
+      compartmentValueLabel.setAction(new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          final CompartmentSelection compartmentSelection = CompartmentSelection.newInstance();
+
+          if (compartmentSelection.showAndGet()) {
+            final Compartment selectedCompartment = compartmentSelection.getSelectedCompartment();
+            SystemPreferences.setCompartment(selectedCompartment);
+          }
+        }
+      });
+    }
+
+    if (regionValueLabel != null){
+      regionValueLabel.setAction(new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          RegionAction regionAction = new RegionAction();
+          Object source = e.getSource();
+          DataContext dataContext = ActionToolbar.getDataContextFor((Component) source);
+
+          MouseEvent simulatedMouseEvent = new MouseEvent((Component) source, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(),
+                  0, 0, 0, 1, false);
+
+          AnActionEvent anActionEvent = AnActionEvent.createFromAnAction(regionAction, simulatedMouseEvent,
+                  ActionPlaces.UNKNOWN, dataContext);
+
+          regionAction.actionPerformed(anActionEvent);
+        }
+      });
     }
 
   }
@@ -381,6 +430,8 @@ public final class AutonomousDatabasesDashboard implements PropertyChangeListene
     }
     populateTableData();
   }
+
+
 
   private static class RefreshAction extends AbstractAction {
     /**
