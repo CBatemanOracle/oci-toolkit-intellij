@@ -81,7 +81,7 @@ public class ReviewDialog extends DialogWrapper {
 
 
 
-        // todo create the panel of  the check if user wants to immediately
+        // todo create the panel of  the check if user wants to immediately apply thr job
         if (!isShowStackVariables){
             addRunApplyCheckbox();
         }

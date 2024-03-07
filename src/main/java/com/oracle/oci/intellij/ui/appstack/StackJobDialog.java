@@ -9,15 +9,17 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.BoxLayout;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextArea;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
+import com.intellij.openapi.ui.DescriptionLabel;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.components.JBTextArea;
+import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import com.intellij.openapi.ui.DialogWrapper;
@@ -25,7 +27,7 @@ import com.oracle.bmc.resourcemanager.model.JobSummary;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.ui.appstack.command.TerraformLogger;
 
-class StackJobDialog extends DialogWrapper {
+public class StackJobDialog extends DialogWrapper {
 
   private final List<JobSummary> jobs;      
   private TerraformLogger logger;
@@ -51,7 +53,7 @@ class StackJobDialog extends DialogWrapper {
   @Override
   protected @Nullable JComponent createCenterPanel() {
     JPanel centerPanel = new JPanel();
-    centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.X_AXIS));
+    centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
 
     DefaultTableModel jobsModel = new DefaultTableModel();
     jobsModel.addColumn("Name");
@@ -68,13 +70,16 @@ class StackJobDialog extends DialogWrapper {
       row.clear();
     });
 
-    JTable jobsTable = new JTable();
+    JBTable jobsTable = new JBTable();
     jobsTable.setModel(jobsModel);
     JPanel leftPanel = new JPanel(new BorderLayout());
     leftPanel.add(jobsTable, BorderLayout.NORTH);
+    leftPanel.setBorder(JBUI.Borders.customLine(JBColor.black));
     centerPanel.add(leftPanel);
-
-    JTextArea textArea = new JTextArea();
+//    panel.add(Box.createRigidArea(new Dimension(0, 10))); // Add 10px vertical spacing
+    centerPanel.add(Box.createRigidArea(new JBDimension(0,10)));
+//    centerPanel.add(new Empty)
+    JBTextArea textArea = new JBTextArea();
     // textArea.setText("Hello!");
     textArea.setLineWrap(true);
     textArea.setEditable(false);
@@ -85,6 +90,9 @@ class StackJobDialog extends DialogWrapper {
     JScrollPane scroll = new JScrollPane(textArea);
     scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
     scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+
+
+    JBPanel rightPanel = new JBPanel();
 
     centerPanel.add(scroll);
     // centerPanel.add(textArea);
@@ -116,15 +124,31 @@ class StackJobDialog extends DialogWrapper {
 
     return centerPanel;
   }
+  @Override
+  protected Action @NotNull [] createActions() {
+//    if (isShowStackVariables){
+      getCancelAction().putValue("Name","Close");
+      return new Action[]{getCancelAction()};
+//    }
+//    return super.createActions();
+  }
 
-  private static class JTextAreaWriter extends Writer {
-    private JTextArea target;
+  public static class JTextAreaWriter extends Writer {
+
+    private boolean isFinished ;
+    private JBTextArea target;
     private StringBuilder buffer;
+    private StringBuilder fullBuffer ;
 
-    public JTextAreaWriter(JTextArea target) {
+    public JTextAreaWriter(JBTextArea target) {
       super();
       this.target = target;
+      this.target.setText("     Loading... Please Wait");
       this.buffer = new StringBuilder();
+      this.fullBuffer = new StringBuilder();
+    }
+    public void setFinished(boolean finished) {
+      isFinished = finished;
     }
 
     @Override
@@ -137,21 +161,31 @@ class StackJobDialog extends DialogWrapper {
       if (this.buffer.length() > 0) {
         try {
           // wait to ensure ordering.
-          SwingUtilities.invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-              if (buffer.length() > 0) {
-                StringBuilder fullBuffer = new StringBuilder();
-                fullBuffer.append(target.getText());
-                fullBuffer.append(buffer);
+          SwingUtilities.invokeAndWait(() -> {
+            if (buffer.length() > 0) {
+//              StringBuilder fullBuffer = new StringBuilder();
+              fullBuffer.append(buffer);
+              if (isFinished)
                 target.setText(fullBuffer.toString());
-                buffer.setLength(0);
-              }
+              else
+                target.setText(fullBuffer+"\n    Loading ... Please Wait");
+              buffer.setLength(0);
             }
           });
         } catch (InvocationTargetException | InterruptedException e) {
           throw new IOException(e);
         }
+      }else {
+          try {
+              SwingUtilities.invokeAndWait(() -> {
+                target.setText(fullBuffer.toString());
+
+              });
+          } catch (InterruptedException e) {
+              throw new RuntimeException(e);
+          } catch (InvocationTargetException e) {
+              throw new RuntimeException(e);
+          }
       }
     }
 
@@ -159,6 +193,7 @@ class StackJobDialog extends DialogWrapper {
     public void close() throws IOException {
       this.buffer = null;
       this.target = null;
+      this.fullBuffer = null;
     }
   }
 }

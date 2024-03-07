@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.oracle.bmc.resourcemanager.model.LogEntry;
 import com.oracle.oci.intellij.account.OracleCloudAccount.ResourceManagerClientProxy;
+import com.oracle.oci.intellij.ui.appstack.StackJobDialog;
 import com.oracle.oci.intellij.ui.appstack.command.ListTFLogsCommand.ListTFLogsResult;
 
 public class TerraformLogger {
@@ -15,7 +16,7 @@ public class TerraformLogger {
   public enum STAT {
     NOT_OPENED, OPEN, CLOSED
 };
-  private Writer writer;
+  private StackJobDialog.JTextAreaWriter writer;
   private Thread thread;
   private AtomicBoolean running = new AtomicBoolean();
   private AtomicBoolean closed = new AtomicBoolean();
@@ -27,14 +28,20 @@ public class TerraformLogger {
   private STAT stat = STAT.NOT_OPENED;
   private ListTFLogsResult result;
   
-  public TerraformLogger(Writer writer, ResourceManagerClientProxy rmc, String jobId) {
-    this.writer = writer;
+  public TerraformLogger(StackJobDialog.JTextAreaWriter jTextAreaWriter, ResourceManagerClientProxy rmc, String jobId) {
+    this.writer = jTextAreaWriter;
     this.rmc = rmc;
     this.jobId = jobId;
   }
 
   public void start() {
     if (this.thread == null) {
+//      try {
+//        this.writer.write("Fetching logs, please wait...");
+//        this.writer.flush();
+//      } catch (IOException e) {
+//        e.printStackTrace();
+//      }
       this.thread = new Thread(() -> runPollerLoop());
       this.running.set(true);
       this.thread.start();
@@ -104,7 +111,11 @@ public class TerraformLogger {
         }
         return items.size();
       }
-      case CLOSED: 
+      case CLOSED: {
+        writer.setFinished(true);
+        this.writer.flush();
+        this.running.set(false);
+      }
         // TODO:
       }
     }
