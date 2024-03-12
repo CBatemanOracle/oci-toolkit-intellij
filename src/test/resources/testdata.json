@@ -1,0 +1,95 @@
+[
+
+  {
+
+    "test-name": "my-todo-list",
+
+    "variables": {
+
+      "compartment_ocid": "ocid1.compartment.oc1..aaaaaaaahwscui44wuvezqbv3avvgwgzzrg4crwvz7q3bvth5wi64aoirqsq",
+
+      "region": "us-phoenix-1",
+
+      "tenancy_ocid": "ocid1.tenancy.oc1..aaaaaaaagojvam7c7hthdm7h2pgshjmiqntcvei4skgysz3galuejn3rioia",
+
+      "current_user_ocid": "ocid1.user.oc1..aaaaaaaayxour6azc7726nxigxoop3odbojyk4wriesh2xc5pcz4qjaurk7q",
+
+      "compartment_id": "ocid1.compartment.oc1..aaaaaaaahwscui44wuvezqbv3avvgwgzzrg4crwvz7q3bvth5wi64aoirqsq",
+
+      "devops_compartment": "ocid1.compartment.oc1..aaaaaaaahwscui44wuvezqbv3avvgwgzzrg4crwvz7q3bvth5wi64aoirqsq",
+
+      "application_source": "SOURCE_CODE",
+
+      "application_type": "JAR",
+
+      "repo_name": "ocid1.devopsrepository.oc1.phx.amaaaaaadxiv6saajlfisnbfcycux5zqtmnwwnoj6dl2hwnuzxrlqjfptm7a",
+
+      "branch": "main",
+
+      "build_command": "mvn install",
+
+      "artifact_location": "target/*.jar",
+
+      "use_existing_token": "true",
+
+      "current_user_token": "v(lNGkk84]RG9:sBUCz5",
+
+      "vault_compartment_id": "ocid1.tenancy.oc1..aaaaaaaagojvam7c7hthdm7h2pgshjmiqntcvei4skgysz3galuejn3rioia",
+
+      "vault_id": "ocid1.vault.oc1.phx.bvqyw534aadfa.abyhqljrsmw7ssbfzocpnekb4ykcui443z5jbdzpkequddq6fwl7pomdaiqa",
+
+      "key_id": "ocid1.key.oc1.phx.bvqyw534aadfa.abyhqljrxjzhkald3vzmhngqvuqf62rroyjzzeq4wspgoql23ztq2es3gvba",
+
+      "use_existing_database": "true",
+
+      "autonomous_database": "ocid1.autonomousdatabase.oc1.phx.anyhqljrdxiv6saawxwnzrepmsebdshxtti24vk2tq2iwg77kx5wqkmgqzrq",
+
+      "autonomous_database_user": "DBUSER",
+
+      "autonomous_database_password": "LAjR9kww6rfgE3T",
+
+      "db_compartment": "ocid1.compartment.oc1..aaaaaaaahwscui44wuvezqbv3avvgwgzzrg4crwvz7q3bvth5wi64aoirqsq",
+
+      "use_connection_url_env": "true",
+
+      "connection_url_env": "SPRING_DATASOURCE_URL",
+
+      "use_default_ssl_configuration": "true",
+
+      "create_fqdn": "false",
+
+      "create_new_vcn": "true",
+
+      "vcn_cidr": "10.0.0.0/24",
+
+      "app_subnet_cidr": "10.0.0.0/25",
+
+      "lb_subnet_cidr": "10.0.0.192/26",
+
+      "db_subnet_cidr": "10.0.0.128/26",
+
+      "use_default_lb_configuration": "true",
+
+      "memory_in_gbs": 8,
+
+      "availability_domain": "NkvI:PHX-AD-1",
+
+      "application_name": "my-todo-list",
+
+      "nb_copies": 2,
+
+      "open_https_port": "true"
+
+    },
+
+    "test_urls": [
+
+      "/",
+
+      "/todolist"
+
+    ]
+
+  }
+
+]
