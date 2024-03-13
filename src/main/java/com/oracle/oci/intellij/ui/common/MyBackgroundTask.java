@@ -45,7 +45,7 @@ public class MyBackgroundTask {
 
 
 
-    private static Job getJob(String jobId) {
+    public static Job getJob(String jobId) {
         OracleCloudAccount.ResourceManagerClientProxy resourceManagerClient = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
         return resourceManagerClient.getJobDetails(jobId);
     }

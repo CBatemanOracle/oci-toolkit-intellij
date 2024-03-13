@@ -4,6 +4,8 @@ import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
 
+import com.oracle.bmc.resourcemanager.model.Job;
+import com.oracle.bmc.resourcemanager.model.LogEntry;
 import com.oracle.oci.intellij.ui.appstack.AppStackDashboard;
 import com.oracle.oci.intellij.ui.common.UIUtil;
 

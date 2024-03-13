@@ -1,6 +1,8 @@
 package com.oracle.oci.intellij.ui.appstack;
 
-import java.awt.BorderLayout;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -8,17 +10,18 @@ import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-import com.intellij.openapi.ui.DescriptionLabel;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
+import com.oracle.bmc.resourcemanager.model.Job;
+import com.oracle.oci.intellij.ui.common.MyBackgroundTask;
+import com.oracle.oci.intellij.ui.common.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,14 +34,82 @@ public class StackJobDialog extends DialogWrapper {
 
   private final List<JobSummary> jobs;      
   private TerraformLogger logger;
+  private JPanel mainPanel;
+  private JBTable jobsTable;
+  private JBTextArea textArea;
+  private JComboBox operationTypeCombobox;
+  private JComboBox statusComboBox;
+  private JButton searchButton;
+  private JButton resetButton;
+  private JPanel filterPanel;
 
 
   protected StackJobDialog(List<JobSummary> jobs) {
     super(true);
     this.jobs = new ArrayList<>(jobs);
     init();
-    setTitle("Stack Job");
+    setTitle("Stack Jobs");
     setOKButtonText("Ok");
+//    jobsTable.setSize(0,400);
+    setSize(1000,900);
+    filterPanel.setMaximumSize(new JBDimension(0,30));
+   searchButton.addActionListener(e -> {
+     filterJobs();
+   });
+    resetButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        statusComboBox.setSelectedItem("ALL");
+        operationTypeCombobox.setSelectedItem("ALL");
+        filterJobs();
+      }
+    });
+
+
+    jobsTable.getColumn("Status").setCellRenderer(new DefaultTableCellRenderer() {
+      @Override
+      public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        if (column == 2) {
+          super.getTableCellRendererComponent(table,value,isSelected,hasFocus,row,column);
+          final Job.LifecycleState  state = (Job.LifecycleState) value;
+
+//          StringBuilder columnText = new StringBuilder();
+//          columnText.append(job.getOperation());
+//          columnText.append(" Job  ->  ");
+//          columnText.append(job.getLifecycleState());
+
+          this.setText(state.getValue());
+          this.setIcon(AppStackDashboard.getImageStatus(state));
+          return this;
+        }
+        return (Component) value;
+      }
+    });
+  }
+
+  private void filterJobs() {
+    String operationType = (String) operationTypeCombobox.getSelectedItem().toString();
+    String status = (String) statusComboBox.getSelectedItem();
+    List<JobSummary> newJobs = jobs.stream().filter(jobSummary -> {
+       boolean matchesOperationType = operationType.equals("ALL") || jobSummary.getOperation().getValue().equalsIgnoreCase(operationType);
+       boolean matchesStatus = status.equals("ALL") || jobSummary.getLifecycleState().getValue().equalsIgnoreCase(status);
+
+       return matchesStatus && matchesOperationType ;
+    }).collect(Collectors.toList());
+
+    UIUtil.invokeLater(()->{
+      DefaultTableModel jobsModel = (DefaultTableModel) jobsTable.getModel();
+      jobsModel.setRowCount(0);
+      List<Object> row = new ArrayList<>();
+      newJobs.forEach(j->{
+        row.add(j.getDisplayName());
+        row.add(j.getOperation());
+        row.add(j.getLifecycleState());
+        row.add(j.getTimeCreated());
+        jobsModel.addRow(row.toArray());
+        row.clear();
+      });
+    });
   }
 
   @Override
@@ -62,6 +133,14 @@ public class StackJobDialog extends DialogWrapper {
     jobsModel.addColumn("Time Created");
     List<Object> row = new ArrayList<>();
     this.jobs.forEach(j -> {
+      String status = j.getLifecycleState().getValue();
+      if (Job.LifecycleState.InProgress.getValue().equalsIgnoreCase(status) ||
+              Job.LifecycleState.Canceling.getValue().equalsIgnoreCase(status) ||
+              Job.LifecycleState.Accepted.getValue().equalsIgnoreCase(status)
+      ){
+        // update the job's status
+        boolean b =updateJobStateInBackground(j.getId());
+      }
       row.add(j.getDisplayName());
       row.add(j.getOperation());
       row.add(j.getLifecycleState());
@@ -70,31 +149,36 @@ public class StackJobDialog extends DialogWrapper {
       row.clear();
     });
 
-    JBTable jobsTable = new JBTable();
+//    JBTable jobsTable = new JBTable();
     jobsTable.setModel(jobsModel);
-    JPanel leftPanel = new JPanel(new BorderLayout());
-    leftPanel.add(jobsTable, BorderLayout.NORTH);
-    leftPanel.setBorder(JBUI.Borders.customLine(JBColor.black));
-    centerPanel.add(leftPanel);
+//    JScrollPane tableScrollPane = new JScrollPane(jobsTable);
+//    tableScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+//    tableScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
+//    centerPanel.add(tableScrollPane);
+//    JPanel leftPanel = new JPanel(new BorderLayout());
+
+//    leftPanel.add(tableScrollPane, BorderLayout.NORTH);
+//    leftPanel.setBorder(JBUI.Borders.customLine(JBColor.black));
+//    centerPanel.add(leftPanel);
 //    panel.add(Box.createRigidArea(new Dimension(0, 10))); // Add 10px vertical spacing
-    centerPanel.add(Box.createRigidArea(new JBDimension(0,10)));
+//    centerPanel.add(Box.createRigidArea(new JBDimension(0,10)));
 //    centerPanel.add(new Empty)
-    JBTextArea textArea = new JBTextArea();
-    // textArea.setText("Hello!");
+//     textArea = new JBTextArea("Select a job to see it's logs");
+    textArea.setText("Select a job to see its logs ");
+    textArea.setMargin(new Insets(3,9,3,3));
     textArea.setLineWrap(true);
     textArea.setEditable(false);
     textArea.setVisible(true);
     textArea.setColumns(80);
     textArea.setRows(30);
 
-    JScrollPane scroll = new JScrollPane(textArea);
-    scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-    scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+//    JScrollPane scroll = new JBScrollPane(textArea);
+//    scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+//    scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
 
-    JBPanel rightPanel = new JBPanel();
-
-    centerPanel.add(scroll);
+//    centerPanel.add(scroll);
     // centerPanel.add(textArea);
 
     jobsTable.addMouseListener(new MouseAdapter() {
@@ -122,8 +206,42 @@ public class StackJobDialog extends DialogWrapper {
       }
     });
 
-    return centerPanel;
+    return mainPanel;
   }
+
+  private boolean updateJobStateInBackground(String jobId) {
+    UIUtil.schedule(()->{
+      while (true){
+        DefaultTableModel model = (DefaultTableModel ) jobsTable.getModel();
+        Job job= MyBackgroundTask.getJob(jobId);
+        Job.LifecycleState state = job.getLifecycleState();
+        SwingUtilities.invokeLater(()->{
+          try {
+          // row 0 the  last job
+          model.setValueAt(state,0,2);
+          model.fireTableCellUpdated(0,2);
+        }catch (ArrayIndexOutOfBoundsException ex){
+          System.out.println(ex.getMessage());
+        }
+        });
+        if ("SUCCEEDED".equals(state)) {
+          return ;
+        } else if ("FAILED".equals(state)) {
+          return ;
+        }
+
+          try {
+              Thread.sleep(5000); // Sleep for 5 seconds
+          } catch (InterruptedException e) {
+              throw new RuntimeException(e);
+          }
+
+
+      }
+    });
+    return false;
+  }
+
   @Override
   protected Action @NotNull [] createActions() {
 //    if (isShowStackVariables){
@@ -143,7 +261,7 @@ public class StackJobDialog extends DialogWrapper {
     public JTextAreaWriter(JBTextArea target) {
       super();
       this.target = target;
-      this.target.setText("     Loading... Please Wait");
+      this.target.setText("Fetching logs...... Please Wait");
       this.buffer = new StringBuilder();
       this.fullBuffer = new StringBuilder();
     }
@@ -158,17 +276,17 @@ public class StackJobDialog extends DialogWrapper {
 
     @Override
     public void flush() throws IOException {
+
       if (this.buffer.length() > 0) {
         try {
           // wait to ensure ordering.
           SwingUtilities.invokeAndWait(() -> {
             if (buffer.length() > 0) {
-//              StringBuilder fullBuffer = new StringBuilder();
               fullBuffer.append(buffer);
               if (isFinished)
                 target.setText(fullBuffer.toString());
               else
-                target.setText(fullBuffer+"\n    Loading ... Please Wait");
+                target.setText(fullBuffer+"\nFetching logs...  Please Wait...");
               buffer.setLength(0);
             }
           });
@@ -176,16 +294,21 @@ public class StackJobDialog extends DialogWrapper {
           throw new IOException(e);
         }
       }else {
+        if (fullBuffer.toString().isEmpty()){
+          UIUtil.invokeLater(()->{
+            target.setText(fullBuffer+"\nFetching logs...  Please Wait...");
+          });
+        }else {
           try {
-              SwingUtilities.invokeAndWait(() -> {
-                target.setText(fullBuffer.toString());
-
-              });
+            SwingUtilities.invokeAndWait(() -> {
+              target.setText(fullBuffer.toString());
+            });
           } catch (InterruptedException e) {
-              throw new RuntimeException(e);
+            throw new RuntimeException(e);
           } catch (InvocationTargetException e) {
-              throw new RuntimeException(e);
+            throw new RuntimeException(e);
           }
+        }
       }
     }
 

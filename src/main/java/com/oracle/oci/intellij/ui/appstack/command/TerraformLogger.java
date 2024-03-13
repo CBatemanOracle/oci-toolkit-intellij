@@ -6,7 +6,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.oracle.bmc.resourcemanager.model.Job;
+import com.oracle.bmc.resourcemanager.model.JobSummary;
 import com.oracle.bmc.resourcemanager.model.LogEntry;
+import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.account.OracleCloudAccount.ResourceManagerClientProxy;
 import com.oracle.oci.intellij.ui.appstack.StackJobDialog;
 import com.oracle.oci.intellij.ui.appstack.command.ListTFLogsCommand.ListTFLogsResult;
@@ -36,12 +39,6 @@ public class TerraformLogger {
 
   public void start() {
     if (this.thread == null) {
-//      try {
-//        this.writer.write("Fetching logs, please wait...");
-//        this.writer.flush();
-//      } catch (IOException e) {
-//        e.printStackTrace();
-//      }
       this.thread = new Thread(() -> runPollerLoop());
       this.running.set(true);
       this.thread.start();
@@ -90,7 +87,7 @@ public class TerraformLogger {
         {
           this.logEntries.addLast(logEntry);
         }
-        if (this.result.getLastResponse().getOpcNextPage() == null) {
+        if (this.result.getLastResponse().getOpcNextPage() == null && !isJobStillRunning()) {
           stat = STAT.CLOSED;
         }
         else {
@@ -106,7 +103,8 @@ public class TerraformLogger {
         for (LogEntry item : items) {
           logEntries.addLast(item);
         }
-        if (result.getLastResponse().getOpcNextPage() == null) {
+        //
+        if (result.getLastResponse().getOpcNextPage() == null && !isJobStillRunning()) {
           stat = STAT.CLOSED;
         }
         return items.size();
@@ -115,6 +113,7 @@ public class TerraformLogger {
         writer.setFinished(true);
         this.writer.flush();
         this.running.set(false);
+
       }
         // TODO:
       }
@@ -126,5 +125,21 @@ public class TerraformLogger {
       throw new IOException(e);
     }
     return -1;
+  }
+
+  private boolean isJobStillRunning() {
+    Job job = getJob(jobId);
+    String status =job.getLifecycleState().getValue();
+    if (Job.LifecycleState.InProgress.getValue().equalsIgnoreCase(status) ||
+            Job.LifecycleState.Canceling.getValue().equalsIgnoreCase(status) ||
+            Job.LifecycleState.Accepted.getValue().equalsIgnoreCase(status)
+    ) {
+      return true;
+    }
+    return false ;
+  }
+  public static Job getJob(String jobId) {
+    OracleCloudAccount.ResourceManagerClientProxy resourceManagerClient = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
+    return resourceManagerClient.getJobDetails(jobId);
   }
 }

@@ -232,7 +232,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
     }
     return lastAppliedJob;
   }
-  private Icon getImageStatus(Job.LifecycleState state){
+  public static Icon getImageStatus(Job.LifecycleState state){
 
     switch (state) {
       case Accepted:
@@ -350,7 +350,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      AtomicReference<Map<String, String>> variables = null;
+      AtomicReference<Map<String, String>> variables = new AtomicReference<>();
       Runnable fetchData = ()->{
         ResourceManagerClientProxy resourceManagerClientProxy = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
         Stack stackDetails =  resourceManagerClientProxy.getStackDetails(stack.getId());
