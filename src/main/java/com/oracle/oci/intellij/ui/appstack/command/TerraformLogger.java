@@ -87,6 +87,7 @@ public class TerraformLogger {
         {
           this.logEntries.addLast(logEntry);
         }
+        // verifying also if the job is still running because sometimes we get nextpage null even tho there is still some logs getting generated
         if (this.result.getLastResponse().getOpcNextPage() == null && !isJobStillRunning()) {
           stat = STAT.CLOSED;
         }

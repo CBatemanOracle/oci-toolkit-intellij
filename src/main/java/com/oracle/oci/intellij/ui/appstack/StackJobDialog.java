@@ -41,18 +41,15 @@ public class StackJobDialog extends DialogWrapper {
   private JComboBox statusComboBox;
   private JButton searchButton;
   private JButton resetButton;
-  private JPanel filterPanel;
-
 
   protected StackJobDialog(List<JobSummary> jobs) {
     super(true);
     this.jobs = new ArrayList<>(jobs);
     init();
-    setTitle("Stack Jobs");
+//    setTitle("Stack Jobs");
     setOKButtonText("Ok");
-//    jobsTable.setSize(0,400);
     setSize(1000,900);
-    filterPanel.setMaximumSize(new JBDimension(0,30));
+//    filterPanel.setMaximumSize(new JBDimension(0,30));
    searchButton.addActionListener(e -> {
      filterJobs();
    });
@@ -72,12 +69,6 @@ public class StackJobDialog extends DialogWrapper {
         if (column == 2) {
           super.getTableCellRendererComponent(table,value,isSelected,hasFocus,row,column);
           final Job.LifecycleState  state = (Job.LifecycleState) value;
-
-//          StringBuilder columnText = new StringBuilder();
-//          columnText.append(job.getOperation());
-//          columnText.append(" Job  ->  ");
-//          columnText.append(job.getLifecycleState());
-
           this.setText(state.getValue());
           this.setIcon(AppStackDashboard.getImageStatus(state));
           return this;
