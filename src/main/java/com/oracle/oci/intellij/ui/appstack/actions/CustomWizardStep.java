@@ -410,6 +410,26 @@ public class CustomWizardStep extends WizardStep implements PropertyChangeListen
                     textField.setText(pd.getValue("default").toString());
                     controller.setValue(pd.getValue("default").toString(),varGroup,pd);
                 }
+
+                if (pd.getName().equals("current_user_token")){
+                    JPanel userTokenPanel = new JPanel(new BorderLayout());
+
+                    JButton listTokenButton = new JButton("List");
+
+                    listTokenButton.addActionListener((event)->{
+                        OracleCloudAccount.IdentityClientProxy identityClientProxy = OracleCloudAccount.getInstance().getIdentityClient();
+                        List<AuthToken> tokens = identityClientProxy.getAuthTokenList();
+
+                        AuthenticationTokenDialog authenticationTokenDialog = new AuthenticationTokenDialog(tokens);
+                        authenticationTokenDialog.show();
+                    });
+
+                    inputComponent = textField ;
+                    textField.setPreferredSize(new JBDimension(400,-1));
+                    userTokenPanel.add(textField,BorderLayout.WEST);
+                    userTokenPanel.add(listTokenButton,BorderLayout.CENTER);
+                    return userTokenPanel ;
+                }
                 component = textField;
             }
             component.setPreferredSize(new JBDimension(200,100));

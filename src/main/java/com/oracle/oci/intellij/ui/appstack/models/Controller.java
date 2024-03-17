@@ -348,9 +348,13 @@ public class Controller {
             JLabel errorLabel = varPanel.getErrorLabel();
 
             inputComponent.setBorder(BorderFactory.createLineBorder(JBColor.pink,3,true));
-            errorLabel.setText(errorMessage);
+            if (!pd.getName().equals("current_user_token"))
+                errorLabel.setText(errorMessage);
             if (pd.getValue("errorMessage") != null && !((String)pd.getValue("errorMessage")).isEmpty())
                 inputComponent.setToolTipText("Field should be : "+pd.getValue("errorMessage"));
+            else {
+                inputComponent.setToolTipText(errorMessage);
+            }
         }
     }
     public Object getValue(VariableGroup variableGroup,PropertyDescriptor pd){
