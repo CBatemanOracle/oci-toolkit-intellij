@@ -1,5 +1,6 @@
 package com.oracle.oci.intellij.ui.common;
 
+import com.esotericsoftware.minlog.Log;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -10,6 +11,7 @@ import com.oracle.bmc.resourcemanager.model.Job;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.common.command.BasicCommand;
 import com.oracle.oci.intellij.ui.appstack.AppStackDashboard;
+import com.oracle.oci.intellij.ui.appstack.command.GetStackJobsCommand;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -46,8 +48,14 @@ public class MyBackgroundTask {
 
 
     public static Job getJob(String jobId) {
-        OracleCloudAccount.ResourceManagerClientProxy resourceManagerClient = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
-        return resourceManagerClient.getJobDetails(jobId);
+        try {
+            OracleCloudAccount.ResourceManagerClientProxy resourceManagerClient = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
+            return resourceManagerClient.getJobDetails(jobId);
+        }catch (BmcException ex){
+            Log.error(ex.getMessage());
+        }
+        return null;
+
     }
 
     public MyBackgroundTask(Project project) {

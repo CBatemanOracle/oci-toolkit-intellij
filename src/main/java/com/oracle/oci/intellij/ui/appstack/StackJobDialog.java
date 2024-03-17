@@ -46,7 +46,7 @@ public class StackJobDialog extends DialogWrapper {
     super(true);
     this.jobs = new ArrayList<>(jobs);
     init();
-//    setTitle("Stack Jobs");
+    setTitle("Stack Jobs");
     setOKButtonText("Ok");
     setSize(1000,900);
 //    filterPanel.setMaximumSize(new JBDimension(0,30));

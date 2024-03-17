@@ -186,7 +186,8 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
         if (column == 5) {
           super.getTableCellRendererComponent(table,value,isSelected,hasFocus,row,column);
           final JobSummary job = (JobSummary) value;
-
+          if (job == null ) return null;
+          
           StringBuilder columnText = new StringBuilder();
           columnText.append(job.getOperation());
           columnText.append(" Job  ->  ");
