@@ -52,8 +52,8 @@ public class AuthenticationTokenDialog extends DialogWrapper {
 
     private void  updateActionState(){
         boolean enableDeleteButton = tokensTable.getSelectedRow()!=-1 ;
-        boolean enableGenerateButton = tokensTable.getRowCount()<=1;
-
+        boolean enableGenerateButton = tokensTable.getRowCount()<=2;
+        System.out.println("this is length "+tokensTable.getRowCount());
         deleteAction.setEnabled(enableDeleteButton);
         generateTokenAction.setEnabled(enableGenerateButton);
     }
@@ -80,7 +80,7 @@ public class AuthenticationTokenDialog extends DialogWrapper {
                 generateToken();
             }
         };
-        deleteAction.putValue("Name","Generate");
+        generateTokenAction.putValue("Name","Generate");
 
         updateActionState();
         getCancelAction().putValue("Name","Close");
