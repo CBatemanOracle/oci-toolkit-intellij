@@ -9,16 +9,14 @@ import com.intellij.openapi.project.Project;
 import com.oracle.bmc.model.BmcException;
 import com.oracle.bmc.resourcemanager.model.Job;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
-import com.oracle.oci.intellij.common.command.BasicCommand;
 import com.oracle.oci.intellij.ui.appstack.AppStackDashboard;
-import com.oracle.oci.intellij.ui.appstack.command.GetStackJobsCommand;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
 public class MyBackgroundTask {
-    private final Project project;
-    private static final Function<String,Boolean> isJobFinished=(jobId)->{
+    private volatile boolean isRunning = true ;
+    private  final Function<String,Boolean> isJobFinished=(jobId)->{
         try {
             while (true) {
                 Job job = getJob(jobId);
@@ -44,10 +42,13 @@ public class MyBackgroundTask {
 
         return null;
     };
+    public void stopCheckingJobState(){
+        isRunning = false;
+    }
 
 
 
-    public static Job getJob(String jobId) {
+    public  Job getJob(String jobId) {
         try {
             OracleCloudAccount.ResourceManagerClientProxy resourceManagerClient = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
             return resourceManagerClient.getJobDetails(jobId);
@@ -58,11 +59,8 @@ public class MyBackgroundTask {
 
     }
 
-    public MyBackgroundTask(Project project) {
-        this.project = project;
-    }
 
-    public static void startBackgroundTask(Project project, String title, String processingMessage, String failedMessage , String succeededMessage ,String jobId, Runnable runLater) {
+    public  void startBackgroundTask(Project project, String title, String processingMessage, String failedMessage , String succeededMessage ,String jobId, Runnable runLater) {
         Task.Backgroundable task = new Task.Backgroundable(project, title, false) {
 
             @Override
@@ -103,7 +101,7 @@ public class MyBackgroundTask {
         // Run the task with a progress indicator
         ProgressManager.getInstance().run(task);
     }
-    public static void startBackgroundTask(Project project, String title, String processingMessage, String failedMessage , String succeededMessage , String jobId) {
+    public  void startBackgroundTask(Project project, String title, String processingMessage, String failedMessage , String succeededMessage , String jobId) {
         startBackgroundTask(project,title,processingMessage,failedMessage,succeededMessage,jobId,null);
     }
 

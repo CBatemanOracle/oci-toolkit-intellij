@@ -30,7 +30,7 @@ public class DestroyStackCommand extends AbstractBasicCommand<Result> {
     String applyJobId = response.getJob().getId();
     UIUtil.fireNotification(NotificationType.INFORMATION, "Destroy Job was submitted for \""+stackName+"\" (stack)", null);
 
-    MyBackgroundTask.startBackgroundTask(ProjectManager.getInstance().getDefaultProject(),"Destroying Resources of \""+stackName+"\" (stack)","Destroying resources...","Destroy Job Failed please check logs of \""+stackName+"\" (stack)","Destroy job successfully applied on \""+stackName+"\" (stack)",applyJobId);
+    new MyBackgroundTask().startBackgroundTask(ProjectManager.getInstance().getDefaultProject(),"Destroying Resources of \""+stackName+"\" (stack)","Destroying resources...","Destroy Job Failed please check logs of \""+stackName+"\" (stack)","Destroy job successfully applied on \""+stackName+"\" (stack)",applyJobId);
 
     return new Result(Severity.NONE,Status.OK);
   }

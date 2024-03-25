@@ -117,7 +117,7 @@ public class CreateStackCommand extends AbstractBasicCommand<CreateResult> {
     /* Send request to the Client */
         CreateJobResponse createJobResponse =  resourceManagerClient.submitJob(createJobRequest);
         UIUtil.fireNotification(NotificationType.INFORMATION," The Apply Job  submitted successfully. for\""+stackName+"\" (stack)", null);
-        MyBackgroundTask.startBackgroundTask(ProjectManager.getInstance().getDefaultProject(),"Creating Resources of \""+stackName+"\" (stack)","Creating Resources... ","Apply Job Failed please check logs \""+stackName+"\" (stack)","Apply job successfully applied  \""+stackName+"\" (stack)",createJobResponse.getJob().getId(),()->{
+        new MyBackgroundTask().startBackgroundTask(ProjectManager.getInstance().getDefaultProject(),"Creating Resources of \""+stackName+"\" (stack)","Creating Resources... ","Apply Job Failed please check logs \""+stackName+"\" (stack)","Apply job successfully applied  \""+stackName+"\" (stack)",createJobResponse.getJob().getId(),()->{
             try {
                 if (createJobResponse.getJob().getLifecycleState().getValue().equals(Job.LifecycleState.Succeeded))
                     BrowserUtil.browse(AppStackDashboard.getUrlOutput(createJobResponse.getJob().getId()));

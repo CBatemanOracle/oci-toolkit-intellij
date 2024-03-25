@@ -1,5 +1,20 @@
 package com.oracle.oci.intellij.ui.appstack;
 
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.components.JBTextArea;
+import com.intellij.ui.table.JBTable;
+import com.oracle.bmc.resourcemanager.model.Job;
+import com.oracle.bmc.resourcemanager.model.JobSummary;
+import com.oracle.oci.intellij.account.OracleCloudAccount;
+import com.oracle.oci.intellij.ui.appstack.command.TerraformLogger;
+import com.oracle.oci.intellij.ui.common.MyBackgroundTask;
+import com.oracle.oci.intellij.ui.common.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -11,24 +26,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-
-import com.intellij.ui.components.JBTextArea;
-import com.intellij.ui.table.JBTable;
-import com.intellij.util.ui.JBDimension;
-import com.oracle.bmc.resourcemanager.model.Job;
-import com.oracle.oci.intellij.ui.common.MyBackgroundTask;
-import com.oracle.oci.intellij.ui.common.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import com.intellij.openapi.ui.DialogWrapper;
-import com.oracle.bmc.resourcemanager.model.JobSummary;
-import com.oracle.oci.intellij.account.OracleCloudAccount;
-import com.oracle.oci.intellij.ui.appstack.command.TerraformLogger;
 
 public class StackJobDialog extends DialogWrapper {
 
@@ -204,7 +201,7 @@ public class StackJobDialog extends DialogWrapper {
     UIUtil.schedule(()->{
       while (true){
         DefaultTableModel model = (DefaultTableModel ) jobsTable.getModel();
-        Job job= MyBackgroundTask.getJob(jobId);
+        Job job= new MyBackgroundTask().getJob(jobId);
         Job.LifecycleState state = job.getLifecycleState();
         SwingUtilities.invokeLater(()->{
           try {

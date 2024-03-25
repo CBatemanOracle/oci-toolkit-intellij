@@ -30,7 +30,7 @@ public class DeleteAndDestroyCommand extends DestroyStackCommand {
             }
         };
 
-        MyBackgroundTask.startBackgroundTask(ProjectManager.getInstance().getDefaultProject(),"Destroying Resources of \""+stackName+"\" (stack)","Destroying resources...","Destroy Job Failed please check logs of \""+stackName+"\" (stack)","Destroy job successfully applied on \""+stackName+"\" (stack)",applyJobId,deleteAfterDestroy);
+        new MyBackgroundTask().startBackgroundTask(ProjectManager.getInstance().getDefaultProject(),"Destroying Resources of \""+stackName+"\" (stack)","Destroying resources...","Destroy Job Failed please check logs of \""+stackName+"\" (stack)","Destroy job successfully applied on \""+stackName+"\" (stack)",applyJobId,deleteAfterDestroy);
         UIUtil.fireNotification(NotificationType.INFORMATION, "Destroy Job was submitted for \""+stackName+"\" (stack)", null);
         return new Result(Result.Severity.NONE, Result.Status.OK);
     }
