@@ -4,43 +4,6 @@
  */
 package com.oracle.oci.intellij.account;
 
-import static com.oracle.bmc.ClientRuntime.setClientUserAgent;
-import static com.oracle.oci.intellij.account.SystemPreferences.getRegionName;
-import static com.oracle.oci.intellij.account.SystemPreferences.getUserAgent;
-
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-
-import com.oracle.bmc.model.BmcException;
-import com.oracle.bmc.resourcemanager.model.*;
-import com.oracle.bmc.resourcemanager.requests.*;
-import com.oracle.bmc.resourcemanager.responses.*;
-import com.oracle.oci.intellij.ui.appstack.exceptions.JobRunningException;
-import org.apache.commons.io.FileUtils;
-
 import com.oracle.bmc.artifacts.ArtifactsClient;
 import com.oracle.bmc.artifacts.model.GenericArtifact;
 import com.oracle.bmc.artifacts.model.GenericArtifactSummary;
@@ -68,39 +31,9 @@ import com.oracle.bmc.core.responses.ListNetworkSecurityGroupsResponse;
 import com.oracle.bmc.core.responses.ListSubnetsResponse;
 import com.oracle.bmc.core.responses.ListVcnsResponse;
 import com.oracle.bmc.database.DatabaseClient;
-import com.oracle.bmc.database.model.AutonomousDatabase;
-import com.oracle.bmc.database.model.AutonomousDatabaseBackupSummary;
-import com.oracle.bmc.database.model.AutonomousDatabaseSummary;
-import com.oracle.bmc.database.model.AutonomousDatabaseWallet;
-import com.oracle.bmc.database.model.CreateAutonomousDatabaseCloneDetails;
-import com.oracle.bmc.database.model.CreateAutonomousDatabaseDetails;
-import com.oracle.bmc.database.model.DbVersionSummary;
-import com.oracle.bmc.database.model.GenerateAutonomousDatabaseWalletDetails;
-import com.oracle.bmc.database.model.RestoreAutonomousDatabaseDetails;
-import com.oracle.bmc.database.model.UpdateAutonomousDatabaseDetails;
-import com.oracle.bmc.database.model.UpdateAutonomousDatabaseWalletDetails;
-import com.oracle.bmc.database.requests.CreateAutonomousDatabaseRequest;
-import com.oracle.bmc.database.requests.DeleteAutonomousDatabaseRequest;
-import com.oracle.bmc.database.requests.GenerateAutonomousDatabaseWalletRequest;
-import com.oracle.bmc.database.requests.GetAutonomousDatabaseRegionalWalletRequest;
-import com.oracle.bmc.database.requests.GetAutonomousDatabaseRequest;
-import com.oracle.bmc.database.requests.GetAutonomousDatabaseWalletRequest;
-import com.oracle.bmc.database.requests.ListAutonomousDatabaseBackupsRequest;
-import com.oracle.bmc.database.requests.ListAutonomousDatabasesRequest;
-import com.oracle.bmc.database.requests.ListDbVersionsRequest;
-import com.oracle.bmc.database.requests.RestoreAutonomousDatabaseRequest;
-import com.oracle.bmc.database.requests.StartAutonomousDatabaseRequest;
-import com.oracle.bmc.database.requests.StopAutonomousDatabaseRequest;
-import com.oracle.bmc.database.requests.UpdateAutonomousDatabaseRegionalWalletRequest;
-import com.oracle.bmc.database.requests.UpdateAutonomousDatabaseRequest;
-import com.oracle.bmc.database.requests.UpdateAutonomousDatabaseWalletRequest;
-import com.oracle.bmc.database.responses.GenerateAutonomousDatabaseWalletResponse;
-import com.oracle.bmc.database.responses.GetAutonomousDatabaseRegionalWalletResponse;
-import com.oracle.bmc.database.responses.GetAutonomousDatabaseResponse;
-import com.oracle.bmc.database.responses.GetAutonomousDatabaseWalletResponse;
-import com.oracle.bmc.database.responses.ListAutonomousDatabaseBackupsResponse;
-import com.oracle.bmc.database.responses.ListAutonomousDatabasesResponse;
-import com.oracle.bmc.database.responses.ListDbVersionsResponse;
+import com.oracle.bmc.database.model.*;
+import com.oracle.bmc.database.requests.*;
+import com.oracle.bmc.database.responses.*;
 import com.oracle.bmc.devops.DevopsClient;
 import com.oracle.bmc.devops.model.RepositorySummary;
 import com.oracle.bmc.devops.requests.ListRepositoriesRequest;
@@ -110,25 +43,10 @@ import com.oracle.bmc.dns.model.ZoneSummary;
 import com.oracle.bmc.dns.requests.ListZonesRequest;
 import com.oracle.bmc.dns.responses.ListZonesResponse;
 import com.oracle.bmc.identity.IdentityClient;
-import com.oracle.bmc.identity.model.AuthToken;
-import com.oracle.bmc.identity.model.AvailabilityDomain;
-import com.oracle.bmc.identity.model.Compartment;
+import com.oracle.bmc.identity.model.*;
 import com.oracle.bmc.identity.model.Compartment.LifecycleState;
-import com.oracle.bmc.identity.model.CreateCompartmentDetails;
-import com.oracle.bmc.identity.model.RegionSubscription;
-import com.oracle.bmc.identity.requests.CreateCompartmentRequest;
-import com.oracle.bmc.identity.requests.DeleteCompartmentRequest;
-import com.oracle.bmc.identity.requests.GetCompartmentRequest;
-import com.oracle.bmc.identity.requests.ListAuthTokensRequest;
-import com.oracle.bmc.identity.requests.ListAvailabilityDomainsRequest;
-import com.oracle.bmc.identity.requests.ListCompartmentsRequest;
-import com.oracle.bmc.identity.requests.ListRegionSubscriptionsRequest;
-import com.oracle.bmc.identity.responses.CreateCompartmentResponse;
-import com.oracle.bmc.identity.responses.GetCompartmentResponse;
-import com.oracle.bmc.identity.responses.ListAuthTokensResponse;
-import com.oracle.bmc.identity.responses.ListAvailabilityDomainsResponse;
-import com.oracle.bmc.identity.responses.ListCompartmentsResponse;
-import com.oracle.bmc.identity.responses.ListRegionSubscriptionsResponse;
+import com.oracle.bmc.identity.requests.*;
+import com.oracle.bmc.identity.responses.*;
 import com.oracle.bmc.keymanagement.KmsManagementClient;
 import com.oracle.bmc.keymanagement.KmsVaultClient;
 import com.oracle.bmc.keymanagement.model.KeySummary;
@@ -137,12 +55,40 @@ import com.oracle.bmc.keymanagement.requests.ListKeysRequest;
 import com.oracle.bmc.keymanagement.requests.ListVaultsRequest;
 import com.oracle.bmc.keymanagement.responses.ListKeysResponse;
 import com.oracle.bmc.keymanagement.responses.ListVaultsResponse;
+import com.oracle.bmc.model.BmcException;
 import com.oracle.bmc.resourcemanager.ResourceManagerClient;
+import com.oracle.bmc.resourcemanager.model.Stack;
+import com.oracle.bmc.resourcemanager.model.*;
+import com.oracle.bmc.resourcemanager.requests.*;
+import com.oracle.bmc.resourcemanager.responses.*;
 import com.oracle.oci.intellij.ui.appstack.AppStackDashboard;
+import com.oracle.oci.intellij.ui.appstack.exceptions.JobRunningException;
 import com.oracle.oci.intellij.ui.common.AutonomousDatabaseConstants;
 import com.oracle.oci.intellij.ui.database.AutonomousDatabasesDashboard;
 import com.oracle.oci.intellij.util.BundleUtil;
 import com.oracle.oci.intellij.util.LogHandler;
+import org.apache.commons.io.FileUtils;
+
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
+import static com.oracle.bmc.ClientRuntime.setClientUserAgent;
+import static com.oracle.bmc.resourcemanager.model.Job.LifecycleState.*;
+import static com.oracle.oci.intellij.account.SystemPreferences.getRegionName;
+import static com.oracle.oci.intellij.account.SystemPreferences.getUserAgent;
 
 /**
  * The Oracle Cloud account configurator and accessor.
@@ -1130,10 +1076,7 @@ public class OracleCloudAccount {
       ListJobsResponse listJobsResponse =  resourceManagerClient.listJobs(request);
       List<JobSummary> runningJobs = new ArrayList<>();
       for (JobSummary job:listJobsResponse.getItems()){
-        if (job.getLifecycleState().equals(Job.LifecycleState.Accepted) ||
-            job.getLifecycleState().equals(Job.LifecycleState.Canceling) ||
-            job.getLifecycleState().equals(Job.LifecycleState.InProgress)) {
-
+        if (EnumSet.of(InProgress, Canceling, Accepted).contains(job.getLifecycleState())) {
           runningJobs.add(job);
         }
       }

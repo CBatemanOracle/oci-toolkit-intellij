@@ -14,20 +14,23 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
+import static com.oracle.bmc.resourcemanager.model.Job.LifecycleState.Failed;
+import static com.oracle.bmc.resourcemanager.model.Job.LifecycleState.Succeeded;
+
 public class MyBackgroundTask {
     private volatile boolean isRunning = true ;
     private  final Function<String,Boolean> isJobFinished=(jobId)->{
         try {
-            while (true) {
+            while (isRunning) {
                 Job job = getJob(jobId);
-                String status =job.getLifecycleState().getValue();
-                if ("SUCCEEDED".equals(status)) {
+//                String status =job.getLifecycleState().getValue();
+                if (Succeeded.equals(job.getLifecycleState())) {
                     return true;
-                } else if ("FAILED".equals(status)) {
+                } else if (Failed.equals(job.getLifecycleState())) {
                     return false;
                 }
 //                UIUtil.invokeLater(()->{
-                    AppStackDashboard.getInstance().refreshLastJobState(status,job);
+                    AppStackDashboard.getInstance().refreshLastJobState(job);
 //                });
 
                 // Wait a bit before checking again
@@ -40,7 +43,7 @@ public class MyBackgroundTask {
             throw new RuntimeException();
         }
 
-        return null;
+        return false;
     };
     public void stopCheckingJobState(){
         isRunning = false;
@@ -84,8 +87,7 @@ public class MyBackgroundTask {
                 // refresh the last job state
 //                UIUtil.invokeLater(()->{
                 Job job = getJob(jobId);
-                String status =job.getLifecycleState().getValue();
-                AppStackDashboard.getInstance().refreshLastJobState(status,job);
+                AppStackDashboard.getInstance().refreshLastJobState(job);
 //                });
             }
 

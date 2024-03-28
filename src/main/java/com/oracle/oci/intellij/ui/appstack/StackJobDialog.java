@@ -24,9 +24,13 @@ import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.oracle.bmc.resourcemanager.model.Job.LifecycleState.*;
+
+@SuppressWarnings("ALL")
 public class StackJobDialog extends DialogWrapper {
 
   private final List<JobSummary> jobs;      
@@ -47,9 +51,7 @@ public class StackJobDialog extends DialogWrapper {
     setOKButtonText("Ok");
     setSize(1000,900);
 //    filterPanel.setMaximumSize(new JBDimension(0,30));
-   searchButton.addActionListener(e -> {
-     filterJobs();
-   });
+   searchButton.addActionListener(e -> filterJobs());
     resetButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -76,11 +78,11 @@ public class StackJobDialog extends DialogWrapper {
   }
 
   private void filterJobs() {
-    String operationType = (String) operationTypeCombobox.getSelectedItem().toString();
+    String operationType =  operationTypeCombobox.getSelectedItem().toString();
     String status = (String) statusComboBox.getSelectedItem();
     List<JobSummary> newJobs = jobs.stream().filter(jobSummary -> {
-       boolean matchesOperationType = operationType.equals("ALL") || jobSummary.getOperation().getValue().equalsIgnoreCase(operationType);
-       boolean matchesStatus = status.equals("ALL") || jobSummary.getLifecycleState().getValue().equalsIgnoreCase(status);
+       boolean matchesOperationType = "ALL".equals(operationType) || jobSummary.getOperation().getValue().equalsIgnoreCase(operationType);
+       boolean matchesStatus = "ALL".equals(status) || jobSummary.getLifecycleState().getValue().equalsIgnoreCase(status);
 
        return matchesStatus && matchesOperationType ;
     }).collect(Collectors.toList());
@@ -121,11 +123,7 @@ public class StackJobDialog extends DialogWrapper {
     jobsModel.addColumn("Time Created");
     List<Object> row = new ArrayList<>();
     this.jobs.forEach(j -> {
-      String status = j.getLifecycleState().getValue();
-      if (Job.LifecycleState.InProgress.getValue().equalsIgnoreCase(status) ||
-              Job.LifecycleState.Canceling.getValue().equalsIgnoreCase(status) ||
-              Job.LifecycleState.Accepted.getValue().equalsIgnoreCase(status)
-      ){
+      if (EnumSet.of(InProgress, Canceling, Accepted).contains(j.getLifecycleState())){
         // update the job's status
         boolean b =updateJobStateInBackground(j.getId());
       }
@@ -207,14 +205,14 @@ public class StackJobDialog extends DialogWrapper {
           try {
           // row 0 the  last job
           model.setValueAt(state,0,2);
-          model.fireTableCellUpdated(0,2);
+//          model.fireTableCellUpdated(0,2);
         }catch (ArrayIndexOutOfBoundsException ex){
           System.out.println(ex.getMessage());
         }
         });
-        if ("SUCCEEDED".equals(state)) {
+        if (Succeeded.equals(state)) {
           return ;
-        } else if ("FAILED".equals(state)) {
+        } else if (Failed.equals(state)) {
           return ;
         }
 
@@ -282,7 +280,7 @@ public class StackJobDialog extends DialogWrapper {
           throw new IOException(e);
         }
       }else {
-        if (fullBuffer.toString().isEmpty()){
+        if (fullBuffer.length() == 0){
           UIUtil.invokeLater(()->{
             target.setText(fullBuffer+"\nFetching logs...  Please Wait...");
           });

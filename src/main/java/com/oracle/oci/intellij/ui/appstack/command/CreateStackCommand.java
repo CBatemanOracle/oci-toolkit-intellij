@@ -1,11 +1,5 @@
 package com.oracle.oci.intellij.ui.appstack.command;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
 import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.ProjectManager;
@@ -24,6 +18,12 @@ import com.oracle.oci.intellij.common.command.AbstractBasicCommand;
 import com.oracle.oci.intellij.ui.appstack.AppStackDashboard;
 import com.oracle.oci.intellij.ui.common.MyBackgroundTask;
 import com.oracle.oci.intellij.ui.common.UIUtil;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class CreateStackCommand extends AbstractBasicCommand<CreateResult> {
     private ResourceManagerClientProxy resourceManagerClient;
@@ -119,7 +119,7 @@ public class CreateStackCommand extends AbstractBasicCommand<CreateResult> {
         UIUtil.fireNotification(NotificationType.INFORMATION," The Apply Job  submitted successfully. for\""+stackName+"\" (stack)", null);
         new MyBackgroundTask().startBackgroundTask(ProjectManager.getInstance().getDefaultProject(),"Creating Resources of \""+stackName+"\" (stack)","Creating Resources... ","Apply Job Failed please check logs \""+stackName+"\" (stack)","Apply job successfully applied  \""+stackName+"\" (stack)",createJobResponse.getJob().getId(),()->{
             try {
-                if (createJobResponse.getJob().getLifecycleState().getValue().equals(Job.LifecycleState.Succeeded))
+                if (Job.LifecycleState.Succeeded.equals(createJobResponse.getJob().getLifecycleState()))
                     BrowserUtil.browse(AppStackDashboard.getUrlOutput(createJobResponse.getJob().getId()));
             } catch (Exception e) {
                 throw new RuntimeException(e);

@@ -4,9 +4,42 @@
  */
 package com.oracle.oci.intellij.ui.appstack;
 
-import java.awt.Component;
-import java.awt.Desktop;
-import java.awt.Dimension;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.components.ActionLink;
+import com.intellij.ui.table.JBTable;
+import com.oracle.bmc.model.BmcException;
+import com.oracle.bmc.resourcemanager.model.Stack;
+import com.oracle.bmc.resourcemanager.model.*;
+import com.oracle.bmc.resourcemanager.responses.CreateJobResponse;
+import com.oracle.oci.intellij.account.OracleCloudAccount;
+import com.oracle.oci.intellij.account.OracleCloudAccount.ResourceManagerClientProxy;
+import com.oracle.oci.intellij.account.SystemPreferences;
+import com.oracle.oci.intellij.common.command.AbstractBasicCommand;
+import com.oracle.oci.intellij.common.command.AbstractBasicCommand.CommandFailedException;
+import com.oracle.oci.intellij.common.command.AbstractBasicCommand.Result;
+import com.oracle.oci.intellij.common.command.CommandStack;
+import com.oracle.oci.intellij.common.command.CompositeCommand;
+import com.oracle.oci.intellij.ui.appstack.actions.ActionFactory;
+import com.oracle.oci.intellij.ui.appstack.actions.ReviewDialog;
+import com.oracle.oci.intellij.ui.appstack.command.*;
+import com.oracle.oci.intellij.ui.appstack.command.GetStackJobsCommand.GetStackJobsResult;
+import com.oracle.oci.intellij.ui.appstack.command.ListStackCommand.ListStackResult;
+import com.oracle.oci.intellij.ui.appstack.exceptions.JobRunningException;
+import com.oracle.oci.intellij.ui.appstack.models.Utils;
+import com.oracle.oci.intellij.ui.appstack.uimodel.AppStackTableModel;
+import com.oracle.oci.intellij.ui.common.Icons;
+import com.oracle.oci.intellij.ui.common.UIUtil;
+import com.oracle.oci.intellij.ui.explorer.ITabbedExplorerContent;
+import com.oracle.oci.intellij.util.LogHandler;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -18,56 +51,9 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.components.ActionLink;
-import com.intellij.ui.table.JBTable;
-import com.oracle.bmc.identity.model.Compartment;
-import com.oracle.bmc.model.BmcException;
-import com.oracle.bmc.resourcemanager.model.*;
-import com.oracle.bmc.resourcemanager.model.Stack;
-import com.oracle.bmc.resourcemanager.responses.CreateJobResponse;
-import com.oracle.oci.intellij.common.command.AbstractBasicCommand;
-import com.oracle.oci.intellij.ui.account.ConfigureOracleCloudDialog;
-import com.oracle.oci.intellij.ui.account.RegionAction;
-import com.oracle.oci.intellij.ui.appstack.actions.ReviewDialog;
-import com.oracle.oci.intellij.ui.appstack.command.*;
-import com.oracle.oci.intellij.ui.appstack.exceptions.JobRunningException;
-import com.oracle.oci.intellij.ui.appstack.models.Utils;
-import com.oracle.oci.intellij.ui.common.CompartmentSelection;
-import com.oracle.oci.intellij.ui.common.Icons;
-import org.jetbrains.annotations.Nullable;
-
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.oracle.oci.intellij.account.OracleCloudAccount;
-import com.oracle.oci.intellij.account.OracleCloudAccount.ResourceManagerClientProxy;
-import com.oracle.oci.intellij.account.SystemPreferences;
-import com.oracle.oci.intellij.common.command.AbstractBasicCommand.CommandFailedException;
-import com.oracle.oci.intellij.common.command.AbstractBasicCommand.Result;
-import com.oracle.oci.intellij.common.command.CommandStack;
-import com.oracle.oci.intellij.common.command.CompositeCommand;
-import com.oracle.oci.intellij.ui.appstack.command.CreateStackCommand;
-import com.oracle.oci.intellij.ui.appstack.command.DestroyStackCommand;
-import com.oracle.oci.intellij.ui.appstack.command.GetStackJobsCommand;
-import com.oracle.oci.intellij.ui.appstack.command.GetStackJobsCommand.GetStackJobsResult;
-import com.oracle.oci.intellij.ui.appstack.command.ListStackCommand;
-import com.oracle.oci.intellij.ui.appstack.command.ListStackCommand.ListStackResult;
-import com.oracle.oci.intellij.ui.appstack.uimodel.AppStackTableModel;
-import com.oracle.oci.intellij.ui.common.UIUtil;
-import com.oracle.oci.intellij.ui.explorer.ITabbedExplorerContent;
-import com.oracle.oci.intellij.util.LogHandler;
 
 public final class AppStackDashboard implements PropertyChangeListener, ITabbedExplorerContent {
 
@@ -82,9 +68,8 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
   private ActionLink profileValueLabel;
   private ActionLink compartmentValueLabel;
   private ActionLink regionValueLabel;
-  private JButton destroyAppStackButton;
   private List<StackSummary> appStackList;
-  private CommandStack commandStack = new CommandStack();
+  private final CommandStack commandStack = new CommandStack();
   private static ResourceBundle resBundle;
 
   private static final AppStackDashboard INSTANCE =
@@ -122,46 +107,16 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
     }
 
     if (profileValueLabel != null){
-      profileValueLabel.setAction(new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          ConfigureOracleCloudDialog.newInstance().showAndGet();
-        }
-      });
+      profileValueLabel.setAction(ActionFactory.getProfileAction());
     }
 
     if (compartmentValueLabel != null){
 
-      compartmentValueLabel.setAction(new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          final CompartmentSelection compartmentSelection = CompartmentSelection.newInstance();
-
-          if (compartmentSelection.showAndGet()) {
-            final Compartment selectedCompartment = compartmentSelection.getSelectedCompartment();
-            SystemPreferences.setCompartment(selectedCompartment);
-          }
-        }
-      });
+      compartmentValueLabel.setAction(ActionFactory.getCompartmentAction());
     }
 
     if (regionValueLabel != null){
-      regionValueLabel.setAction(new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          RegionAction regionAction = new RegionAction();
-          Object source = e.getSource();
-          DataContext dataContext = ActionToolbar.getDataContextFor((Component) source);
-
-          MouseEvent simulatedMouseEvent = new MouseEvent((Component) source, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(),
-                  0, 0, 0, 1, false);
-
-          AnActionEvent anActionEvent = AnActionEvent.createFromAnAction(regionAction, simulatedMouseEvent,
-                  ActionPlaces.UNKNOWN, dataContext);
-
-          regionAction.actionPerformed(anActionEvent);
-        }
-      });
+      regionValueLabel.setAction(ActionFactory.getRegionAction());
     }
 
     resBundle = ResourceBundle.getBundle("appStackDashboard", Locale.ROOT);
@@ -209,9 +164,9 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
           JPopupMenu popupMenu;
           StackSummary selectedSummary = null;
           if (appStacksTable.getSelectedRowCount() == 1) {
-            Object selectedObject = appStackList.get(appStacksTable.getSelectedRow());
-            if (selectedObject instanceof StackSummary) {
-              selectedSummary = (StackSummary) selectedObject;
+            StackSummary selectedObject = appStackList.get(appStacksTable.getSelectedRow());
+            if (selectedObject != null) {
+              selectedSummary = selectedObject;
             }
           }
           // TODO:
@@ -253,7 +208,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
     }
   }
 
-  public synchronized void refreshLastJobState(String newStatus , Job job) {
+  public synchronized void refreshLastJobState( Job job) {
     String stackId = job.getStackId();
     int stackRow = getStackRow(stackId);
     if (stackRow != -1){
@@ -342,7 +297,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
   private static class ShowStackDetailsAction extends AbstractAction {
 
     private static final long serialVersionUID = 1463690182909882687L;
-    private StackSummary stack;
+    private final StackSummary stack;
 
     public ShowStackDetailsAction(StackSummary stack) {
       super("Show Stack Details..");
@@ -447,8 +402,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
   public static String getUrlOutput(String lastApplyJobId) throws Exception {
     ResourceManagerClientProxy resourceManagerClientProxy = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
 
-    String jobId = lastApplyJobId;
-    ListJobOutputCommand cmd = new ListJobOutputCommand(resourceManagerClientProxy, null, jobId);
+      ListJobOutputCommand cmd = new ListJobOutputCommand(resourceManagerClientProxy, null, lastApplyJobId);
     ListJobOutputCommand.ListJobOutputResult result = cmd.execute();
     List<JobOutputSummary> outputSummaries = result.getOutputSummaries();
     Optional<JobOutputSummary> job = outputSummaries.stream().filter(p -> "app_url".equals(p.getOutputName())).findFirst();

@@ -4,49 +4,34 @@
  */
 package com.oracle.oci.intellij.ui.database;
 
-import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.Iterator;
-import java.util.List;
-import java.util.function.Function;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-
-import com.intellij.ide.DataManager;
-import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.ide.plugins.newui.ListPluginComponent;
-import com.intellij.ide.plugins.newui.UIPluginGroup;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.ActionLink;
 import com.oracle.bmc.database.model.AutonomousDatabaseSummary;
 import com.oracle.bmc.database.model.AutonomousDatabaseSummary.LifecycleState;
-import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.account.SystemPreferences;
-import com.oracle.oci.intellij.ui.account.CompartmentAction;
-import com.oracle.oci.intellij.ui.account.ConfigureAction;
-import com.oracle.oci.intellij.ui.account.ConfigureOracleCloudDialog;
-import com.oracle.oci.intellij.ui.account.RegionAction;
+import com.oracle.oci.intellij.ui.appstack.actions.ActionFactory;
 import com.oracle.oci.intellij.ui.common.AutonomousDatabaseConstants;
-import com.oracle.oci.intellij.ui.common.CompartmentSelection;
 import com.oracle.oci.intellij.ui.common.UIUtil;
 import com.oracle.oci.intellij.ui.database.actions.AutonomousDatabaseBasicActions;
 import com.oracle.oci.intellij.ui.database.actions.AutonomousDatabaseMoreActions;
 import com.oracle.oci.intellij.ui.database.actions.CreateAutonomousDatabaseDialog;
 import com.oracle.oci.intellij.ui.explorer.ITabbedExplorerContent;
 import com.oracle.oci.intellij.util.LogHandler;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.List;
+import java.util.function.Function;
 
 public final class AutonomousDatabasesDashboard implements PropertyChangeListener, ITabbedExplorerContent {
 
@@ -92,46 +77,16 @@ public final class AutonomousDatabasesDashboard implements PropertyChangeListene
       createADBInstanceButton.setAction(new CreateAction("Create Autonomous Database"));
     }
     if (profileValueLabel != null){
-      profileValueLabel.setAction(new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          ConfigureOracleCloudDialog.newInstance().showAndGet();
-        }
-      });
+      profileValueLabel.setAction(ActionFactory.getProfileAction());
     }
 
     if (compartmentValueLabel != null){
 
-      compartmentValueLabel.setAction(new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          final CompartmentSelection compartmentSelection = CompartmentSelection.newInstance();
-
-          if (compartmentSelection.showAndGet()) {
-            final Compartment selectedCompartment = compartmentSelection.getSelectedCompartment();
-            SystemPreferences.setCompartment(selectedCompartment);
-          }
-        }
-      });
+      compartmentValueLabel.setAction(ActionFactory.getCompartmentAction());
     }
 
     if (regionValueLabel != null){
-      regionValueLabel.setAction(new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          RegionAction regionAction = new RegionAction();
-          Object source = e.getSource();
-          DataContext dataContext = ActionToolbar.getDataContextFor((Component) source);
-
-          MouseEvent simulatedMouseEvent = new MouseEvent((Component) source, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(),
-                  0, 0, 0, 1, false);
-
-          AnActionEvent anActionEvent = AnActionEvent.createFromAnAction(regionAction, simulatedMouseEvent,
-                  ActionPlaces.UNKNOWN, dataContext);
-
-          regionAction.actionPerformed(anActionEvent);
-        }
-      });
+      regionValueLabel.setAction(ActionFactory.getRegionAction());
     }
 
   }
