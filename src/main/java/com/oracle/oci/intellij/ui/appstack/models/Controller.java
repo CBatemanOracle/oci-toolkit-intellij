@@ -8,9 +8,7 @@ import com.oracle.bmc.http.client.internal.ExplicitlySetBmcModel;
 import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.bmc.resourcemanager.model.Stack;
 import com.oracle.bmc.resourcemanager.model.StackSummary;
-import com.oracle.bmc.resourcemanager.responses.ListStacksResponse;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
-import com.oracle.oci.intellij.account.SystemPreferences;
 import com.oracle.oci.intellij.common.command.AbstractBasicCommand;
 import com.oracle.oci.intellij.common.command.CommandStack;
 import com.oracle.oci.intellij.ui.appstack.actions.CustomWizardStep;
@@ -19,14 +17,13 @@ import com.oracle.oci.intellij.ui.appstack.command.ListStackCommand;
 import com.oracle.oci.intellij.ui.appstack.command.SetCommand;
 import com.oracle.oci.intellij.ui.common.UIUtil;
 import com.oracle.oci.intellij.util.LogHandler;
-import jnr.ffi.Struct;
 
 import javax.swing.*;
 import java.awt.*;
 import java.beans.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
@@ -99,7 +96,7 @@ public class Controller {
 
     public void updateDependencies(String pdName, VariableGroup varGroup){
         PropertyDescriptor pd = descriptorsState.get(pdName);
-        List<String> dependencies = Utils.depondsOn.get(pd.getName());
+        List<String> dependencies = Utils.dependsOn.get(pd.getName());
         if (dependencies != null) {
             for (String dependent : dependencies) {
                 CustomWizardStep.VarPanel varPanel = varPanels.get(dependent);
