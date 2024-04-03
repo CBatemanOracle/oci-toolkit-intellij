@@ -12,7 +12,11 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
@@ -27,8 +31,13 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.wm.ToolWindow;
 import com.oracle.bmc.database.model.AutonomousDatabaseSummary;
 import com.oracle.bmc.database.model.AutonomousDatabaseSummary.LifecycleState;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
@@ -64,13 +73,67 @@ public final class AutonomousDatabasesDashboard implements PropertyChangeListene
   private JLabel regionValueLabel;
   private JButton createADBInstanceButton;
   private List<AutonomousDatabaseSummary> autonomousDatabaseInstancesList;
+  private static final CopyOnWriteArrayList<AutonomousDatabasesDashboard> ALL = 
+    new CopyOnWriteArrayList<AutonomousDatabasesDashboard>();
+  private @NotNull @NonNls String locationHash;
 
-  private static final AutonomousDatabasesDashboard INSTANCE =
-          new AutonomousDatabasesDashboard();
+  private @NonNls @NotNull String toolWindowId;
 
-  public static AutonomousDatabasesDashboard getInstance() {
-    return INSTANCE;
+  public static AutonomousDatabasesDashboard newInstance(@NotNull Project project,
+                                              @NotNull ToolWindow toolWindow) {
+    AutonomousDatabasesDashboard add = new AutonomousDatabasesDashboard();
+    // they call it a hash but looking at the impl, it looks like 
+    // name plus full path so should be universally unique?
+    // I'd rather not hold a reference to the Project directly because
+    // it's clear to me that its an indirect handle like an IProject.
+    @NotNull
+    @NonNls
+    String locationHash = project.getLocationHash();
+    add.setProjectLocationHash(locationHash);
+    
+    @NonNls
+    @NotNull
+    String toolId = toolWindow.getId();
+    add.setToolWindowId(toolId);
+
+    ALL.add(add);
+    return add;
   }
+  
+  private void setToolWindowId(@NonNls @NotNull String toolWindowId) {
+    this.toolWindowId = toolWindowId;
+  }
+
+  public void setProjectLocationHash(@NotNull @NonNls String locationHash) {
+    this.locationHash = locationHash;
+  }
+  public static Stream<AutonomousDatabasesDashboard> getAllInstances() {
+    return ALL.stream();
+  }
+
+  public static Optional<AutonomousDatabasesDashboard> getInstance(@NotNull Project project,
+                                                         @NotNull ToolWindow toolWindow) {
+    List<AutonomousDatabasesDashboard> dashboard = 
+      getAllInstances().filter(d -> d.toolWindowId.equals(toolWindow.getId())).collect(Collectors.toList());
+    long count = dashboard.size();
+    int index = -1;
+    if (count > 1) {
+      // generally should not happen. but this is too critical, so just use the first one
+      index = 0; // TODO:log
+    }
+    else if (count == 1) {
+      // should always happen unless not initialized on this toolWindow
+      index = 0;
+    }
+    else {
+      //not found.
+      return Optional.empty();
+    }
+    return Optional.of(dashboard.get(index));
+  }
+  
+  
+
 
   private AutonomousDatabasesDashboard() {
     initializeWorkLoadTypeFilter();
@@ -85,6 +148,7 @@ public final class AutonomousDatabasesDashboard implements PropertyChangeListene
       createADBInstanceButton.setAction(new CreateAction("Create Autonomous Database"));
     }
 
+    SystemPreferences.addPropertyChangeListener(this);
   }
 
   private void initializeLabels() {
@@ -159,6 +223,8 @@ public final class AutonomousDatabasesDashboard implements PropertyChangeListene
     });
 
     adbInstancesTable.getColumn("State").setCellRenderer(new DefaultTableCellRenderer(){
+      private static final long serialVersionUID = 1L;
+
       @Override
       public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         if (column == 2) {
@@ -417,21 +483,6 @@ public final class AutonomousDatabasesDashboard implements PropertyChangeListene
     }
 
   }
-
-//  private static class DeployAction extends AbstractAction {
-//    /**
-//     *
-//     */
-//    private static final long serialVersionUID = 1L;
-//
-//    @Override
-//    public void actionPerformed(ActionEvent e) {
-//      // TODO Auto-generated method stub
-//      
-//    }
-//
-//   }
-
 
   @Override
   public String getTitle() {

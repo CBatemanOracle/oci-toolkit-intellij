@@ -385,7 +385,7 @@ public class UpdateNetworkAccessDialog extends DialogWrapper {
         final Runnable refresh = new Runnable() {
             @Override
             public void run() {
-                AutonomousDatabasesDashboard.getInstance().populateTableData();
+                AutonomousDatabasesDashboard.getAllInstances().forEach(add -> add.populateTableData());
             }
         };
         
