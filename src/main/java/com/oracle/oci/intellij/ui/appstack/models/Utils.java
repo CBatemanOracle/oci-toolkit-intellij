@@ -12,9 +12,7 @@ import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.bmc.keymanagement.model.KeySummary;
 import com.oracle.bmc.keymanagement.model.VaultSummary;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
-import com.oracle.oci.intellij.ui.appstack.YamlLoader;
 
-import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -183,7 +181,7 @@ public class Utils{
         return "";
     }
 
-    static public Map<String , List<String>> depondsOn = new LinkedHashMap<>(){{
+    static public Map<String , List<String>> dependsOn = new LinkedHashMap<>(){{
         put("compartment_id", List.of("availability_domain"));
         put("vault_compartment_id",List.of("vault_id","key_id"));
         put("vault_id",List.of("key_id"));

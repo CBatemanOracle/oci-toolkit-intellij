@@ -4,10 +4,40 @@
  */
 package com.oracle.oci.intellij.ui.appstack;
 
-import java.awt.Component;
-import java.awt.Color;
-import java.awt.Desktop;
-import java.awt.Dimension;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.table.JBTable;
+import com.oracle.bmc.model.BmcException;
+import com.oracle.bmc.resourcemanager.model.Stack;
+import com.oracle.bmc.resourcemanager.model.*;
+import com.oracle.bmc.resourcemanager.responses.CreateJobResponse;
+import com.oracle.oci.intellij.account.OracleCloudAccount;
+import com.oracle.oci.intellij.account.OracleCloudAccount.ResourceManagerClientProxy;
+import com.oracle.oci.intellij.account.SystemPreferences;
+import com.oracle.oci.intellij.common.command.AbstractBasicCommand;
+import com.oracle.oci.intellij.common.command.AbstractBasicCommand.CommandFailedException;
+import com.oracle.oci.intellij.common.command.AbstractBasicCommand.Result;
+import com.oracle.oci.intellij.common.command.CommandStack;
+import com.oracle.oci.intellij.common.command.CompositeCommand;
+import com.oracle.oci.intellij.ui.appstack.actions.ReviewDialog;
+import com.oracle.oci.intellij.ui.appstack.command.*;
+import com.oracle.oci.intellij.ui.appstack.command.GetStackJobsCommand.GetStackJobsResult;
+import com.oracle.oci.intellij.ui.appstack.command.ListStackCommand.ListStackResult;
+import com.oracle.oci.intellij.ui.appstack.exceptions.JobRunningException;
+import com.oracle.oci.intellij.ui.appstack.models.Utils;
+import com.oracle.oci.intellij.ui.appstack.uimodel.AppStackTableModel;
+import com.oracle.oci.intellij.ui.common.Icons;
+import com.oracle.oci.intellij.ui.common.UIUtil;
+import com.oracle.oci.intellij.ui.explorer.ITabbedExplorerContent;
+import com.oracle.oci.intellij.util.LogHandler;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -19,61 +49,9 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.table.JBTable;
-import com.oracle.bmc.model.BmcException;
-import com.oracle.bmc.resourcemanager.model.*;
-import com.oracle.bmc.resourcemanager.model.Stack;
-import com.oracle.bmc.resourcemanager.responses.CreateJobResponse;
-import com.oracle.oci.intellij.common.command.AbstractBasicCommand;
-import com.oracle.oci.intellij.ui.appstack.actions.ReviewDialog;
-import com.oracle.oci.intellij.ui.appstack.command.*;
-import com.oracle.oci.intellij.ui.appstack.exceptions.JobRunningException;
-import com.oracle.oci.intellij.ui.appstack.models.Utils;
-import com.oracle.oci.intellij.ui.common.Icons;
-import com.oracle.oci.intellij.ui.common.MyBackgroundTask;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JTable;
-import javax.swing.SwingUtilities;
-import javax.swing.table.DefaultTableModel;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.oracle.oci.intellij.account.OracleCloudAccount;
-import com.oracle.oci.intellij.account.OracleCloudAccount.ResourceManagerClientProxy;
-import com.oracle.oci.intellij.account.SystemPreferences;
-import com.oracle.oci.intellij.common.command.AbstractBasicCommand.CommandFailedException;
-import com.oracle.oci.intellij.common.command.AbstractBasicCommand.Result;
-import com.oracle.oci.intellij.common.command.CommandStack;
-import com.oracle.oci.intellij.common.command.CompositeCommand;
-import com.oracle.oci.intellij.ui.appstack.command.CreateStackCommand;
-import com.oracle.oci.intellij.ui.appstack.command.DestroyStackCommand;
-import com.oracle.oci.intellij.ui.appstack.command.GetStackJobsCommand;
-import com.oracle.oci.intellij.ui.appstack.command.GetStackJobsCommand.GetStackJobsResult;
-import com.oracle.oci.intellij.ui.appstack.command.ListStackCommand;
-import com.oracle.oci.intellij.ui.appstack.command.ListStackCommand.ListStackResult;
-import com.oracle.oci.intellij.ui.appstack.uimodel.AppStackTableModel;
-import com.oracle.oci.intellij.ui.common.UIUtil;
-import com.oracle.oci.intellij.ui.explorer.ITabbedExplorerContent;
-import com.oracle.oci.intellij.util.LogHandler;
 
 public final class AppStackDashboard implements PropertyChangeListener, ITabbedExplorerContent {
 

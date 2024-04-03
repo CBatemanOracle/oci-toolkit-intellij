@@ -94,7 +94,7 @@ public class CreateStackCommand extends AbstractBasicCommand<CreateResult> {
       
       CreateJobDetails createJobDetails = CreateJobDetails.builder()
         .stackId(stackId)
-        .displayName("app-stack-test-apply-job-" + UUID.randomUUID().toString())
+        .displayName("app-stack-test-apply-job-" + UUID.randomUUID())
         .operation(Operation.Apply)
         .jobOperationDetails(CreateApplyJobOperationDetails.builder()
             .executionPlanStrategy(ExecutionPlanStrategy.AutoApproved)
@@ -104,8 +104,8 @@ public class CreateStackCommand extends AbstractBasicCommand<CreateResult> {
     CreateJobRequest createJobRequest = CreateJobRequest.builder()
         .createJobDetails(createJobDetails)
         .opcRequestId("app-stack-test-apply-job-request-" + UUID.randomUUID()
-            .toString())
-        .opcRetryToken("app-stack-test-apply-job-retry-" + UUID.randomUUID().toString())
+            )
+        .opcRetryToken("app-stack-test-apply-job-retry-" + UUID.randomUUID())
         .build();
 
     /* Send request to the Client */
