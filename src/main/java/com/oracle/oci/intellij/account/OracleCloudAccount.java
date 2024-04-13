@@ -10,9 +10,14 @@ import static com.oracle.oci.intellij.account.SystemPreferences.getUserAgent;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -32,11 +37,6 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import com.oracle.bmc.model.BmcException;
-import com.oracle.bmc.resourcemanager.model.*;
-import com.oracle.bmc.resourcemanager.requests.*;
-import com.oracle.bmc.resourcemanager.responses.*;
-import com.oracle.oci.intellij.ui.appstack.exceptions.JobRunningException;
 import org.apache.commons.io.FileUtils;
 
 import com.oracle.bmc.artifacts.ArtifactsClient;
@@ -160,6 +160,7 @@ import com.oracle.bmc.keymanagement.requests.ListVaultsRequest;
 import com.oracle.bmc.keymanagement.responses.CreateKeyResponse;
 import com.oracle.bmc.keymanagement.responses.ListKeysResponse;
 import com.oracle.bmc.keymanagement.responses.ListVaultsResponse;
+import com.oracle.bmc.model.BmcException;
 import com.oracle.bmc.resourcemanager.ResourceManagerClient;
 import com.oracle.bmc.resourcemanager.model.AssociatedResourceSummary;
 import com.oracle.bmc.resourcemanager.model.AssociatedResourcesCollection;
@@ -170,6 +171,7 @@ import com.oracle.bmc.resourcemanager.model.CreateStackDetails;
 import com.oracle.bmc.resourcemanager.model.CreateZipUploadConfigSourceDetails;
 import com.oracle.bmc.resourcemanager.model.DestroyJobOperationDetails;
 import com.oracle.bmc.resourcemanager.model.Job;
+import com.oracle.bmc.resourcemanager.model.JobSummary;
 import com.oracle.bmc.resourcemanager.model.Stack;
 import com.oracle.bmc.resourcemanager.model.StackSummary;
 import com.oracle.bmc.resourcemanager.requests.CreateJobRequest;
@@ -203,10 +205,8 @@ import com.oracle.bmc.vault.requests.CreateSecretRequest;
 import com.oracle.bmc.vault.requests.ListSecretsRequest;
 import com.oracle.bmc.vault.responses.CreateSecretResponse;
 import com.oracle.bmc.vault.responses.ListSecretsResponse;
-import com.oracle.oci.intellij.ui.appstack.AppStackDashboard;
+import com.oracle.oci.intellij.ui.appstack.exceptions.JobRunningException;
 import com.oracle.oci.intellij.ui.common.AutonomousDatabaseConstants;
-import com.oracle.oci.intellij.ui.database.AutonomousDatabasesDashboard;
-import com.oracle.oci.intellij.ui.devops.DevOpsDashboard;
 import com.oracle.oci.intellij.util.BundleUtil;
 import com.oracle.oci.intellij.util.LogHandler;
 import com.oracle.oci.intellij.util.SafeRunnerUtil;
@@ -231,9 +231,9 @@ public class OracleCloudAccount {
     // Add the property change listeners in the order they have to be notified.
     SystemPreferences.addPropertyChangeListener(identityClientProxy);
     SystemPreferences.addPropertyChangeListener(databaseClientProxy);
-    SystemPreferences.addPropertyChangeListener(AutonomousDatabasesDashboard.getInstance());
-    SystemPreferences.addPropertyChangeListener(AppStackDashboard.getInstance());
-    SystemPreferences.addPropertyChangeListener(DevOpsDashboard.getInstance());
+    //SystemPreferences.addPropertyChangeListener(new AutonomousDatabasesDashboard());
+    //SystemPreferences.addPropertyChangeListener(AppStackDashboard.getInstance());
+    //SystemPreferences.addPropertyChangeListener(DevOpsDashboard.getInstance());
     // TODO: property change listener for resource manager
   }
 
