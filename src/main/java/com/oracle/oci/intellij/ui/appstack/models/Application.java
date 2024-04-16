@@ -3,8 +3,6 @@ package com.oracle.oci.intellij.ui.appstack.models;
 import com.oracle.oci.intellij.ui.appstack.actions.PropertyOrder;
 import com.oracle.oci.intellij.ui.appstack.annotations.VariableMetaData;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.beans.PropertyVetoException;
 
 public class Application extends VariableGroup {
@@ -33,7 +31,7 @@ public class Application extends VariableGroup {
 
     private java.lang.Object repo_name;
 
-    private java.lang.String branch;
+    private java.lang.Object branch;
 
     private java.lang.String build_command;
 
@@ -123,13 +121,13 @@ public class Application extends VariableGroup {
         vcp.fireVetoableChange("repo_name", oldValue, newValue);
     }
     @PropertyOrder(7)
-    @VariableMetaData(title="Branch used for build / deployment",description="Name of the branch to be built, deployed and on which a trigger will be installed for continuous deployment.",defaultVal="main",type="string",required=true,visible="eq(application_source,'SOURCE_CODE')")
+    @VariableMetaData(title="Branch used for build / deployment",description="Name of the branch to be built, deployed and on which a trigger will be installed for continuous deployment.",type="oci:devops:branch:id",required=true,visible="eq(application_source,'SOURCE_CODE')")
 
-    public String getBranch() {
+    public Object getBranch() {
         return branch;
     }
 
-    public void setBranch(String newValue) throws PropertyVetoException {
+    public void setBranch(Object newValue) throws PropertyVetoException {
         Object oldValue = this.branch;
         this.branch = newValue;
         pcs.firePropertyChange("branch", oldValue, newValue);
@@ -149,7 +147,7 @@ public class Application extends VariableGroup {
         vcp.fireVetoableChange("build_command", oldValue, newValue);
     }
     @PropertyOrder(9)
-    @VariableMetaData(title="Artifact path",description="For example: target/MyApplication.jar",defaultVal="ADMIN",type="string",required=true,visible="eq(application_source,'SOURCE_CODE')")
+    @VariableMetaData(title="Artifact path",description="For example: target/MyApplication.jar",defaultVal="target/.jar",type="string",required=true,visible="eq(application_source,'SOURCE_CODE')")
 
     public String getArtifact_location() {
         return artifact_location;
