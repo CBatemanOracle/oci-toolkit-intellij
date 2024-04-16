@@ -28,9 +28,9 @@ public class DeleteStackCommand extends AbstractBasicCommand<Result> {
   protected Result doExecute() throws Exception {
     resManagerClientProxy.deleteStack(this.stackId);
     UIUtil.fireNotification(NotificationType.INFORMATION, SUCCESSFUL_MESSAGE+" : \""+stackName+"\" (stack)", null);
-//    UIUtil.invokeLater(()->{
-      AppStackDashboard.getInstance().populateTableData();
-//    });
+    UIUtil.invokeLater(()->{
+      AppStackDashboard.getAllInstances().forEach(dashboard -> dashboard.populateTableData());
+    });
     return Result.OK_RESULT;
   }
 }

@@ -61,6 +61,9 @@ dependencies {
         exclude(group="org.slf4j", module="slf4j-api")
     }
 
+    implementation("org.yaml:snakeyaml:2.2") {
+        exclude(group="org.slf4j", module="slf4j-api")
+    }
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.0") // Use the latest version
     
     testImplementation(platform("org.junit:junit-bom:5.7.1"))
@@ -90,6 +93,7 @@ tasks {
         jvmArgs = listOf(
             "-Xms512m",
             "-Xmx2048m",
+            "-ea",
             "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044",
         )
     }

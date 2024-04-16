@@ -22,6 +22,12 @@ import com.oracle.oci.intellij.common.command.AbstractBasicCommand.CommandFailed
 import com.oracle.oci.intellij.common.command.AbstractBasicCommand.Result;
 import com.oracle.oci.intellij.common.command.CommandStack;
 import com.oracle.oci.intellij.common.command.CompositeCommand;
+import com.oracle.oci.intellij.ui.appstack.actions.ReviewDialog;
+import com.oracle.oci.intellij.ui.appstack.command.CreateStackCommand;
+import com.oracle.oci.intellij.ui.appstack.command.DeleteAndDestroyCommand;
+import com.oracle.oci.intellij.ui.appstack.command.DeleteStackCommand;
+import com.oracle.oci.intellij.ui.appstack.command.DestroyStackCommand;
+import com.oracle.oci.intellij.ui.appstack.command.GetStackJobsCommand;
 import com.oracle.oci.intellij.ui.appstack.actions.ActionFactory;
 import com.oracle.oci.intellij.ui.appstack.actions.ReviewDialog;
 import com.oracle.oci.intellij.ui.appstack.command.*;
@@ -32,6 +38,7 @@ import com.oracle.oci.intellij.ui.appstack.models.Utils;
 import com.oracle.oci.intellij.ui.appstack.uimodel.AppStackTableModel;
 import com.oracle.oci.intellij.ui.common.Icons;
 import com.oracle.oci.intellij.ui.common.UIUtil;
+import com.oracle.oci.intellij.ui.devops.DevOpsDashboard;
 import com.oracle.oci.intellij.ui.explorer.ITabbedExplorerContent;
 import com.oracle.oci.intellij.util.LogHandler;
 import org.jetbrains.annotations.Nullable;
@@ -69,14 +76,68 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
   private ActionLink compartmentValueLabel;
   private ActionLink regionValueLabel;
   private List<StackSummary> appStackList;
-  private final CommandStack commandStack = new CommandStack();
+  private CommandStack commandStack = new CommandStack();
+  private @NonNls @NotNull String toolWindowId;
+  private @NotNull @NonNls String locationHash;
   private static ResourceBundle resBundle;
+  private static final CopyOnWriteArrayList<AppStackDashboard> ALL = new CopyOnWriteArrayList<>();
 
-  private static final AppStackDashboard INSTANCE =
-          new AppStackDashboard();
+  public static AppStackDashboard newInstance(@NotNull Project project,
+                                                         @NotNull ToolWindow toolWindow) {
+    AppStackDashboard add = new AppStackDashboard();
+    // they call it a hash but looking at the impl, it looks like
+    // name plus full path so should be universally unique?
+    // I'd rather not hold a reference to the Project directly because
+    // it's clear to me that its an indirect handle like an IProject.
+    @NotNull
+    @NonNls
+    String locationHash = project.getLocationHash();
+    add.setProjectLocationHash(locationHash);
 
-  public synchronized static AppStackDashboard getInstance() {
-    return INSTANCE;
+    @NonNls
+    @NotNull
+    String toolId = toolWindow.getId();
+    add.setToolWindowId(toolId);
+
+    ALL.add(add);
+    return add;
+  }
+
+  private void setToolWindowId(@NonNls @NotNull String toolWindowId) {
+    this.toolWindowId = toolWindowId;
+  }
+
+  public void setProjectLocationHash(@NotNull @NonNls String locationHash) {
+    this.locationHash = locationHash;
+  }
+
+  /**
+   * @return all the instances of the dashboard; in most cases, we must stream
+   * updates onto all of them.
+   */
+  public static Stream<AppStackDashboard> getAllInstances() {
+    return ALL.stream();
+  }
+
+  public static Optional<AppStackDashboard> getInstance(@NotNull Project project,
+                                                      @NotNull ToolWindow toolWindow) {
+    List<AppStackDashboard> dashboard =
+      getAllInstances().filter(d -> d.toolWindowId.equals(toolWindow.getId()))
+                       .collect(Collectors.toList());
+    long count = dashboard.size();
+    int index = -1;
+    if (count > 1) {
+      // generally should not happen. but this is too critical, so just use the
+      // first one
+      index = 0; // TODO:log
+    } else if (count == 1) {
+      // should always happen unless not initialized on this toolWindow
+      index = 0;
+    } else {
+      // not found.
+      return Optional.empty();
+    }
+    return Optional.of(dashboard.get(index));
   }
 
   private AppStackDashboard() {
@@ -120,6 +181,8 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
     }
 
     resBundle = ResourceBundle.getBundle("appStackDashboard", Locale.ROOT);
+
+    SystemPreferences.addPropertyChangeListener(this);
   }
 
   private void initializeLabels() {
@@ -133,6 +196,9 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
   }
 
   private void initializeTableStructure() {
+    if (appStacksTable == null) {
+      return;
+    }
     appStacksTable.setModel(new AppStackTableModel(0));
 
     appStacksTable.getColumn("Last Job State").setCellRenderer(new DefaultTableCellRenderer() {
@@ -142,12 +208,15 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
           super.getTableCellRendererComponent(table,value,isSelected,hasFocus,row,column);
           final JobSummary job = (JobSummary) value;
           if (job == null ) return null;
-          
+
           StringBuilder columnText = new StringBuilder();
           columnText.append(job.getOperation());
           columnText.append(" Job  ->  ");
           columnText.append(job.getLifecycleState());
 
+//          final JBLabel statusLbl = new JBLabel(
+//                  columnText.toString());
+//          statusLbl.setIcon((getImageStatus(job.getLifecycleState())));
           this.setText(columnText.toString());
           this.setIcon(getImageStatus(job.getLifecycleState()));
           return this;
@@ -253,7 +322,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
 
     private static final long serialVersionUID = 1463690182909882687L;
     private StackSummary stack;
-
+    
     public LoadStackJobsAction(StackSummary stack) {
       super("View Jobs..");
       this.stack = stack;
@@ -371,7 +440,16 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
 
     }
 
+    private String getUrlOutput(JobSummary lastApplyJob) throws Exception {
+      ResourceManagerClientProxy resourceManagerClientProxy = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
 
+      String jobId = lastApplyJob.getId();
+      ListJobOutputCommand cmd = new ListJobOutputCommand(resourceManagerClientProxy, null, jobId);
+      ListJobOutputCommand.ListJobOutputResult result = cmd.execute();
+      List<JobOutputSummary> outputSummaries = result.getOutputSummaries();
+      Optional<JobOutputSummary> jos = outputSummaries.stream().filter(p -> "app_url".equals(p.getOutputName())).findFirst();
+      return jos.get().getOutputValue();
+    }
 
     private JobSummary getLastApplyJob() {
       ResourceManagerClientProxy resourceManagerClientProxy = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
@@ -542,6 +620,18 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
   }
 
 
+//  private ImageIcon getStatusImage(LifecycleState state) {
+//    if (state.equals(LifecycleState.Available) || state
+//            .equals(LifecycleState.ScaleInProgress)) {
+//      return new ImageIcon(getClass().getResource("/icons/db-available-state.png"));
+//    } else if (state.equals(LifecycleState.Terminated) || state
+//            .equals(LifecycleState.Unavailable)) {
+//      return new ImageIcon(getClass().getResource("/icons/db-unavailable-state.png"));
+//    } else {
+//      return new ImageIcon(getClass().getResource("/icons/db-inprogress-state.png"));
+//    }
+//  }
+
   public JComponent createCenterPanel() {
     return mainPanel;
   }
@@ -577,7 +667,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
 
   private static class RefreshAction extends AbstractAction {
     /**
-     *
+     * 
      */
     private static final long serialVersionUID = 1L;
     private final AppStackDashboard appStackDashBoard;
@@ -616,6 +706,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
       dashboard.createAppStackButton.setEnabled(false);
       Runnable runnable = () -> {
         YamlLoader loader = new YamlLoader();
+        dashboard.createAppStackButton.setEnabled(true);
 
         try {
           variables.set(loader.load());
@@ -686,6 +777,16 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
               });
             }
           });
+
+
+
+//        String applyJobId = createApplyJobResponse.getJob().getId();
+
+//        System.out.println(applyJobId);
+//
+//        // Get Job Terraform state GetJobTfStateRequest getJobTfStateRequest =
+//        GetJobTfStateResponse jobTfState = resourceManagerClient.getJobTfState(applyJobId);
+//        System.out.println(jobTfState.toString());
       }
 
 
@@ -715,7 +816,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
       super("Delete...");
       this.dashboard = dashboard;
     }
-
+    
     private static class DeleteYesNoDialog extends DialogWrapper {
       // TODO: externalize
       private static final String DESTROY_ONLY_DESCRIPTION_TEXT = resBundle.getString("DESTROY_ONLY_DESCRIPTION_TEXT");
@@ -789,12 +890,12 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
           }
         };
         deleteInfraStackRdoBtn = new JRadioButton();
-        initRadioBtn(deleteInfraStackRdoBtn, "DESTROY_ONLY", "Destroy the OCI infrastructure for the selected stack.", selectionListener
+        initRadioBtn(deleteInfraStackRdoBtn, "DESTROY_ONLY", "Destroy the OCI resources for the selected stack", selectionListener
                      );
 
         deleteStackRdoBtn = new JRadioButton();
         initRadioBtn(deleteStackRdoBtn, "DELETE_ONLY", "Delete the definition for the stack", selectionListener);
-
+        
         deleteAllRdoBtn = new JRadioButton();
         initRadioBtn(deleteAllRdoBtn, "DELETE_ALL", "Delete everything to do with the selected stack", selectionListener);
 
@@ -839,7 +940,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
 
     @Override
     public void actionPerformed(ActionEvent e) {
-
+     
       int selectedRow = this.dashboard.appStacksTable.getSelectedRow();
       // TODO: should be better way to get select row object
       if (selectedRow >=0 && selectedRow < this.dashboard.appStackList.size()) {
