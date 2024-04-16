@@ -282,7 +282,7 @@ variables:
     required: true
     title: Autonomous Database display name
     description: A user-friendly name to help you easily identify the resource.
-    visible: 
+    visible:
       not:
         - use_existing_database
   autonomous_database_admin_password:
@@ -291,9 +291,9 @@ variables:
     # validate
     description: Password must be 12 to 30 characters and contain at least one uppercase letter, one lowercase letter, and one number. The password cannot contain the double quote (") character or the username "admin".
     required: true
-    
-    visible: 
-      not: 
+
+    visible:
+      not:
         - use_existing_database
   data_storage_size_in_tbs:
     type: number
@@ -301,7 +301,7 @@ variables:
     title: Storage (TB)
     description: The amount of storage to allocate.
     default: 1
-    visible: 
+    visible:
       not:
         - use_existing_database
   cpu_core_count:
@@ -319,7 +319,7 @@ variables:
     title: OCPU count
     description: The number of OCPU cores to enable. Available cores are subject to your tenancy's service limits.
     default: 1
-    visible: 
+    visible:
       not:
         - use_existing_database
   autonomous_database:
@@ -329,8 +329,8 @@ variables:
     description: The Autonomous Database used by the application.
     dependsOn:
       compartmentId: ${compartment_id}
-    visible: 
-      and: 
+    visible:
+      and:
         - use_existing_database
   autonomous_database_user:
     type: string
@@ -338,16 +338,16 @@ variables:
     title: DB username
     default: ""
     description: The username used to connect to the database.
-    visible: 
-      and: 
+    visible:
+      and:
         - use_existing_database
   autonomous_database_password:
     type: password
     title: DB user password
     required: true
     description: The password of the user used to access the database.
-    visible: 
-      and: 
+    visible:
+      and:
         - use_existing_database
   # Vault
   use_existing_vault:
@@ -363,7 +363,7 @@ variables:
     required: true
     visible:
       not:
-      - use_existing_vault
+        - use_existing_vault
   vault_compartment_id:
     type: oci:identity:compartment:id
     required: true
@@ -586,10 +586,10 @@ variables:
             - "IMAGE"
   # FQDN
   create_fqdn:
-    type : boolean
+    type: boolean
     required: true
     default: true
-    title : Create DNS record
+    title: Create DNS record
     description: If you check this checkbox the stack will create a DNS record that will resolve to the load balancer's IP address.
   dns_compartment:
     type: oci:identity:compartment:id
@@ -598,12 +598,12 @@ variables:
     title: DNS and Certificate compartement
     description: Compartment containing the DNS Zone and the Certificate
     visible: create_fqdn
-  zone :
+  zone:
     type: string
     required: true
     title: DNS Zone
-    description : Domain name in which the host name will be created.
-    visible : create_fqdn
+    description: Domain name in which the host name will be created.
+    visible: create_fqdn
   subdomain:
     type: string
     required: true
@@ -627,14 +627,14 @@ variables:
     required: true
     title: The compartment of the existing VCN.
     default: compartment_ocid
-    visible: 
+    visible:
       not:
         - create_new_vcn
   existing_vcn_id:
     type: oci:core:vcn:id
     required: true
     title: Select to VCN
-    visible: 
+    visible:
       not:
         - create_new_vcn
     dependsOn:
@@ -652,8 +652,8 @@ variables:
     required: true
     title: Use existing Application Subnet
     default: false
-    visible: 
-      not : 
+    visible:
+      not:
         - create_new_vcn
   existing_app_subnet_id:
     type: oci:core:subnet:id
@@ -680,11 +680,11 @@ variables:
     title: Use existing Database Subnet
     default: false
     visible:
-      and: 
-        - not: 
-          - create_new_vcn
+      and:
         - not:
-          - use_existing_database
+            - create_new_vcn
+        - not:
+            - use_existing_database
   existing_db_subnet_id:
     type: oci:core:subnet:id
     required: true
@@ -697,23 +697,23 @@ variables:
   db_subnet_cidr:
     type: string
     required: true
-    title: 'Database Subnet Creation: IPv4 CIDR Blocks'
-    description: 'The Autonomous Database will be created in this subnet. For example: 10.0.0.128/26'
+    title: "Database Subnet Creation: IPv4 CIDR Blocks"
+    description: "The Autonomous Database will be created in this subnet. For example: 10.0.0.128/26"
     default: "10.0.0.128/26"
     pattern: "^(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9]).(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9]).(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9]).(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\/(3[0-2]|[1-2]?[0-9])$"
-    visible: 
+    visible:
       and:
-        - not: 
-          - use_existing_db_subnet
         - not:
-          - use_existing_database
+            - use_existing_db_subnet
+        - not:
+            - use_existing_database
   use_existing_lb_subnet:
     type: boolean
     required: true
     title: Use existing Load Balancer Subnet
     default: false
-    visible: 
-      not : 
+    visible:
+      not:
         - create_new_vcn
   existing_lb_subnet_id:
     type: oci:core:subnet:id
@@ -731,15 +731,15 @@ variables:
     description: The load balancer will be created in this subnet.
     pattern: "^(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9]).(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9]).(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9]).(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\\/(3[0-2]|[1-2]?[0-9])$"
     default: "10.0.0.192/26"
-    visible: 
+    visible:
       not:
         - use_existing_lb_subnet
   open_https_port:
     type: boolean
     required: true
     title: Open load balancer's HTTPS port
-    description: By checking this checkbox you agree to make the load balancer 
-      subnet public and to open the HTTPS port of the load balancer to the 
+    description: By checking this checkbox you agree to make the load balancer
+      subnet public and to open the HTTPS port of the load balancer to the
       Internet.
     default: false
   # Container instances configuration
@@ -778,7 +778,7 @@ variables:
     type: number
     required: true
     title: Maximum bandwidth (Mbps)
-    description : 10Mbps for always free load balancer
+    description: 10Mbps for always free load balancer
     default: 10
     visible:
       not:
@@ -787,7 +787,7 @@ variables:
     type: number
     required: true
     title: Minimum bandwidth (Mbps)
-    description : 10Mbps for always free load balancer
+    description: 10Mbps for always free load balancer
     default: 10
     visible:
       not:
@@ -815,9 +815,8 @@ variables:
     required: true
     default: false
     title: Enable cookie-based session persistence
-    visible: 
-      not:
-        - use_default_lb_configuration
+    visible:
+      not: use_default_lb_configuration
   session_affinity:
     type: enum
     required: true
@@ -845,7 +844,3 @@ outputs:
     type: link
     title: Application URL
     visible: true
-
-
-
-

@@ -4,7 +4,30 @@
  */
 package com.oracle.oci.intellij.ui.database;
 
-import java.awt.Component;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.components.ActionLink;
+import com.oracle.bmc.database.model.AutonomousDatabaseSummary;
+import com.oracle.bmc.database.model.AutonomousDatabaseSummary.LifecycleState;
+import com.oracle.oci.intellij.account.OracleCloudAccount;
+import com.oracle.oci.intellij.account.SystemPreferences;
+import com.oracle.oci.intellij.ui.appstack.actions.ActionFactory;
+import com.oracle.oci.intellij.ui.common.AutonomousDatabaseConstants;
+import com.oracle.oci.intellij.ui.common.UIUtil;
+import com.oracle.oci.intellij.ui.database.actions.AutonomousDatabaseBasicActions;
+import com.oracle.oci.intellij.ui.database.actions.AutonomousDatabaseMoreActions;
+import com.oracle.oci.intellij.ui.database.actions.CreateAutonomousDatabaseDialog;
+import com.oracle.oci.intellij.ui.explorer.ITabbedExplorerContent;
+import com.oracle.oci.intellij.util.LogHandler;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseAdapter;
@@ -17,38 +40,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import javax.swing.AbstractAction;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.wm.ToolWindow;
-import com.oracle.bmc.database.model.AutonomousDatabaseSummary;
-import com.oracle.bmc.database.model.AutonomousDatabaseSummary.LifecycleState;
-import com.oracle.oci.intellij.account.OracleCloudAccount;
-import com.oracle.oci.intellij.account.SystemPreferences;
-import com.oracle.oci.intellij.ui.common.AutonomousDatabaseConstants;
-import com.oracle.oci.intellij.ui.common.UIUtil;
-import com.oracle.oci.intellij.ui.database.actions.AutonomousDatabaseBasicActions;
-import com.oracle.oci.intellij.ui.database.actions.AutonomousDatabaseMoreActions;
-import com.oracle.oci.intellij.ui.database.actions.CreateAutonomousDatabaseDialog;
-import com.oracle.oci.intellij.ui.explorer.ITabbedExplorerContent;
-import com.oracle.oci.intellij.util.LogHandler;
 
 public final class AutonomousDatabasesDashboard implements PropertyChangeListener, ITabbedExplorerContent {
 
@@ -68,12 +59,12 @@ public final class AutonomousDatabasesDashboard implements PropertyChangeListene
   private JComboBox<String> workloadCombo;
   private JButton refreshADBInstancesButton;
   private JTable adbInstancesTable;
-  private JLabel profileValueLabel;
-  private JLabel compartmentValueLabel;
-  private JLabel regionValueLabel;
+  private ActionLink profileValueLabel;
+  private ActionLink compartmentValueLabel;
+  private ActionLink regionValueLabel;
   private JButton createADBInstanceButton;
   private List<AutonomousDatabaseSummary> autonomousDatabaseInstancesList;
-  private static final CopyOnWriteArrayList<AutonomousDatabasesDashboard> ALL = 
+  private static final CopyOnWriteArrayList<AutonomousDatabasesDashboard> ALL =
     new CopyOnWriteArrayList<AutonomousDatabasesDashboard>();
   private @NotNull @NonNls String locationHash;
 
@@ -82,7 +73,7 @@ public final class AutonomousDatabasesDashboard implements PropertyChangeListene
   public static AutonomousDatabasesDashboard newInstance(@NotNull Project project,
                                               @NotNull ToolWindow toolWindow) {
     AutonomousDatabasesDashboard add = new AutonomousDatabasesDashboard();
-    // they call it a hash but looking at the impl, it looks like 
+    // they call it a hash but looking at the impl, it looks like
     // name plus full path so should be universally unique?
     // I'd rather not hold a reference to the Project directly because
     // it's clear to me that its an indirect handle like an IProject.
@@ -90,7 +81,7 @@ public final class AutonomousDatabasesDashboard implements PropertyChangeListene
     @NonNls
     String locationHash = project.getLocationHash();
     add.setProjectLocationHash(locationHash);
-    
+
     @NonNls
     @NotNull
     String toolId = toolWindow.getId();
@@ -99,7 +90,7 @@ public final class AutonomousDatabasesDashboard implements PropertyChangeListene
     ALL.add(add);
     return add;
   }
-  
+
   private void setToolWindowId(@NonNls @NotNull String toolWindowId) {
     this.toolWindowId = toolWindowId;
   }
@@ -113,7 +104,7 @@ public final class AutonomousDatabasesDashboard implements PropertyChangeListene
 
   public static Optional<AutonomousDatabasesDashboard> getInstance(@NotNull Project project,
                                                          @NotNull ToolWindow toolWindow) {
-    List<AutonomousDatabasesDashboard> dashboard = 
+    List<AutonomousDatabasesDashboard> dashboard =
       getAllInstances().filter(d -> d.toolWindowId.equals(toolWindow.getId())).collect(Collectors.toList());
     long count = dashboard.size();
     int index = -1;
@@ -131,14 +122,13 @@ public final class AutonomousDatabasesDashboard implements PropertyChangeListene
     }
     return Optional.of(dashboard.get(index));
   }
-  
-  
+
+
 
 
   private AutonomousDatabasesDashboard() {
     initializeWorkLoadTypeFilter();
     initializeTableStructure();
-    initializeLabels();
 
     if (refreshADBInstancesButton != null) {
       refreshADBInstancesButton.setAction(new RefreshAction(this, "Refresh"));
@@ -147,7 +137,19 @@ public final class AutonomousDatabasesDashboard implements PropertyChangeListene
     if (createADBInstanceButton != null) {
       createADBInstanceButton.setAction(new CreateAction("Create Autonomous Database"));
     }
+    if (profileValueLabel != null){
+      profileValueLabel.setAction(ActionFactory.getProfileAction());
+    }
 
+    if (compartmentValueLabel != null){
+
+      compartmentValueLabel.setAction(ActionFactory.getCompartmentAction());
+    }
+
+    if (regionValueLabel != null){
+      regionValueLabel.setAction(ActionFactory.getRegionAction());
+    }
+    initializeLabels();
     SystemPreferences.addPropertyChangeListener(this);
   }
 

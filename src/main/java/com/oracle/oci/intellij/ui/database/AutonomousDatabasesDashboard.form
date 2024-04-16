@@ -13,7 +13,7 @@
         <border type="none"/>
         <children>
           <grid id="802b3" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
+            <margin top="0" left="5" bottom="0" right="0"/>
             <constraints border-constraint="West"/>
             <properties/>
             <border type="none"/>
@@ -28,7 +28,7 @@
                 <children>
                   <component id="883c2" class="javax.swing.JLabel">
                     <constraints>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="4" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
                       <text value="Profile : "/>
@@ -50,7 +50,7 @@
                       <text value="Region : "/>
                     </properties>
                   </component>
-                  <component id="14fe9" class="javax.swing.JLabel" binding="profileValueLabel">
+                  <component id="14fe9" class="com.intellij.ui.components.ActionLink" binding="profileValueLabel">
                     <constraints>
                       <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
@@ -58,7 +58,7 @@
                       <text value="DEFAULT"/>
                     </properties>
                   </component>
-                  <component id="cdd86" class="javax.swing.JLabel" binding="compartmentValueLabel">
+                  <component id="cdd86" class="com.intellij.ui.components.ActionLink" binding="compartmentValueLabel">
                     <constraints>
                       <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
@@ -66,7 +66,7 @@
                       <text value="[Root Compartment]"/>
                     </properties>
                   </component>
-                  <component id="7b506" class="javax.swing.JLabel" binding="regionValueLabel">
+                  <component id="7b506" class="com.intellij.ui.components.ActionLink" binding="regionValueLabel">
                     <constraints>
                       <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
@@ -139,7 +139,7 @@
         </children>
       </grid>
       <grid id="bf29e" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="0" right="0"/>
+        <margin top="3" left="0" bottom="0" right="0"/>
         <constraints border-constraint="Center"/>
         <properties/>
         <border type="none"/>

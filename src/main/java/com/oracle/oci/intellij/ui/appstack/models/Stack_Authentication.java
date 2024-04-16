@@ -10,9 +10,7 @@ import java.beans.PropertyVetoException;
 public class Stack_Authentication extends VariableGroup {
 
     private boolean use_existing_token;
-
     private java.lang.Object current_user_token;
-
 
     private boolean use_existing_vault;
 
