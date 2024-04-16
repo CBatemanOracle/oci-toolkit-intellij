@@ -21,6 +21,25 @@ import com.oracle.oci.intellij.ui.database.actions.AutonomousDatabaseMoreActions
 import com.oracle.oci.intellij.ui.database.actions.CreateAutonomousDatabaseDialog;
 import com.oracle.oci.intellij.ui.explorer.ITabbedExplorerContent;
 import com.oracle.oci.intellij.util.LogHandler;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class AutonomousDatabasesDashboard implements PropertyChangeListener, ITabbedExplorerContent {
 
@@ -110,7 +129,6 @@ public final class AutonomousDatabasesDashboard implements PropertyChangeListene
   private AutonomousDatabasesDashboard() {
     initializeWorkLoadTypeFilter();
     initializeTableStructure();
-    initializeLabels();
 
     if (refreshADBInstancesButton != null) {
       refreshADBInstancesButton.setAction(new RefreshAction(this, "Refresh"));
@@ -131,7 +149,7 @@ public final class AutonomousDatabasesDashboard implements PropertyChangeListene
     if (regionValueLabel != null){
       regionValueLabel.setAction(ActionFactory.getRegionAction());
     }
-
+    initializeLabels();
     SystemPreferences.addPropertyChangeListener(this);
   }
 

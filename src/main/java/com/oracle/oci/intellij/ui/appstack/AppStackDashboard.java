@@ -6,8 +6,10 @@ package com.oracle.oci.intellij.ui.appstack;
 
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.table.JBTable;
 import com.oracle.bmc.model.BmcException;
@@ -22,12 +24,6 @@ import com.oracle.oci.intellij.common.command.AbstractBasicCommand.CommandFailed
 import com.oracle.oci.intellij.common.command.AbstractBasicCommand.Result;
 import com.oracle.oci.intellij.common.command.CommandStack;
 import com.oracle.oci.intellij.common.command.CompositeCommand;
-import com.oracle.oci.intellij.ui.appstack.actions.ReviewDialog;
-import com.oracle.oci.intellij.ui.appstack.command.CreateStackCommand;
-import com.oracle.oci.intellij.ui.appstack.command.DeleteAndDestroyCommand;
-import com.oracle.oci.intellij.ui.appstack.command.DeleteStackCommand;
-import com.oracle.oci.intellij.ui.appstack.command.DestroyStackCommand;
-import com.oracle.oci.intellij.ui.appstack.command.GetStackJobsCommand;
 import com.oracle.oci.intellij.ui.appstack.actions.ActionFactory;
 import com.oracle.oci.intellij.ui.appstack.actions.ReviewDialog;
 import com.oracle.oci.intellij.ui.appstack.command.*;
@@ -38,9 +34,10 @@ import com.oracle.oci.intellij.ui.appstack.models.Utils;
 import com.oracle.oci.intellij.ui.appstack.uimodel.AppStackTableModel;
 import com.oracle.oci.intellij.ui.common.Icons;
 import com.oracle.oci.intellij.ui.common.UIUtil;
-import com.oracle.oci.intellij.ui.devops.DevOpsDashboard;
 import com.oracle.oci.intellij.ui.explorer.ITabbedExplorerContent;
 import com.oracle.oci.intellij.util.LogHandler;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -60,7 +57,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class AppStackDashboard implements PropertyChangeListener, ITabbedExplorerContent {
 
@@ -150,7 +150,6 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
     }
     //initializeWorkLoadTypeFilter();
     initializeTableStructure();
-    initializeLabels();
 
     if (refreshAppStackButton != null) {
       refreshAppStackButton.setAction(new RefreshAction(this, "Refresh"));
@@ -172,7 +171,6 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
     }
 
     if (compartmentValueLabel != null){
-
       compartmentValueLabel.setAction(ActionFactory.getCompartmentAction());
     }
 
@@ -180,8 +178,8 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
       regionValueLabel.setAction(ActionFactory.getRegionAction());
     }
 
+    initializeLabels();
     resBundle = ResourceBundle.getBundle("appStackDashboard", Locale.ROOT);
-
     SystemPreferences.addPropertyChangeListener(this);
   }
 
@@ -440,16 +438,6 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
 
     }
 
-    private String getUrlOutput(JobSummary lastApplyJob) throws Exception {
-      ResourceManagerClientProxy resourceManagerClientProxy = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
-
-      String jobId = lastApplyJob.getId();
-      ListJobOutputCommand cmd = new ListJobOutputCommand(resourceManagerClientProxy, null, jobId);
-      ListJobOutputCommand.ListJobOutputResult result = cmd.execute();
-      List<JobOutputSummary> outputSummaries = result.getOutputSummaries();
-      Optional<JobOutputSummary> jos = outputSummaries.stream().filter(p -> "app_url".equals(p.getOutputName())).findFirst();
-      return jos.get().getOutputValue();
-    }
 
     private JobSummary getLastApplyJob() {
       ResourceManagerClientProxy resourceManagerClientProxy = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
@@ -480,7 +468,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
   public static String getUrlOutput(String lastApplyJobId) throws Exception {
     ResourceManagerClientProxy resourceManagerClientProxy = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
 
-      ListJobOutputCommand cmd = new ListJobOutputCommand(resourceManagerClientProxy, null, lastApplyJobId);
+    ListJobOutputCommand cmd = new ListJobOutputCommand(resourceManagerClientProxy, null, lastApplyJobId);
     ListJobOutputCommand.ListJobOutputResult result = cmd.execute();
     List<JobOutputSummary> outputSummaries = result.getOutputSummaries();
     Optional<JobOutputSummary> job = outputSummaries.stream().filter(p -> "app_url".equals(p.getOutputName())).findFirst();

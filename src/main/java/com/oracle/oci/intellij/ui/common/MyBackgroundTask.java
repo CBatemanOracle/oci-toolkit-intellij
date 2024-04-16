@@ -1,9 +1,6 @@
 package com.oracle.oci.intellij.ui.common;
 
-import java.util.function.Function;
-
-import org.jetbrains.annotations.NotNull;
-
+import com.esotericsoftware.minlog.Log;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -11,9 +8,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.oracle.bmc.model.BmcException;
 import com.oracle.bmc.resourcemanager.model.Job;
-import com.oracle.bmc.resourcemanager.model.Job;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
-import com.oracle.oci.intellij.common.command.BasicCommand;
 import com.oracle.oci.intellij.ui.appstack.AppStackDashboard;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +29,7 @@ public class MyBackgroundTask {
                 } else if (Failed.equals(job.getLifecycleState())) {
                     return false;
                 }
-                AppStackDashboard.getAllInstances().forEach(d -> d.populateTableData());
+                AppStackDashboard.getAllInstances().forEach(d -> d.refreshLastJobState(job));
 
                 // Wait a bit before checking again
                 Thread.sleep(5000); // Sleep for 5 seconds
