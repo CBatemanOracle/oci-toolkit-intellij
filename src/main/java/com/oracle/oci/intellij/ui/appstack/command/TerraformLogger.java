@@ -6,8 +6,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.oracle.bmc.resourcemanager.model.Job;
+import com.oracle.bmc.resourcemanager.model.JobSummary;
 import com.oracle.bmc.resourcemanager.model.LogEntry;
+import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.account.OracleCloudAccount.ResourceManagerClientProxy;
+import com.oracle.oci.intellij.ui.appstack.StackJobDialog;
 import com.oracle.oci.intellij.ui.appstack.command.ListTFLogsCommand.ListTFLogsResult;
 
 public class TerraformLogger {
@@ -15,7 +19,7 @@ public class TerraformLogger {
   public enum STAT {
     NOT_OPENED, OPEN, CLOSED
 };
-  private Writer writer;
+  private StackJobDialog.JTextAreaWriter writer;
   private Thread thread;
   private AtomicBoolean running = new AtomicBoolean();
   private AtomicBoolean closed = new AtomicBoolean();
@@ -27,8 +31,8 @@ public class TerraformLogger {
   private STAT stat = STAT.NOT_OPENED;
   private ListTFLogsResult result;
   
-  public TerraformLogger(Writer writer, ResourceManagerClientProxy rmc, String jobId) {
-    this.writer = writer;
+  public TerraformLogger(StackJobDialog.JTextAreaWriter jTextAreaWriter, ResourceManagerClientProxy rmc, String jobId) {
+    this.writer = jTextAreaWriter;
     this.rmc = rmc;
     this.jobId = jobId;
   }
@@ -83,7 +87,8 @@ public class TerraformLogger {
         {
           this.logEntries.addLast(logEntry);
         }
-        if (this.result.getLastResponse().getOpcNextPage() == null) {
+        // verifying also if the job is still running because sometimes we get nextpage null even tho there is still some logs getting generated
+        if (this.result.getLastResponse().getOpcNextPage() == null && !isJobStillRunning()) {
           stat = STAT.CLOSED;
         }
         else {
@@ -99,12 +104,18 @@ public class TerraformLogger {
         for (LogEntry item : items) {
           logEntries.addLast(item);
         }
-        if (result.getLastResponse().getOpcNextPage() == null) {
+        //
+        if (result.getLastResponse().getOpcNextPage() == null && !isJobStillRunning()) {
           stat = STAT.CLOSED;
         }
         return items.size();
       }
-      case CLOSED: 
+      case CLOSED: {
+        writer.setFinished(true);
+        this.writer.flush();
+        this.running.set(false);
+
+      }
         // TODO:
       }
     }
@@ -115,5 +126,21 @@ public class TerraformLogger {
       throw new IOException(e);
     }
     return -1;
+  }
+
+  private boolean isJobStillRunning() {
+    Job job = getJob(jobId);
+    String status =job.getLifecycleState().getValue();
+    if (Job.LifecycleState.InProgress.getValue().equalsIgnoreCase(status) ||
+            Job.LifecycleState.Canceling.getValue().equalsIgnoreCase(status) ||
+            Job.LifecycleState.Accepted.getValue().equalsIgnoreCase(status)
+    ) {
+      return true;
+    }
+    return false ;
+  }
+  public static Job getJob(String jobId) {
+    OracleCloudAccount.ResourceManagerClientProxy resourceManagerClient = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
+    return resourceManagerClient.getJobDetails(jobId);
   }
 }

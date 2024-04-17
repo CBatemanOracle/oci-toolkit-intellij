@@ -81,7 +81,7 @@ public class ReviewDialog extends DialogWrapper {
 
 
 
-        // todo create the panel of  the check if user wants to immediately
+        // todo create the panel of  the check if user wants to immediately apply thr job
         if (!isShowStackVariables){
             addRunApplyCheckbox();
         }
@@ -140,8 +140,9 @@ public class ReviewDialog extends DialogWrapper {
             setBorder(BorderFactory.createEmptyBorder(0,8,0,0));
 
             add(keyLabel,BorderLayout.WEST);
+            add(valueLabel,BorderLayout.CENTER);
             JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            buttonsPanel.add(valueLabel);
+//            buttonsPanel.add(valueLabel);
 
 
             String fullText = value;
@@ -196,6 +197,8 @@ public class ReviewDialog extends DialogWrapper {
                 copyButton.setBackground(null);
                 copyButton.setPreferredSize(new JBDimension(20,20));
                 copyButton.setBorder(null);
+                copyButton.setOpaque(false);
+                copyButton.setContentAreaFilled(false); //
                 String finalValue = value;
                 copyButton.addActionListener(new ActionListener() {
                     @Override
@@ -206,8 +209,7 @@ public class ReviewDialog extends DialogWrapper {
                         clipboard.setContents(selection, selection);
                         copyButton.setIcon(null);
                         copyButton.setToolTipText("Copy");
-                        copyButton.setOpaque(false);
-                        copyButton.setContentAreaFilled(false); //
+
 //                        copyButton.setText("copied");
                         // notify
                         new Timer(500,ev->{
@@ -217,7 +219,7 @@ public class ReviewDialog extends DialogWrapper {
                 });
                 buttonsPanel.add(copyButton);
             }
-            add(buttonsPanel,BorderLayout.CENTER);
+            add(buttonsPanel,BorderLayout.EAST);
         }
     }
 

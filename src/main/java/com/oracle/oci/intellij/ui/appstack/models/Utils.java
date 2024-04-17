@@ -147,8 +147,10 @@ public class Utils{
         });
         suggestedValues.put("oci:certificatesmanagement:certificate:id",(pd,pds,varGroup)->{
 //            VariableGroup general_ConfigurationVarGroup =  Controller.getInstance().getVariableGroups().get("General_Configuration");
+            //todo to recheck
+            VariableGroup applicationUrlGroup =  Controller.getInstance().getVariableGroups().get("Application_URL");
 
-            String compartment_id = ( (Compartment) pds.get("dns_compartment").getReadMethod().invoke(varGroup)).getId();
+            String compartment_id = ( (Compartment) pds.get("dns_compartment").getReadMethod().invoke(applicationUrlGroup)).getId();
 
             List<CertificateSummary> certificateSummaries = OracleCloudAccount.getInstance().getIdentityClient().getAllCertificates(compartment_id);
 
@@ -217,13 +219,15 @@ public class Utils{
         put("use_password_env", List.of("password_env"));
         put("use_tns_admin_env", List.of("tns_admin_env"));
         put("use_default_ssl_configuration", List.of("port_property", "keystore_property", "key_alias_property", "keystore_password_property", "keystore_type_property"));
-        put("create_fqdn", List.of("dns_compartment", "zone", "subdomain", "certificate_ocid"));
+        put("create_fqdn", List.of("dns_compartment", "zone", "subdomain"));
         put("create_new_vcn", List.of("vcn_compartment_id", "existing_vcn_id", "vcn_cidr", "use_existing_app_subnet", "use_existing_db_subnet", "use_existing_lb_subnet"));
         put("use_existing_app_subnet", List.of("existing_app_subnet_id", "app_subnet_cidr"));
         put("use_existing_db_subnet", List.of("existing_db_subnet_id", "db_subnet_cidr"));
         put("use_existing_lb_subnet", List.of("existing_lb_subnet_id", "lb_subnet_cidr"));
         put("use_default_lb_configuration", List.of("maximum_bandwidth_in_mbps", "minimum_bandwidth_in_mbps", "health_checker_url_path", "health_checker_return_code", "enable_session_affinity"));
         put("enable_session_affinity", List.of("session_affinity", "session_affinity_cookie_name"));
+        put("use_reserved_ip_address",List.of("reserved_ip_address"));
+        put("open_https_port",List.of("certificate_ocid"));
     }};
 
     public static SuggestConsumor<PropertyDescriptor,LinkedHashMap<String,PropertyDescriptor> ,List<? extends ExplicitlySetBmcModel>,VariableGroup> getSuggestedValuesOf(String type){
