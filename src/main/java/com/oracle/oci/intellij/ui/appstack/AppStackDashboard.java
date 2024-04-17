@@ -5,7 +5,6 @@
 package com.oracle.oci.intellij.ui.appstack;
 
 import java.awt.Component;
-import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -19,59 +18,77 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.ResourceBundle;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.table.JBTable;
-import com.oracle.bmc.model.BmcException;
-import com.oracle.bmc.resourcemanager.model.*;
-import com.oracle.bmc.resourcemanager.model.Stack;
-import com.oracle.bmc.resourcemanager.responses.CreateJobResponse;
-import com.oracle.oci.intellij.common.command.AbstractBasicCommand;
-import com.oracle.oci.intellij.ui.appstack.actions.ReviewDialog;
-import com.oracle.oci.intellij.ui.appstack.command.*;
-import com.oracle.oci.intellij.ui.appstack.exceptions.JobRunningException;
-import com.oracle.oci.intellij.ui.appstack.models.Utils;
-import com.oracle.oci.intellij.ui.common.Icons;
-import com.oracle.oci.intellij.ui.common.MyBackgroundTask;
+import javax.swing.AbstractAction;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.Icon;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JRadioButton;
 import javax.swing.JTable;
-import javax.swing.SwingUtilities;
+import javax.swing.JTextArea;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.table.JBTable;
+import com.oracle.bmc.model.BmcException;
+import com.oracle.bmc.resourcemanager.model.Job;
+import com.oracle.bmc.resourcemanager.model.JobOutputSummary;
+import com.oracle.bmc.resourcemanager.model.JobSummary;
+import com.oracle.bmc.resourcemanager.model.Stack;
+import com.oracle.bmc.resourcemanager.model.StackSummary;
+import com.oracle.bmc.resourcemanager.responses.CreateJobResponse;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.account.OracleCloudAccount.ResourceManagerClientProxy;
 import com.oracle.oci.intellij.account.SystemPreferences;
+import com.oracle.oci.intellij.common.command.AbstractBasicCommand;
 import com.oracle.oci.intellij.common.command.AbstractBasicCommand.CommandFailedException;
 import com.oracle.oci.intellij.common.command.AbstractBasicCommand.Result;
 import com.oracle.oci.intellij.common.command.CommandStack;
 import com.oracle.oci.intellij.common.command.CompositeCommand;
+import com.oracle.oci.intellij.ui.appstack.actions.ReviewDialog;
 import com.oracle.oci.intellij.ui.appstack.command.CreateStackCommand;
+import com.oracle.oci.intellij.ui.appstack.command.DeleteAndDestroyCommand;
+import com.oracle.oci.intellij.ui.appstack.command.DeleteStackCommand;
 import com.oracle.oci.intellij.ui.appstack.command.DestroyStackCommand;
 import com.oracle.oci.intellij.ui.appstack.command.GetStackJobsCommand;
 import com.oracle.oci.intellij.ui.appstack.command.GetStackJobsCommand.GetStackJobsResult;
+import com.oracle.oci.intellij.ui.appstack.command.ListJobOutputCommand;
 import com.oracle.oci.intellij.ui.appstack.command.ListStackCommand;
 import com.oracle.oci.intellij.ui.appstack.command.ListStackCommand.ListStackResult;
+import com.oracle.oci.intellij.ui.appstack.exceptions.JobRunningException;
+import com.oracle.oci.intellij.ui.appstack.models.Utils;
 import com.oracle.oci.intellij.ui.appstack.uimodel.AppStackTableModel;
+import com.oracle.oci.intellij.ui.common.Icons;
 import com.oracle.oci.intellij.ui.common.UIUtil;
+import com.oracle.oci.intellij.ui.devops.DevOpsDashboard;
 import com.oracle.oci.intellij.ui.explorer.ITabbedExplorerContent;
 import com.oracle.oci.intellij.util.LogHandler;
 
@@ -91,13 +108,67 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
   private JButton destroyAppStackButton;
   private List<StackSummary> appStackList;
   private CommandStack commandStack = new CommandStack();
+  private @NonNls @NotNull String toolWindowId;
+  private @NotNull @NonNls String locationHash;
   private static ResourceBundle resBundle;
+  private static final CopyOnWriteArrayList<AppStackDashboard> ALL = new CopyOnWriteArrayList<>();
 
-  private static final AppStackDashboard INSTANCE =
-          new AppStackDashboard();
+  public static AppStackDashboard newInstance(@NotNull Project project,
+                                                         @NotNull ToolWindow toolWindow) {
+    AppStackDashboard add = new AppStackDashboard();
+    // they call it a hash but looking at the impl, it looks like
+    // name plus full path so should be universally unique?
+    // I'd rather not hold a reference to the Project directly because
+    // it's clear to me that its an indirect handle like an IProject.
+    @NotNull
+    @NonNls
+    String locationHash = project.getLocationHash();
+    add.setProjectLocationHash(locationHash);
 
-  public synchronized static AppStackDashboard getInstance() {
-    return INSTANCE;
+    @NonNls
+    @NotNull
+    String toolId = toolWindow.getId();
+    add.setToolWindowId(toolId);
+
+    ALL.add(add);
+    return add;
+  }
+
+  private void setToolWindowId(@NonNls @NotNull String toolWindowId) {
+    this.toolWindowId = toolWindowId;
+  }
+
+  public void setProjectLocationHash(@NotNull @NonNls String locationHash) {
+    this.locationHash = locationHash;
+  }
+
+  /**
+   * @return all the instances of the dashboard; in most cases, we must stream
+   * updates onto all of them.
+   */
+  public static Stream<AppStackDashboard> getAllInstances() {
+    return ALL.stream();
+  }
+  
+  public static Optional<AppStackDashboard> getInstance(@NotNull Project project,
+                                                      @NotNull ToolWindow toolWindow) {
+    List<AppStackDashboard> dashboard =
+      getAllInstances().filter(d -> d.toolWindowId.equals(toolWindow.getId()))
+                       .collect(Collectors.toList());
+    long count = dashboard.size();
+    int index = -1;
+    if (count > 1) {
+      // generally should not happen. but this is too critical, so just use the
+      // first one
+      index = 0; // TODO:log
+    } else if (count == 1) {
+      // should always happen unless not initialized on this toolWindow
+      index = 0;
+    } else {
+      // not found.
+      return Optional.empty();
+    }
+    return Optional.of(dashboard.get(index));
   }
 
   private AppStackDashboard() {
@@ -127,6 +198,8 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
       applyAppStackButton.setAction(new ApplyAction(this, "Apply AppStack"));
     }
     resBundle = ResourceBundle.getBundle("appStackDashboard", Locale.ROOT);
+    
+    SystemPreferences.addPropertyChangeListener(this);
   }
 
   private void initializeLabels() {

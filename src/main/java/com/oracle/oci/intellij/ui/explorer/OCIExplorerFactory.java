@@ -39,9 +39,7 @@ public class OCIExplorerFactory implements ToolWindowFactory {
           try {
             OracleCloudAccount.getInstance().configure(SystemPreferences.getConfigFilePath(),
                                                        SystemPreferences.getProfileName());
-            SafeRunnerUtil.run((Void) -> { AutonomousDatabasesDashboard.getInstance().populateTableData();},null);
-            SafeRunnerUtil.run((Void) -> { AppStackDashboard.getInstance(); }, null);
-            SafeRunnerUtil.run((Void) -> { DevOpsDashboard.getInstance(); }, null);// populate();
+
           } catch (Exception ex) {
            final String message = "Oracle Cloud account configuration failed: " + ex.getMessage();
            LogHandler.warn(message);
@@ -54,7 +52,7 @@ public class OCIExplorerFactory implements ToolWindowFactory {
   public void createToolWindowContent(@NotNull Project project,
                                       @NotNull ToolWindow toolWindow) {
 
-    UIUtil.setCurrentProject(project);
+    //UIUtil.setCurrentProject(project);
 
     // This actions are available on the top right of the toolbar
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
@@ -63,14 +61,26 @@ public class OCIExplorerFactory implements ToolWindowFactory {
     actionGroup.add(new CompartmentAction());
     toolWindow.setTitleActions(Arrays.asList(actionGroup));
     
+    SafeRunnerUtil.run((Void) -> { 
+      AutonomousDatabasesDashboard autonomousDBDashboard = 
+        AutonomousDatabasesDashboard.newInstance(project, toolWindow);
+      autonomousDBDashboard.populateTableData();
+      createTab(toolWindow, autonomousDBDashboard, "Autonomous Database");
+    }, null);
+    SafeRunnerUtil.run((Void) -> { 
+      AppStackDashboard appStackDashboard = AppStackDashboard.newInstance(project, toolWindow); 
+      createTab(toolWindow, appStackDashboard, "Application Stack");
     
-    SafeRunnerUtil.run((Void) -> createTab(toolWindow, AutonomousDatabasesDashboard.getInstance(), "Autonomous Database"), null);
-    SafeRunnerUtil.run((Void) -> createTab(toolWindow, AppStackDashboard.getInstance(), "Application Stack"), null);
-    SafeRunnerUtil.run((Void) -> createTab(toolWindow, DevOpsDashboard.getInstance(), "DevOps"), null);
+    }, null);
+    SafeRunnerUtil.run((Void) -> { 
+      DevOpsDashboard devOpsDashboard = DevOpsDashboard.newInstance(project, toolWindow); 
+      createTab(toolWindow, devOpsDashboard, "DevOps");
+    }, null);
   }
 
   private void createTab(ToolWindow toolWindow, ITabbedExplorerContent tabbedContent, String title) {
-    final TabbedExplorer ociTabbedToolBar = new TabbedExplorer(toolWindow, tabbedContent);
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    final TabbedExplorer<?> ociTabbedToolBar = new TabbedExplorer(toolWindow, tabbedContent);
     final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
     final Content ociTabbedToolBarContent =
       contentFactory.createContent(ociTabbedToolBar.getContent(), title, false);

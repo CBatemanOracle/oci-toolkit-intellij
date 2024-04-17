@@ -6,7 +6,6 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
-import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
@@ -223,15 +222,16 @@ public class UpdateNetworkAccessDialog extends DialogWrapper {
     }
     root.setEnabled(enabled);
   }
+
   private void initSecureAccessFromEverywhereDynamicPanel() {
     // This is the dynamically growing panel.
     this.accessControlDynamicPanel.setLayout(new BoxLayout(this.accessControlDynamicPanel, BoxLayout.PAGE_AXIS));
 
-    // The action handler of this button should add a new IP notation type and values pair to dynamic panel.
-    this.addAccessControlRuleButton.addActionListener(event -> {
-        final Frame f= new Frame("PopupMenu");  
+    
+    ActionListener popListener = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
         JPopupMenu menu = new JPopupMenu();
-        
         ActionListener listener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -267,13 +267,12 @@ public class UpdateNetworkAccessDialog extends DialogWrapper {
         menuItem.setActionCommand("VCN by Name");
         menuItem.addActionListener(listener);
         menu.add(menuItem);
-        
-        f.add(menu);   
-        f.setSize(400,400);  
-        f.setLayout(null);  
-        f.setVisible(true);  
-        menu.show(this.addAccessControlRuleButton , 0, 0);  
-    });
+
+        menu.show(addAccessControlRuleButton , 0, 0);
+    }};
+
+    // The action handler of this button should add a new IP notation type and values pair to dynamic panel.
+    this.addAccessControlRuleButton.addActionListener(popListener);
   }
 
 
@@ -385,7 +384,7 @@ public class UpdateNetworkAccessDialog extends DialogWrapper {
         final Runnable refresh = new Runnable() {
             @Override
             public void run() {
-                AutonomousDatabasesDashboard.getInstance().populateTableData();
+                AutonomousDatabasesDashboard.getAllInstances().forEach(add -> add.populateTableData());
             }
         };
         
