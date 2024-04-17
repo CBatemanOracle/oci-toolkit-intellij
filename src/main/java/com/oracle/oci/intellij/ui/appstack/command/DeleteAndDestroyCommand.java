@@ -21,9 +21,17 @@ public class DeleteAndDestroyCommand extends DestroyStackCommand {
 
         DeleteStackCommand deleteCommand = new DeleteStackCommand(this.resManagerClientProxy, this.stackId,stackName);
 
+        Runnable deleteAfterDestroy = ()->{
+            try {
+                deleteCommand.execute();
+            } catch (Exception e) {
+                String errorMessage = e.getMessage()==null?"Something went wrong ":e.getMessage();
+                UIUtil.fireNotification(NotificationType.ERROR, errorMessage, null);
+            }
+        };
 
-        MyBackgroundTask.startBackgroundTask(ProjectManager.getInstance().getDefaultProject(),"Destroying Resources of \""+stackName+"\" (stack)","Destroying resources...","Destroy Job Failed please check logs of \""+stackName+"\" (stack)","Destroy job successfully applied on \""+stackName+"\" (stack)",applyJobId,deleteCommand);
-        UIUtil.fireNotification(NotificationType.INFORMATION, "Destroy Job was submitted of \""+stackName+"\" (stack)", null);
+        new MyBackgroundTask().startBackgroundTask(ProjectManager.getInstance().getDefaultProject(),"Destroying Resources of \""+stackName+"\" (stack)","Destroying resources...","Destroy Job Failed please check logs of \""+stackName+"\" (stack)","Destroy job successfully applied on \""+stackName+"\" (stack)",applyJobId,deleteAfterDestroy);
+        UIUtil.fireNotification(NotificationType.INFORMATION, "Destroy Job was submitted for \""+stackName+"\" (stack)", null);
         return new Result(Result.Severity.NONE, Result.Status.OK);
     }
 }

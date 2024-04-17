@@ -124,6 +124,7 @@ public class Controller {
                 try {
                     suggestedValues = (List<ExplicitlySetBmcModel>) get();
                 } catch (InterruptedException | ExecutionException e) {
+                    System.out.println(e);
                     UIUtil.fireNotification(NotificationType.WARNING, "Resource not found: \n"+e.getMessage(), null);
                     comboBox.removeAllItems();
                     comboBox.setEnabled(true);

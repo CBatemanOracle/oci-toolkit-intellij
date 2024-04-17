@@ -4,7 +4,27 @@
  */
 package com.oracle.oci.intellij.ui.devops;
 
-import java.awt.Desktop;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.components.ActionLink;
+import com.oracle.bmc.devops.model.ProjectSummary;
+import com.oracle.bmc.devops.model.RepositorySummary;
+import com.oracle.bmc.resourcemanager.model.StackSummary;
+import com.oracle.oci.intellij.account.OracleCloudAccount;
+import com.oracle.oci.intellij.account.OracleCloudAccount.DevOpsClientProxy;
+import com.oracle.oci.intellij.account.SystemPreferences;
+import com.oracle.oci.intellij.ui.appstack.actions.ActionFactory;
+import com.oracle.oci.intellij.ui.common.UIUtil;
+import com.oracle.oci.intellij.ui.common.UIUtil.ModelHolder;
+import com.oracle.oci.intellij.ui.explorer.ITabbedExplorerContent;
+import com.oracle.oci.intellij.util.LogHandler;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -14,62 +34,100 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-
-import javax.swing.AbstractAction;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
-
-import com.intellij.notification.NotificationType;
-import com.oracle.bmc.devops.model.ProjectSummary;
-import com.oracle.bmc.devops.model.RepositorySummary;
-import com.oracle.bmc.resourcemanager.model.StackSummary;
-import com.oracle.oci.intellij.account.OracleCloudAccount;
-import com.oracle.oci.intellij.account.OracleCloudAccount.DevOpsClientProxy;
-import com.oracle.oci.intellij.account.SystemPreferences;
-import com.oracle.oci.intellij.ui.appstack.uimodel.AppStackTableModel;
-import com.oracle.oci.intellij.ui.common.UIUtil;
-import com.oracle.oci.intellij.ui.common.UIUtil.ModelHolder;
-import com.oracle.oci.intellij.ui.explorer.ITabbedExplorerContent;
-import com.oracle.oci.intellij.util.LogHandler;
+import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class DevOpsDashboard implements PropertyChangeListener, ITabbedExplorerContent {
 
   private JPanel mainPanel;
   // buttons bound in form
   private JButton refreshAppStackButton;
-//  private JButton deleteAppStackButton;
-//  private JButton createAppStackButton;
   private JTable devOpsTable;
-  private JLabel profileValueLabel;
-  private JLabel compartmentValueLabel;
-  private JLabel regionValueLabel;
-  //private CommandStack commandStack = new CommandStack();
+  private ActionLink profileValueLabel;
+  private ActionLink compartmentValueLabel;
+  private ActionLink regionValueLabel;
   private JComboBox<ModelHolder<ProjectSummary>> projectCombo;
   private List<ProjectSummary> listDevOpsProjects;
   private List<RepositorySummary> listRepositories;
-  //private AtomicReference<ProjectSummary> currentProject = new AtomicReference<>();
+  private @NonNls @NotNull String toolWindowId;
+  private @NotNull @NonNls String locationHash;
+  private static final CopyOnWriteArrayList<DevOpsDashboard> ALL = new CopyOnWriteArrayList<>();
 
-  private static final DevOpsDashboard INSTANCE =
-          new DevOpsDashboard();
+  public static DevOpsDashboard newInstance(@NotNull Project project,
+                                                         @NotNull ToolWindow toolWindow) {
+    DevOpsDashboard add = new DevOpsDashboard();
+    // they call it a hash but looking at the impl, it looks like
+    // name plus full path so should be universally unique?
+    // I'd rather not hold a reference to the Project directly because
+    // it's clear to me that its an indirect handle like an IProject.
+    @NotNull
+    @NonNls
+    String locationHash = project.getLocationHash();
+    add.setProjectLocationHash(locationHash);
 
-  public synchronized static DevOpsDashboard getInstance() {
-    return INSTANCE;
+    @NonNls
+    @NotNull
+    String toolId = toolWindow.getId();
+    add.setToolWindowId(toolId);
+
+    ALL.add(add);
+
+    return add;
+  }
+
+  private void setToolWindowId(@NonNls @NotNull String toolWindowId) {
+    this.toolWindowId = toolWindowId;
+  }
+
+  public void setProjectLocationHash(@NotNull @NonNls String locationHash) {
+    this.locationHash = locationHash;
+  }
+
+  public static Stream<DevOpsDashboard> getAllInstances() {
+    return ALL.stream();
+  }
+
+  public static Optional<DevOpsDashboard> getInstance(@NotNull Project project,
+                                                                   @NotNull ToolWindow toolWindow) {
+    List<DevOpsDashboard> dashboard =
+      getAllInstances().filter(d -> d.toolWindowId.equals(toolWindow.getId()))
+                       .collect(Collectors.toList());
+    long count = dashboard.size();
+    int index = -1;
+    if (count > 1) {
+      // generally should not happen. but this is too critical, so just use the
+      // first one
+      index = 0; // TODO:log
+    } else if (count == 1) {
+      // should always happen unless not initialized on this toolWindow
+      index = 0;
+    } else {
+      // not found.
+      return Optional.empty();
+    }
+    return Optional.of(dashboard.get(index));
   }
 
   private DevOpsDashboard() {
     initializeProjectCombo();
     initializeTableStructure();
-    initializeLabels();
 
     if (refreshAppStackButton != null) {
       refreshAppStackButton.setAction(new RefreshAction(this, "Refresh"));
+    }
+
+    if (profileValueLabel != null){
+      profileValueLabel.setAction(ActionFactory.getProfileAction());
+    }
+
+    if (compartmentValueLabel != null){
+      compartmentValueLabel.setAction(ActionFactory.getCompartmentAction());
+    }
+
+    if (regionValueLabel != null){
+      regionValueLabel.setAction(ActionFactory.getRegionAction());
     }
     
 //    if (createAppStackButton != null) {
@@ -79,6 +137,8 @@ public final class DevOpsDashboard implements PropertyChangeListener, ITabbedExp
 //    if (deleteAppStackButton != null) {
 //      deleteAppStackButton.setAction(new DeleteAction(this, "Delete AppStack"));
 //    }
+    initializeLabels();
+    SystemPreferences.addPropertyChangeListener(this);
   }
 
   private void initializeProjectCombo() {

@@ -1,16 +1,12 @@
 package com.oracle.oci.intellij.ui.appstack.command;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
+import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.ProjectManager;
 import com.oracle.bmc.resourcemanager.model.ApplyJobOperationDetails.ExecutionPlanStrategy;
 import com.oracle.bmc.resourcemanager.model.CreateApplyJobOperationDetails;
 import com.oracle.bmc.resourcemanager.model.CreateJobDetails;
+import com.oracle.bmc.resourcemanager.model.Job;
 import com.oracle.bmc.resourcemanager.model.Job.Operation;
 import com.oracle.bmc.resourcemanager.requests.CreateJobRequest;
 import com.oracle.bmc.resourcemanager.responses.CreateJobResponse;
@@ -19,8 +15,15 @@ import com.oracle.bmc.resourcemanager.responses.GetJobTfStateResponse;
 import com.oracle.oci.intellij.account.OracleCloudAccount.ResourceManagerClientProxy;
 import com.oracle.oci.intellij.common.Utils;
 import com.oracle.oci.intellij.common.command.AbstractBasicCommand;
+import com.oracle.oci.intellij.ui.appstack.AppStackDashboard;
 import com.oracle.oci.intellij.ui.common.MyBackgroundTask;
 import com.oracle.oci.intellij.ui.common.UIUtil;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class CreateStackCommand extends AbstractBasicCommand<CreateResult> {
     private ResourceManagerClientProxy resourceManagerClient;
@@ -30,6 +33,9 @@ public class CreateStackCommand extends AbstractBasicCommand<CreateResult> {
     private String zipFileAsString;
     private boolean apply ;
     private HashMap<String, String> variables;
+    private String stackName ;
+    private final String SUCCESSFUL_MESSAGE =  "Stack has been successfully deleted" ;
+
 
     public CreateStackCommand(ResourceManagerClientProxy resourceManagerClient, String compartmentId,
             String zipFilePath) throws IOException {
@@ -110,8 +116,15 @@ public class CreateStackCommand extends AbstractBasicCommand<CreateResult> {
 
     /* Send request to the Client */
         CreateJobResponse createJobResponse =  resourceManagerClient.submitJob(createJobRequest);
-        UIUtil.fireNotification(NotificationType.INFORMATION," The Apply Job  submitted successfully.", null);
-        MyBackgroundTask.startBackgroundTask(ProjectManager.getInstance().getDefaultProject(),"Creating Resources of \""+stackName+"\" (stack)","Creating Resources... ","Apply Job Failed please check logs","Apply job successfully applied ",createJobResponse.getJob().getId());
+        UIUtil.fireNotification(NotificationType.INFORMATION," The Apply Job  submitted successfully. for\""+stackName+"\" (stack)", null);
+        new MyBackgroundTask().startBackgroundTask(ProjectManager.getInstance().getDefaultProject(),"Creating Resources of \""+stackName+"\" (stack)","Creating Resources... ","Apply Job Failed please check logs \""+stackName+"\" (stack)","Apply job successfully applied  \""+stackName+"\" (stack)",createJobResponse.getJob().getId(),()->{
+            try {
+                if (Job.LifecycleState.Succeeded.equals(createJobResponse.getJob().getLifecycleState()))
+                    BrowserUtil.browse(AppStackDashboard.getUrlOutput(createJobResponse.getJob().getId()));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
 
         return createJobResponse;
 //      CreateJobOperationDetails operationDetails =
