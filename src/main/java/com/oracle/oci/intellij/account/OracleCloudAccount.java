@@ -120,6 +120,10 @@ public class OracleCloudAccount {
     // Add the property change listeners in the order they have to be notified.
     SystemPreferences.addPropertyChangeListener(identityClientProxy);
     SystemPreferences.addPropertyChangeListener(databaseClientProxy);
+    SystemPreferences.addPropertyChangeListener(devOpsClientProxy);
+    SystemPreferences.addPropertyChangeListener(vaultClientProxy);
+    SystemPreferences.addPropertyChangeListener(resourceManagerClientProxy);
+    SystemPreferences.addPropertyChangeListener(virtualNetworkClientProxy);
     //SystemPreferences.addPropertyChangeListener(new AutonomousDatabasesDashboard());
     //SystemPreferences.addPropertyChangeListener(AppStackDashboard.getInstance());
     //SystemPreferences.addPropertyChangeListener(DevOpsDashboard.getInstance());
@@ -891,7 +895,7 @@ public class OracleCloudAccount {
 
   }
 
-  public class VirtualNetworkClientProxy {
+  public class VirtualNetworkClientProxy implements PropertyChangeListener {
     private VirtualNetworkClient virtualNetworkClient;
 
     // Instance of this should be taken from the outer class factory method only.
@@ -975,9 +979,17 @@ public class OracleCloudAccount {
         virtualNetworkClient = null;
       }
     }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+      LogHandler.info("VirtualNetworkClientProxy: Handling the event update "+evt.toString());
+      if (evt.getPropertyName().equals(SystemPreferences.EVENT_REGION_UPDATE)){
+        virtualNetworkClient.setRegion(evt.getNewValue().toString());
+      }
+    }
   }
 
-  public class ResourceManagerClientProxy {
+  public class ResourceManagerClientProxy implements PropertyChangeListener {
     private ResourceManagerClient resourceManagerClient;
 
     // Instance of this should be taken from the outer class factory method only.
@@ -1236,9 +1248,19 @@ public class OracleCloudAccount {
     public Object getLastJob(String stackId, String compartmentId) {
       return listJobs(compartmentId,stackId).getItems().get(0);
     }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+      LogHandler.info("ResourceManagerClientProxy: Handling the event update  : " +evt.toString());
+      if (evt.getPropertyName().equals(
+              SystemPreferences.EVENT_REGION_UPDATE
+      )){
+        resourceManagerClient.setRegion(evt.getNewValue().toString());
+      }
+    }
   }
 
-  public class DevOpsClientProxy {
+  public class DevOpsClientProxy implements PropertyChangeListener {
     private DevopsClient devOpsClient;
 
     // Instance of this should be taken from the outer class factory method only.
@@ -1361,6 +1383,14 @@ public class OracleCloudAccount {
       ListRepositoriesResponse listRepositories = devOpsClient.listRepositories(req);
       return listRepositories.getRepositoryCollection().getItems();
     }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+      LogHandler.info("DevopsClientProxy: Handling the even Update "+evt.toString());
+      if (evt.getPropertyName().equals(SystemPreferences.EVENT_REGION_UPDATE)){
+        devOpsClient.setRegion(evt.getNewValue().toString());
+      }
+    }
   }
 
   public class KmsVaultClientProxy {
@@ -1391,7 +1421,7 @@ public class OracleCloudAccount {
 
   }
 
-  public class VaultClientProxy {
+  public class VaultClientProxy implements PropertyChangeListener {
     private VaultsClient vaultsClient;
 
     // Instance of this should be taken from the outer class factory method only.
@@ -1429,6 +1459,14 @@ public class OracleCloudAccount {
       CreateSecretRequest request = CreateSecretRequest.builder().createSecretDetails(details).build();
       CreateSecretResponse response = vaultsClient.createSecret(request);
       return response.getSecret();
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+      LogHandler.info("");
+      if (evt.getPropertyName().equals(SystemPreferences.EVENT_REGION_UPDATE)){
+        vaultsClient.setRegion(evt.getNewValue().toString());
+      }
     }
   }
 
