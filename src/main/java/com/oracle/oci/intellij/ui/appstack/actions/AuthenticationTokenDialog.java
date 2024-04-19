@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBDimension;
@@ -32,6 +31,7 @@ public class AuthenticationTokenDialog extends DialogWrapper {
     private List<AuthToken> tokens ;
     private Action deleteAction;
     private Action generateTokenAction ;
+    private Action refreshAction ;
 
     protected AuthenticationTokenDialog( ) {
         super(true);
@@ -58,7 +58,7 @@ public class AuthenticationTokenDialog extends DialogWrapper {
         });
 
         populateData();
-        updateActionState();
+//        updateActionState();
     }
 
     @Override
@@ -72,6 +72,7 @@ public class AuthenticationTokenDialog extends DialogWrapper {
         System.out.println("this is length "+tokensTable.getRowCount());
         deleteAction.setEnabled(enableDeleteButton);
         generateTokenAction.setEnabled(enableGenerateButton);
+        refreshAction.setEnabled(true);
     }
 
     @Override
@@ -84,45 +85,41 @@ public class AuthenticationTokenDialog extends DialogWrapper {
                 if (selectedRow != -1){
                     AuthToken selectedToken = tokens.get(selectedRow);
                     deleteToken(selectedToken.getId());
-                    populateData();
                 }
             }
         };
 
-        generateTokenAction = new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                generateToken();
-                populateData();
-            }
-        };
+
         deleteAction.putValue("Name","Delete");
 
         generateTokenAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 generateToken();
+            }
+        };
+        refreshAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
                 populateData();
             }
         };
+        refreshAction.putValue("Name","Refresh");
         generateTokenAction.putValue("Name","Generate");
+        generateTokenAction.setEnabled(false);
+        refreshAction.setEnabled(false);
 
-//        updateActionState();
         getCancelAction().putValue("Name","Close");
-        return new Action[]{deleteAction,generateTokenAction,getCancelAction()};
+        return new Action[]{deleteAction,generateTokenAction,refreshAction,getCancelAction()};
 
     }
 
     private void generateToken() {
         // verify if the user have just two tokens ....
-// c
         if (tokens.size()<=2){
-            CreateAuthDialog createAuthDialog = new CreateAuthDialog();
+            CreateAuthDialog createAuthDialog = new CreateAuthDialog(this);
             createAuthDialog.show();
-//            if (createAuthDialog.showAndGet()){
 
-
-//            }
         }else {
             UIUtil.fireNotification(NotificationType.ERROR,"you can just have two tokens at a time ",null);
         }
@@ -133,10 +130,11 @@ public class AuthenticationTokenDialog extends DialogWrapper {
 
         generateTokenAction.setEnabled(false);
         deleteAction.setEnabled(false);
+        refreshAction.setEnabled(false);
 
         Runnable fetchData = ()->{
             try {
-                OracleCloudAccount.IdentityClientProxy identityClientProxy = OracleCloudAccount.getInstance().getIdentityClient();
+                OracleCloudAccount.IdentityClientHomeRegionProxy identityClientProxy = OracleCloudAccount.getInstance().getIdentityClientHomeRegionProxy();
                 tokens = identityClientProxy.getAuthTokenList();
             }catch(RuntimeException ex){
                 UIUtil.fireNotification(NotificationType.ERROR, ex.getMessage(), null);
@@ -155,9 +153,6 @@ public class AuthenticationTokenDialog extends DialogWrapper {
                 row.clear();
             });
             updateActionState();
-//            repaint();
-
-
         };
 
 //        ApplicationManager.getApplication().executeOnPooledThread(()->{
@@ -169,26 +164,33 @@ public class AuthenticationTokenDialog extends DialogWrapper {
     }
 
     private void deleteToken(String id) {
-        try{
-            OracleCloudAccount.getInstance().getIdentityClient().deleteAuthToken(id);
-        }catch (BmcException ex){
-            String simplifiedMessage = ex.getMessage();
-            if (ex.getStatusCode() == 403)
-             simplifiedMessage = "Error returned by DeleteAuthToken operation in Identity service.(403, NotAllowed, false) Please go to your home region PHX to execute CREATE, UPDATE and DELETE operations. ";
-//            ex.
-            setErrorText(simplifiedMessage);
-           UIUtil.fireNotification(NotificationType.ERROR,simplifiedMessage,null);
-        }
+        deleteAction.setEnabled(false);
+        UIUtil.schedule(()->{
+            try{
+                // we use IdentityClientHomeRegionProxy because we can't delete just from the home region
+                OracleCloudAccount.getInstance().getIdentityClientHomeRegionProxy().deleteAuthToken(id);
+                populateData();
+            }catch (BmcException ex){
+                String simplifiedMessage = ex.getMessage().substring(0,100)+"...";
+                setErrorText(simplifiedMessage);
+                UIUtil.fireNotification(NotificationType.ERROR,ex.getMessage(),null);
+            }finally {
+                deleteAction.setEnabled(true);
+            }
+        });
+
     }
 
     static class CreateAuthDialog extends DialogWrapper{
-        private JBTextArea descriptionTextField;
+        AuthenticationTokenDialog tokenDialog;
+        private JTextArea descriptionTextField;
 
-        protected CreateAuthDialog() {
+        protected CreateAuthDialog(AuthenticationTokenDialog tokenDialog) {
             super(true);
             init();
             setTitle("Create New Auth Token ");
             setOKButtonText("Create");
+            this.tokenDialog = tokenDialog;
         }
         public String getAuthDescription(){
             return descriptionTextField.getText();
@@ -198,24 +200,34 @@ public class AuthenticationTokenDialog extends DialogWrapper {
         protected void doOKAction() {
             getOKAction().setEnabled(false);
             String description = descriptionTextField.getText();
-            String message = "" ;
-            try {
-                AuthToken authToken = OracleCloudAccount.getInstance().getIdentityClient().generateToken(description);
-                 message= authToken.getToken();
+            UIUtil.schedule(()->{
+                 final String message  ;
+                try {
+                    AuthToken authToken = OracleCloudAccount.getInstance().getIdentityClientHomeRegionProxy().generateToken(description);
+                    message = authToken.getToken();
+                    UIUtil.invokeAndWait(()->{
+                        JTextField textField = new JTextField(message);
+                        textField.setEditable(false);
+                        ShowTokenSecretDialog dialog = new ShowTokenSecretDialog(message);
+                        dialog.show();
+                    },ModalityState.any());
 
-            }catch (RuntimeException ex){
-                UIUtil.fireNotification(NotificationType.ERROR, ex.getMessage(), null);
-//                System.out.println("there is an error here "+ex);
-            }
-//            AuthToken authToken = OracleCloudAccount.getInstance().getIdentityClient().generateToken(description);
-            JTextField textField = new JTextField(message);
-            textField.setEditable(false);
-            ShowTokenSecretDialog dialog = new ShowTokenSecretDialog(message);
-            dialog.show();
-//            JOptionPane.showMessageDialog(null, textField, "Copy Text", JOptionPane.INFORMATION_MESSAGE);
-            getOKAction().setEnabled(true);
+                    tokenDialog.populateData();
+                }catch (BmcException ex){
+                    String simplifiedMessage = ex.getMessage().substring(0,100)+"...";
+                    setErrorText(simplifiedMessage);
+                    UIUtil.fireNotification(NotificationType.ERROR,ex.getMessage(),null);
+                }finally {
+                    UIUtil.invokeLater(()->{
+                        getOKAction().setEnabled(true);
+                        super.doOKAction();
+                    },ModalityState.any());
 
-            super.doOKAction();
+                }
+            });
+
+
+
         }
 
         @Override
@@ -227,11 +239,13 @@ public class AuthenticationTokenDialog extends DialogWrapper {
 
             JBLabel descriptionLabel = new JBLabel("Description");
 
-            descriptionTextField = new JBTextArea();
+            descriptionTextField = new JTextArea();
             descriptionTextField.setColumns(20);
-            descriptionTextField.setRows(2);
+            descriptionTextField.setRows(1);
             descriptionTextField.setLineWrap(true);
-            descriptionTextField.setMargin(new Insets(6,2,2,2));
+            descriptionTextField.setMargin(new Insets(8,3,2,2));
+
+
             descriptionTextField.setFont(descriptionTextField.getFont().deriveFont(descriptionTextField.getFont().getSize() - 2f));
 
             createPanel.add(descriptionLabel,BorderLayout.WEST);

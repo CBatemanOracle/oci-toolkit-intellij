@@ -88,6 +88,14 @@ public class UIUtil {
       ApplicationManager.getApplication().invokeLater(runnable, modalityState);
     }
   }
+
+  public static  void invokeAndWait(Runnable runnable,ModalityState modalityState){
+    if (modalityState == null){
+      ApplicationManager.getApplication().invokeAndWait(runnable);
+    }else {
+      ApplicationManager.getApplication().invokeAndWait(runnable,modalityState);
+    }
+  }
   public static void invokeLater(Runnable runnable) {
     ApplicationManager.getApplication().invokeLater(runnable);
   }
