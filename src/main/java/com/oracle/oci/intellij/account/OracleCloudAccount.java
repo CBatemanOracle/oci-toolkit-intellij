@@ -982,7 +982,7 @@ public class OracleCloudAccount {
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-      LogHandler.info("VirtualNetworkClientProxy: Handling the event update "+evt.toString());
+      LogHandler.info("VirtualNetworkClientProxy: Handling the event update : "+evt.toString());
       if (evt.getPropertyName().equals(SystemPreferences.EVENT_REGION_UPDATE)){
         virtualNetworkClient.setRegion(evt.getNewValue().toString());
       }
@@ -1463,7 +1463,7 @@ public class OracleCloudAccount {
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-      LogHandler.info("");
+      LogHandler.info("VaultClientProxy: Handling the event update : "+evt.toString());
       if (evt.getPropertyName().equals(SystemPreferences.EVENT_REGION_UPDATE)){
         vaultsClient.setRegion(evt.getNewValue().toString());
       }
