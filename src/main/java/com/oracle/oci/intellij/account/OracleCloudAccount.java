@@ -1514,6 +1514,14 @@ public class OracleCloudAccount {
     }
   }
 
+  /**
+   * This proxy class behaves similarly to IdentityClientProxy but specifically sets the home region as the region for the IdentityClient.
+   * It is designed to perform operations that must be executed from the home region, such as creating or deleting authentication tokens.
+   * <p>
+   * A key issue this class addresses is the potential delay in the visibility of token deletion. Specifically, after deleting a token from the home region,
+   * if we reset the client identity's region to the current region and then fetch the list of tokens again, the recently deleted token might still appear.
+   * This class ensures that such operations are consistently handled by always interacting with the home region for critical identity management tasks.
+   */
   public  class IdentityClientHomeRegionProxy {
     private IdentityClient identityClientHomeRegion;
     private IdentityClientHomeRegionProxy(){
@@ -1560,12 +1568,5 @@ public class OracleCloudAccount {
         return identityClientHomeRegion.createAuthToken(createRequest).getAuthToken();
     }
 
-//    @Override
-//    public void propertyChange(PropertyChangeEvent evt) {
-//      LogHandler.info("IdentityClientHomeRegionProxy: Handling the event update "+evt.toString());
-//      if (evt.getPropertyName().equals(SystemPreferences.EVENT_REGION_UPDATE)){
-//        identityClient.setRegion(e);
-//      }
-//    }
   }
 }

@@ -125,7 +125,6 @@ public class UIUtil {
   public static void showErrorDialog(Component parentComponent, String title, String message) {
     // Use Swing's JOptionPane to show a modal error dialog
     JOptionPane.showMessageDialog(parentComponent,message,title,JOptionPane.ERROR_MESSAGE);
-//    JOptionPane.showMessageDialog(parentComponent, message, title, JOptionPane.ERROR_MESSAGE);
   }
 
   public static SimpleDialogWrapper createDialog(String title,
