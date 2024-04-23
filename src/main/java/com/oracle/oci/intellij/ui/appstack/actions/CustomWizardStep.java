@@ -1,11 +1,10 @@
 package com.oracle.oci.intellij.ui.appstack.actions;
 
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.components.*;
-import com.intellij.ui.table.JBTable;
+import com.intellij.ui.components.JBPasswordField;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.wizard.WizardModel;
 import com.intellij.ui.wizard.WizardNavigationState;
 import com.intellij.ui.wizard.WizardStep;
@@ -13,27 +12,22 @@ import com.intellij.util.ui.JBDimension;
 import com.oracle.bmc.core.model.Subnet;
 import com.oracle.bmc.core.model.Vcn;
 import com.oracle.bmc.database.model.AutonomousDatabaseSummary;
+import com.oracle.bmc.devops.model.RepositoryBranchSummary;
 import com.oracle.bmc.devops.model.RepositorySummary;
 import com.oracle.bmc.dns.model.ZoneSummary;
-import com.oracle.bmc.http.client.internal.ExplicitlySetBmcModel;
-import com.oracle.bmc.identity.model.AuthToken;
 import com.oracle.bmc.identity.model.AvailabilityDomain;
 import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.bmc.keymanagement.model.KeySummary;
 import com.oracle.bmc.keymanagement.model.VaultSummary;
-import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.ui.appstack.models.Controller;
-import com.oracle.oci.intellij.ui.appstack.models.Utils;
 import com.oracle.oci.intellij.ui.appstack.models.Validator;
 import com.oracle.oci.intellij.ui.appstack.models.VariableGroup;
 import com.oracle.oci.intellij.ui.common.CompartmentSelection;
-import io.github.resilience4j.core.lang.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentListener;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
@@ -44,14 +38,13 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyDescriptor;
 import java.beans.PropertyVetoException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.Stack;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class CustomWizardStep extends WizardStep implements PropertyChangeListener {
     JBScrollPane mainScrollPane;
@@ -343,7 +336,10 @@ public class CustomWizardStep extends WizardStep implements PropertyChangeListen
                                 }else if (value instanceof ZoneSummary) {
                                     ZoneSummary zone = (ZoneSummary) value;
                                     setText(zone.getName()+" ("+getId(zone.getId())+")"); // Set the display name of the instance
-                                } else if(value == null){
+                                }else if(value instanceof RepositoryBranchSummary){
+                                    RepositoryBranchSummary repositoryBranchSummary = (RepositoryBranchSummary) value;
+                                    setText(repositoryBranchSummary.getRefName());
+                                }else if(value == null){
                                     setText("No items");
                                 }
                                 return this;

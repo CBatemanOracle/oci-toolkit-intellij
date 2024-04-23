@@ -99,7 +99,6 @@ import static com.oracle.bmc.ClientRuntime.setClientUserAgent;
 import static com.oracle.bmc.resourcemanager.model.Job.LifecycleState.*;
 import static com.oracle.oci.intellij.account.SystemPreferences.getRegionName;
 import static com.oracle.oci.intellij.account.SystemPreferences.getUserAgent;
-
 /**
  * The Oracle Cloud account configurator and accessor.
  */
@@ -288,7 +287,6 @@ public class OracleCloudAccount {
     public List<RepositorySummary> getRepoList(String compartmentId){
       /* Create a service client */
       DevopsClient client = DevopsClient.builder().build(authenticationDetailsProvider);
-
       /* Create a request and dependent object(s). */
 
       ListRepositoriesRequest listRepositoriesRequest = ListRepositoriesRequest.builder()
@@ -300,6 +298,23 @@ public class OracleCloudAccount {
       return response.getRepositoryCollection().getItems();
 
     }
+
+    public List<?> getBranchList(String repoId){
+      DevopsClient client = DevopsClient.builder().build(authenticationDetailsProvider);
+
+      ListRefsResponse res = null;
+        ListRefsRequest ref = ListRefsRequest.builder().repositoryId(repoId)
+                .refType(ListRefsRequest.RefType.Branch)
+                .build();
+        res = client.listRefs(ref);
+
+      return res.getRepositoryRefCollection().getItems();
+
+    }
+//    public com.oracle.bmc.artifacts.model.Repository getRepositoryDetails(){
+//      Repository r = new Repository();
+//
+//    }
     public List<AuthToken> getAuthTokenList(){
       ListAuthTokensRequest listAuthTokensRequest = ListAuthTokensRequest.builder().userId(authenticationDetailsProvider.getUserId()).build();
       ListAuthTokensResponse listAuthTokensResponse = identityClient.listAuthTokens(listAuthTokensRequest);
