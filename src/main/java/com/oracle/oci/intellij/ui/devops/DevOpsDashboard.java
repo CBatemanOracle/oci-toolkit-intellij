@@ -411,7 +411,9 @@ public final class DevOpsDashboard implements PropertyChangeListener, ITabbedExp
         regionValueLabel.setText(SystemPreferences.getRegionName());
         break;
     }
-    // TODO: populateTableData();
+    UIUtil.schedule(()->{
+      populateTableData();
+    });
   }
 
   private static class RefreshAction extends AbstractAction {
