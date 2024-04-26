@@ -72,7 +72,36 @@
     </description>
     <change-notes>
         <![CDATA[
-          <h2>Added</h3>
+          <h2>1.0.1</h2>
+
+          <h3>Added</h3>
+             <ul>
+             <li>O2685 -- minor enhancements to the application config to provide better artifact defaults.</li>
+             <li>O2340 -- enhancements to the Show Jobs dialog for App Stack.</li>
+             <li>O2546 -- Mirror repo action does nothing when there are no repos in the project to use.</li>
+             <li>O2543 -- Dialog to list the auth tokens</li>
+             </ul>
+
+          <h3>Fixed</h3>
+          <h4>Github Issues</h4>
+          <p>Please visit the links at github.com for more information</p>
+          <ul>
+          <li><a href="https://github.com/oracle/oci-toolkit-intellij/issues/7">O2566 -- Job dialog for Stack Jobs may be slow or seem non-responsive</a></li>
+          <li><a href="https://github.com/oracle/oci-toolkit-intellij/issues/8">O2565 -- Performance degraded when there a multiple jobs in the AppStack dashboard</a></li>
+          <li><a href="https://github.com/oracle/oci-toolkit-intellij/issues/9">O2545 -- OCI Explorer tables can disappear in multiple window scenario</a></li>
+          <li><a href="https://github.com/oracle/oci-toolkit-intellij/issues/10">O2435 -- Destroy Job Failed because for ambiguous reason</a></li>
+          </ul>
+
+          <h4>Other Issues</h4>
+          <ul>
+          <li>O2554 -- General improvements in text clarity in Delete Wizard.</li>
+          <li>O2426 -- Unclosable Ghost Panel created when clicking on Update ACL</li>
+          <li>O2292 -- compartment doesn't change in the appstack dashboard</li>
+          </ul> 
+
+
+          <h2>1.0.0</h2>
+          <h3>Added</h3>
 
           <h3>New App Stack Dashboard</h3>
             <ul>
