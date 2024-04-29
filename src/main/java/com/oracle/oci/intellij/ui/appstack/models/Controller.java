@@ -3,6 +3,7 @@ package com.oracle.oci.intellij.ui.appstack.models;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.wizard.WizardStep;
 import com.oracle.bmc.http.client.internal.ExplicitlySetBmcModel;
 import com.oracle.bmc.identity.model.Compartment;
@@ -100,12 +101,25 @@ public class Controller {
         if (dependencies != null) {
             for (String dependent : dependencies) {
                 CustomWizardStep.VarPanel varPanel = varPanels.get(dependent);
+                PropertyDescriptor dependentPd = descriptorsState.get(dependent);
+
+                if ("string".equals(dependentPd.getValue("type"))){
+                    JBTextField textField = (JBTextField) varPanel.getMainComponent();
+                    Object pdValue = getValue(varGroup,pd);
+                    String dependentValue = "";
+                    if ("JAR".equalsIgnoreCase(pdValue.toString())){
+                        dependentValue = "target/.jar";
+                    }else {
+                        dependentValue = "target/*.war ";
+                    }
+                    textField.setText(dependentValue);
+                    continue;
+                }
                 ComboBox jComboBox = (ComboBox) varPanel.getMainComponent();
                 if (jComboBox == null) continue;
                 jComboBox.removeAllItems();
                 jComboBox.setModel(new DefaultComboBoxModel<>(new String[] {"Loading..."}));
                 jComboBox.setEnabled(false);
-                PropertyDescriptor dependentPd = descriptorsState.get(dependent);
                 loadComboBoxValues(dependentPd,varPanel.getVariableGroup(),jComboBox);
             }
         }

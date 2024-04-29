@@ -99,7 +99,6 @@ import static com.oracle.bmc.ClientRuntime.setClientUserAgent;
 import static com.oracle.bmc.resourcemanager.model.Job.LifecycleState.*;
 import static com.oracle.oci.intellij.account.SystemPreferences.getRegionName;
 import static com.oracle.oci.intellij.account.SystemPreferences.getUserAgent;
-
 /**
  * The Oracle Cloud account configurator and accessor.
  */
@@ -122,6 +121,10 @@ public class OracleCloudAccount {
     // Add the property change listeners in the order they have to be notified.
     SystemPreferences.addPropertyChangeListener(identityClientProxy);
     SystemPreferences.addPropertyChangeListener(databaseClientProxy);
+    SystemPreferences.addPropertyChangeListener(devOpsClientProxy);
+    SystemPreferences.addPropertyChangeListener(vaultClientProxy);
+    SystemPreferences.addPropertyChangeListener(resourceManagerClientProxy);
+    SystemPreferences.addPropertyChangeListener(virtualNetworkClientProxy);
     //SystemPreferences.addPropertyChangeListener(new AutonomousDatabasesDashboard());
     //SystemPreferences.addPropertyChangeListener(AppStackDashboard.getInstance());
     //SystemPreferences.addPropertyChangeListener(DevOpsDashboard.getInstance());
@@ -301,7 +304,6 @@ public class OracleCloudAccount {
     public List<RepositorySummary> getRepoList(String compartmentId){
       /* Create a service client */
       DevopsClient client = DevopsClient.builder().build(authenticationDetailsProvider);
-
       /* Create a request and dependent object(s). */
 
       ListRepositoriesRequest listRepositoriesRequest = ListRepositoriesRequest.builder()
@@ -312,6 +314,28 @@ public class OracleCloudAccount {
       ListRepositoriesResponse response = client.listRepositories(listRepositoriesRequest);
       return response.getRepositoryCollection().getItems();
 
+    }
+
+    public List<?> getBranchList(String repoId){
+      DevopsClient client = DevopsClient.builder().build(authenticationDetailsProvider);
+
+      ListRefsResponse res = null;
+        ListRefsRequest ref = ListRefsRequest.builder().repositoryId(repoId)
+                .refType(ListRefsRequest.RefType.Branch)
+                .build();
+        res = client.listRefs(ref);
+
+      return res.getRepositoryRefCollection().getItems();
+
+    }
+//    public com.oracle.bmc.artifacts.model.Repository getRepositoryDetails(){
+//      Repository r = new Repository();
+//
+//    }
+    public List<AuthToken> getAuthTokenList(){
+      ListAuthTokensRequest listAuthTokensRequest = ListAuthTokensRequest.builder().userId(authenticationDetailsProvider.getUserId()).build();
+      ListAuthTokensResponse listAuthTokensResponse = identityClient.listAuthTokens(listAuthTokensRequest);
+      return listAuthTokensResponse.getItems();
     }
 
     public List<CertificateSummary>getAllCertificates(String compartmentId){
@@ -906,7 +930,7 @@ public class OracleCloudAccount {
 
   }
 
-  public class VirtualNetworkClientProxy {
+  public class VirtualNetworkClientProxy implements PropertyChangeListener {
     private VirtualNetworkClient virtualNetworkClient;
 
     // Instance of this should be taken from the outer class factory method only.
@@ -990,9 +1014,17 @@ public class OracleCloudAccount {
         virtualNetworkClient = null;
       }
     }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+      LogHandler.info("VirtualNetworkClientProxy: Handling the event update : "+evt.toString());
+      if (evt.getPropertyName().equals(SystemPreferences.EVENT_REGION_UPDATE)){
+        virtualNetworkClient.setRegion(evt.getNewValue().toString());
+      }
+    }
   }
 
-  public class ResourceManagerClientProxy {
+  public class ResourceManagerClientProxy implements PropertyChangeListener {
     private ResourceManagerClient resourceManagerClient;
 
     // Instance of this should be taken from the outer class factory method only.
@@ -1251,9 +1283,19 @@ public class OracleCloudAccount {
     public Object getLastJob(String stackId, String compartmentId) {
       return listJobs(compartmentId,stackId).getItems().get(0);
     }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+      LogHandler.info("ResourceManagerClientProxy: Handling the event update  : " +evt.toString());
+      if (evt.getPropertyName().equals(
+              SystemPreferences.EVENT_REGION_UPDATE
+      )){
+        resourceManagerClient.setRegion(evt.getNewValue().toString());
+      }
+    }
   }
 
-  public class DevOpsClientProxy {
+  public class DevOpsClientProxy implements PropertyChangeListener {
     private DevopsClient devOpsClient;
 
     // Instance of this should be taken from the outer class factory method only.
@@ -1376,6 +1418,14 @@ public class OracleCloudAccount {
       ListRepositoriesResponse listRepositories = devOpsClient.listRepositories(req);
       return listRepositories.getRepositoryCollection().getItems();
     }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+      LogHandler.info("DevopsClientProxy: Handling the even Update "+evt.toString());
+      if (evt.getPropertyName().equals(SystemPreferences.EVENT_REGION_UPDATE)){
+        devOpsClient.setRegion(evt.getNewValue().toString());
+      }
+    }
   }
 
   public class KmsVaultClientProxy {
@@ -1406,7 +1456,7 @@ public class OracleCloudAccount {
 
   }
 
-  public class VaultClientProxy {
+  public class VaultClientProxy implements PropertyChangeListener {
     private VaultsClient vaultsClient;
 
     // Instance of this should be taken from the outer class factory method only.
@@ -1444,6 +1494,14 @@ public class OracleCloudAccount {
       CreateSecretRequest request = CreateSecretRequest.builder().createSecretDetails(details).build();
       CreateSecretResponse response = vaultsClient.createSecret(request);
       return response.getSecret();
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+      LogHandler.info("VaultClientProxy: Handling the event update : "+evt.toString());
+      if (evt.getPropertyName().equals(SystemPreferences.EVENT_REGION_UPDATE)){
+        vaultsClient.setRegion(evt.getNewValue().toString());
+      }
     }
   }
 
