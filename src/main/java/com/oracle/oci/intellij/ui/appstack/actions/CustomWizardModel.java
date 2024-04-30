@@ -7,6 +7,7 @@ import com.intellij.ui.wizard.WizardStep;
 import com.oracle.bmc.core.model.Subnet;
 import com.oracle.bmc.core.model.Vcn;
 import com.oracle.bmc.database.model.AutonomousDatabaseSummary;
+import com.oracle.bmc.devops.model.RepositoryBranchSummary;
 import com.oracle.bmc.devops.model.RepositorySummary;
 import com.oracle.bmc.dns.model.ZoneSummary;
 import com.oracle.bmc.identity.model.AvailabilityDomain;
@@ -118,9 +119,7 @@ public class CustomWizardModel extends WizardModel {
                 ZoneSummary zoneSummary = (ZoneSummary) value;
                 return zoneSummary.getId();
             } else if (value instanceof AvailabilityDomain) {
-
                 AvailabilityDomain adb = (AvailabilityDomain) value;
-
                 return adb.getName() ;
             }else if (value instanceof Subnet) {
                 Subnet adb = (Subnet) value;
@@ -131,6 +130,9 @@ public class CustomWizardModel extends WizardModel {
             }else if (value instanceof Compartment) {
                 Compartment adb = (Compartment) value;
                 return adb.getId() ;
+            }else if(value instanceof RepositoryBranchSummary){
+                RepositoryBranchSummary repositoryBranchSummary = (RepositoryBranchSummary) value;
+                return repositoryBranchSummary.getRefName();
             }
         }
         if (pd.getName().equals("shape")) {
