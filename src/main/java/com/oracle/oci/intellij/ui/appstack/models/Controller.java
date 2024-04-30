@@ -108,7 +108,7 @@ public class Controller {
                     Object pdValue = getValue(varGroup,pd);
                     String dependentValue = "";
                     if ("JAR".equalsIgnoreCase(pdValue.toString())){
-                        dependentValue = "target/.jar";
+                        dependentValue = "target/*.jar";
                     }else {
                         dependentValue = "target/*.war ";
                     }
