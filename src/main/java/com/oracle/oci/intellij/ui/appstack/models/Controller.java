@@ -3,14 +3,13 @@ package com.oracle.oci.intellij.ui.appstack.models;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.wizard.WizardStep;
 import com.oracle.bmc.http.client.internal.ExplicitlySetBmcModel;
 import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.bmc.resourcemanager.model.Stack;
 import com.oracle.bmc.resourcemanager.model.StackSummary;
-import com.oracle.bmc.resourcemanager.responses.ListStacksResponse;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
-import com.oracle.oci.intellij.account.SystemPreferences;
 import com.oracle.oci.intellij.common.command.AbstractBasicCommand;
 import com.oracle.oci.intellij.common.command.CommandStack;
 import com.oracle.oci.intellij.ui.appstack.actions.CustomWizardStep;
@@ -19,14 +18,13 @@ import com.oracle.oci.intellij.ui.appstack.command.ListStackCommand;
 import com.oracle.oci.intellij.ui.appstack.command.SetCommand;
 import com.oracle.oci.intellij.ui.common.UIUtil;
 import com.oracle.oci.intellij.util.LogHandler;
-import jnr.ffi.Struct;
 
 import javax.swing.*;
 import java.awt.*;
 import java.beans.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
@@ -99,16 +97,29 @@ public class Controller {
 
     public void updateDependencies(String pdName, VariableGroup varGroup){
         PropertyDescriptor pd = descriptorsState.get(pdName);
-        List<String> dependencies = Utils.depondsOn.get(pd.getName());
+        List<String> dependencies = Utils.dependsOn.get(pd.getName());
         if (dependencies != null) {
             for (String dependent : dependencies) {
                 CustomWizardStep.VarPanel varPanel = varPanels.get(dependent);
+                PropertyDescriptor dependentPd = descriptorsState.get(dependent);
+
+                if ("string".equals(dependentPd.getValue("type"))){
+                    JBTextField textField = (JBTextField) varPanel.getMainComponent();
+                    Object pdValue = getValue(varGroup,pd);
+                    String dependentValue = "";
+                    if ("JAR".equalsIgnoreCase(pdValue.toString())){
+                        dependentValue = "target/.jar";
+                    }else {
+                        dependentValue = "target/*.war ";
+                    }
+                    textField.setText(dependentValue);
+                    continue;
+                }
                 ComboBox jComboBox = (ComboBox) varPanel.getMainComponent();
                 if (jComboBox == null) continue;
                 jComboBox.removeAllItems();
                 jComboBox.setModel(new DefaultComboBoxModel<>(new String[] {"Loading..."}));
                 jComboBox.setEnabled(false);
-                PropertyDescriptor dependentPd = descriptorsState.get(dependent);
                 loadComboBoxValues(dependentPd,varPanel.getVariableGroup(),jComboBox);
             }
         }
@@ -349,9 +360,13 @@ public class Controller {
             JLabel errorLabel = varPanel.getErrorLabel();
 
             inputComponent.setBorder(BorderFactory.createLineBorder(JBColor.pink,3,true));
-            errorLabel.setText(errorMessage);
+            if (!pd.getName().equals("current_user_token"))
+                errorLabel.setText(errorMessage);
             if (pd.getValue("errorMessage") != null && !((String)pd.getValue("errorMessage")).isEmpty())
                 inputComponent.setToolTipText("Field should be : "+pd.getValue("errorMessage"));
+            else {
+                inputComponent.setToolTipText(errorMessage);
+            }
         }
     }
     public Object getValue(VariableGroup variableGroup,PropertyDescriptor pd){

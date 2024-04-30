@@ -1,11 +1,10 @@
 package com.oracle.oci.intellij.ui.appstack.actions;
 
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.components.*;
-import com.intellij.ui.table.JBTable;
+import com.intellij.ui.components.JBPasswordField;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.wizard.WizardModel;
 import com.intellij.ui.wizard.WizardNavigationState;
 import com.intellij.ui.wizard.WizardStep;
@@ -13,6 +12,7 @@ import com.intellij.util.ui.JBDimension;
 import com.oracle.bmc.core.model.Subnet;
 import com.oracle.bmc.core.model.Vcn;
 import com.oracle.bmc.database.model.AutonomousDatabaseSummary;
+import com.oracle.bmc.devops.model.RepositoryBranchSummary;
 import com.oracle.bmc.devops.model.RepositorySummary;
 import com.oracle.bmc.dns.model.ZoneSummary;
 import com.oracle.bmc.http.client.internal.ExplicitlySetBmcModel;
@@ -27,7 +27,7 @@ import com.oracle.oci.intellij.ui.appstack.models.Utils;
 import com.oracle.oci.intellij.ui.appstack.models.Validator;
 import com.oracle.oci.intellij.ui.appstack.models.VariableGroup;
 import com.oracle.oci.intellij.ui.common.CompartmentSelection;
-import io.github.resilience4j.core.lang.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -44,9 +44,10 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyDescriptor;
 import java.beans.PropertyVetoException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.Stack;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
@@ -343,7 +344,10 @@ public class CustomWizardStep extends WizardStep implements PropertyChangeListen
                                 }else if (value instanceof ZoneSummary) {
                                     ZoneSummary zone = (ZoneSummary) value;
                                     setText(zone.getName()+" ("+getId(zone.getId())+")"); // Set the display name of the instance
-                                } else if(value == null){
+                                }else if(value instanceof RepositoryBranchSummary){
+                                    RepositoryBranchSummary repositoryBranchSummary = (RepositoryBranchSummary) value;
+                                    setText(repositoryBranchSummary.getRefName());
+                                }else if(value == null){
                                     setText("No items");
                                 }
                                 return this;
@@ -410,6 +414,18 @@ public class CustomWizardStep extends WizardStep implements PropertyChangeListen
                     textField.setText(pd.getValue("default").toString());
                     controller.setValue(pd.getValue("default").toString(),varGroup,pd);
                 }
+
+                if (pd.getName().equals("current_user_token")){
+                    JPanel userTokenPanel = new JPanel(new BorderLayout());
+
+                    JButton listTokenButton = getListTokenButton();
+
+                    inputComponent = textField ;
+                    textField.setPreferredSize(new JBDimension(400,-1));
+                    userTokenPanel.add(textField,BorderLayout.WEST);
+                    userTokenPanel.add(listTokenButton,BorderLayout.CENTER);
+                    return userTokenPanel ;
+                }
                 component = textField;
             }
             component.setPreferredSize(new JBDimension(200,100));
@@ -417,6 +433,22 @@ public class CustomWizardStep extends WizardStep implements PropertyChangeListen
             inputComponent = component;
             return component;
         }
+
+        @NotNull
+        private JButton getListTokenButton() {
+            JButton listTokenButton = new JButton("List");
+
+            listTokenButton.addActionListener((event)->{
+//                        OracleCloudAccount.IdentityClientProxy identityClientProxy = OracleCloudAccount.getInstance().getIdentityClient();
+//                        List<AuthToken> tokens = identityClientProxy.getAuthTokenList();
+                listTokenButton.setEnabled(false);
+                AuthenticationTokenDialog authenticationTokenDialog = new AuthenticationTokenDialog();
+                authenticationTokenDialog.show();
+                listTokenButton.setEnabled(true);
+            });
+            return listTokenButton;
+        }
+
         String getId(String ocid){
             int start = ocid.length() - 9;
             return ocid.substring(start);
