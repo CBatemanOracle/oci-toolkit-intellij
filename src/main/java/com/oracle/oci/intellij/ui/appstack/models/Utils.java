@@ -12,9 +12,7 @@ import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.bmc.keymanagement.model.KeySummary;
 import com.oracle.bmc.keymanagement.model.VaultSummary;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
-import com.oracle.oci.intellij.ui.appstack.YamlLoader;
 
-import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -118,7 +116,7 @@ public class Utils{
 
             String vault_compartment_id = ((Compartment) pds.get("vault_compartment_id").getReadMethod().invoke(general_ConfigurationVarGroup)).getId();;
 
-            List<VaultSummary> vaultList = OracleCloudAccount.getInstance().getIdentityClient().getVaultsList(vault_compartment_id);
+            List<VaultSummary> vaultList = OracleCloudAccount.getInstance().getKmsVaultClient().listVaults(vault_compartment_id);
             return vaultList;
         });
 
@@ -142,7 +140,7 @@ public class Utils{
 
             String compartment_id = ( (Compartment) pds.get("devops_compartment").getReadMethod().invoke(varGroup)).getId();
 
-            List<RepositorySummary> repositorySummaries = OracleCloudAccount.getInstance().getIdentityClient().getRepoList(compartment_id);
+            List<RepositorySummary> repositorySummaries = OracleCloudAccount.getInstance().getDevOpsClient().getRepoList(compartment_id);
 
             return repositorySummaries;
 
@@ -171,6 +169,17 @@ public class Utils{
 
         });
 
+        suggestedValues.put("oci:devops:branch:id",(pd,pds,varGroupe)->{
+            Controller controller =  Controller.getInstance();
+            PropertyDescriptor repoPd = pds.get("repo_name");
+
+            Object repository = controller.getValue(varGroupe,repoPd);
+            if (repository == null || repository instanceof String) return null;
+
+            List branches = OracleCloudAccount.getInstance().getDevOpsClient().getBranchList(((RepositorySummary)repository).getId());
+            return branches;
+        });
+
 
 
     }
@@ -194,6 +203,8 @@ public class Utils{
         put("db_compartment",List.of("autonomous_database"));
         put("devops_compartment",List.of("repo_name"));
         put("dns_compartment",List.of("zone","certificate_ocid"));
+        put("application_type",List.of("artifact_location"));
+        put("repo_name",List.of("branch"));
 
     }};
 

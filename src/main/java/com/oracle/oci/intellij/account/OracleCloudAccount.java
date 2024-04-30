@@ -124,6 +124,8 @@ public class OracleCloudAccount {
     SystemPreferences.addPropertyChangeListener(vaultClientProxy);
     SystemPreferences.addPropertyChangeListener(resourceManagerClientProxy);
     SystemPreferences.addPropertyChangeListener(virtualNetworkClientProxy);
+    SystemPreferences.addPropertyChangeListener(vaultClientProxy);
+    SystemPreferences.addPropertyChangeListener(kmsVaultClientProxy);
     //SystemPreferences.addPropertyChangeListener(new AutonomousDatabasesDashboard());
     //SystemPreferences.addPropertyChangeListener(AppStackDashboard.getInstance());
     //SystemPreferences.addPropertyChangeListener(DevOpsDashboard.getInstance());
@@ -285,21 +287,11 @@ public class OracleCloudAccount {
 
       return createCompartmentResponse.getCompartment();
     }
-    public List<RepositorySummary> getRepoList(String compartmentId){
-      /* Create a service client */
-      DevopsClient client = DevopsClient.builder().build(authenticationDetailsProvider);
 
-      /* Create a request and dependent object(s). */
-
-      ListRepositoriesRequest listRepositoriesRequest = ListRepositoriesRequest.builder()
-              .compartmentId(compartmentId)
-              .build();
-
-      /* Send request to the Client */
-      ListRepositoriesResponse response = client.listRepositories(listRepositoriesRequest);
-      return response.getRepositoryCollection().getItems();
-
-    }
+//    public com.oracle.bmc.artifacts.model.Repository getRepositoryDetails(){
+//      Repository r = new Repository();
+//
+//    }
     public List<AuthToken> getAuthTokenList(){
       ListAuthTokensRequest listAuthTokensRequest = ListAuthTokensRequest.builder().userId(authenticationDetailsProvider.getUserId()).build();
       ListAuthTokensResponse listAuthTokensResponse = identityClient.listAuthTokens(listAuthTokensRequest);
@@ -429,21 +421,7 @@ public class OracleCloudAccount {
       return response.getItems();
     }
 
-    public List<VaultSummary> getVaultsList(String compartmentId){
-      if (authenticationDetailsProvider != null) {
-        KmsVaultClient client = KmsVaultClient.builder().build(authenticationDetailsProvider);
 
-        ListVaultsRequest listVaultsRequest = ListVaultsRequest.builder()
-                .compartmentId(compartmentId)
-                .sortBy(ListVaultsRequest.SortBy.Timecreated)
-                .sortOrder(ListVaultsRequest.SortOrder.Desc).build();
-
-        /* Send request to the Client */
-        ListVaultsResponse response = client.listVaults(listVaultsRequest);
-        return response.getItems();
-      }
-      return null;
-    }
 
     public List<KeySummary> getKeyList(String compartmentId,VaultSummary vault){
       if (authenticationDetailsProvider != null) {
@@ -1292,6 +1270,30 @@ public class OracleCloudAccount {
                                .orElse(null);
     }
 
+    public List<RepositorySummary> getRepoList(String compartmentId){
+
+      ListRepositoriesRequest listRepositoriesRequest = ListRepositoriesRequest.builder()
+              .compartmentId(compartmentId)
+              .build();
+
+      /* Send request to the Client */
+      ListRepositoriesResponse response = devOpsClient.listRepositories(listRepositoriesRequest);
+      return response.getRepositoryCollection().getItems();
+
+    }
+
+    public List<?> getBranchList(String repoId){
+
+      ListRefsResponse res = null;
+      ListRefsRequest ref = ListRefsRequest.builder().repositoryId(repoId)
+              .refType(ListRefsRequest.RefType.Branch)
+              .build();
+      res = devOpsClient.listRefs(ref);
+
+      return res.getRepositoryRefCollection().getItems();
+
+    }
+
     public List<ProjectSummary> listDevOpsProjects() {
       return listDevOpsProjects(SystemPreferences.getCompartmentId());
     }
@@ -1393,7 +1395,7 @@ public class OracleCloudAccount {
     }
   }
 
-  public class KmsVaultClientProxy {
+  public class KmsVaultClientProxy implements PropertyChangeListener {
     private KmsVaultClient kmsVaultClient;
 
     // Instance of this should be taken from the outer class factory method only.
@@ -1413,12 +1415,21 @@ public class OracleCloudAccount {
       }
     }
 
+
+
     public List<VaultSummary> listVaults(String compartmentId) {
       ListVaultsRequest listRequest = ListVaultsRequest.builder().compartmentId(compartmentId).build();
       ListVaultsResponse listVaults = kmsVaultClient.listVaults(listRequest);
       return listVaults.getItems();
     }
 
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+      LogHandler.info("VaultClientProxy: Handling the event update : "+evt.toString());
+      if (evt.getPropertyName().equals(SystemPreferences.EVENT_REGION_UPDATE)){
+        kmsVaultClient.setRegion(evt.getNewValue().toString());
+      }
+    }
   }
 
   public class VaultClientProxy implements PropertyChangeListener {
@@ -1535,5 +1546,5 @@ public class OracleCloudAccount {
       CreateKeyResponse createKey = kmsManagementClient.createKey(request);
       return createKey.getKey();
     }
-  }
+   }
 }
