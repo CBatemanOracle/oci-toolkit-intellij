@@ -1,7 +1,7 @@
 package com.oracle.oci.intellij.ui.appstack;
 
 
-
+import com.intellij.openapi.application.ApplicationManager;
 import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.account.SystemPreferences;
@@ -10,7 +10,6 @@ import com.oracle.oci.intellij.ui.appstack.actions.CompartmentCache;
 import com.oracle.oci.intellij.ui.appstack.actions.CustomWizardModel;
 import com.oracle.oci.intellij.ui.appstack.annotations.VariableMetaData;
 import com.oracle.oci.intellij.ui.appstack.models.*;
-
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -137,7 +136,7 @@ public class YamlLoader {
         }
         CustomWizardModel customWizardModel = new CustomWizardModel(varGroups, descriptorsState);
         AppStackParametersWizardDialog dialog = new AppStackParametersWizardDialog(customWizardModel);
-        dialog.show();
+        ApplicationManager.getApplication().invokeAndWait(dialog::show);
         if (dialog.isCreateStack()){
             isApply = dialog.isApplyJob();
             return dialog.getUserInput();
