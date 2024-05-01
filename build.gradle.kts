@@ -101,6 +101,11 @@ tasks {
     patchPluginXml {
         version.set("${project.version}")
         sinceBuild.set(sinceBuildVersion)
+    } 
+
+    runPluginVerifier {
+
+
     }
 }
 
