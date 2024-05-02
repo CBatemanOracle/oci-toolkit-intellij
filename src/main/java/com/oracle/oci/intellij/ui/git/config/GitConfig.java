@@ -83,4 +83,16 @@ public class GitConfig {
     this.gitConfigFile = Optional.ofNullable(gitConfigFile);
     this.gitConfigFile.ifPresent(gcf -> configFileTimeStamp = gcf.getTimeStamp());
   }
+  
+  public GitConfigCore getConfigCore() {
+    return this.core;
+  }
+  
+  public Map<String, GitConfigRemote> getRemotes() {
+    return Collections.unmodifiableMap(this.remotes);
+  }
+  
+  public Map<String, GitConfigBranch> getBranches() {
+    return Collections.unmodifiableMap(this.branches);
+  }
 }
