@@ -27,6 +27,7 @@ import com.oracle.oci.intellij.ui.devops.DevOpsDashboard;
 import com.oracle.oci.intellij.util.BundleUtil;
 import com.oracle.oci.intellij.util.LogHandler;
 import com.oracle.oci.intellij.util.SafeRunnerUtil;
+import com.oracle.oci.intellij.util.fills.ContentFactorySERVICEShim;
 
 public class OCIExplorerFactory implements ToolWindowFactory {
 
@@ -81,7 +82,7 @@ public class OCIExplorerFactory implements ToolWindowFactory {
   private void createTab(ToolWindow toolWindow, ITabbedExplorerContent tabbedContent, String title) {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     final TabbedExplorer<?> ociTabbedToolBar = new TabbedExplorer(toolWindow, tabbedContent);
-    final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
+    final ContentFactory contentFactory = ContentFactorySERVICEShim.getInstance();
     final Content ociTabbedToolBarContent =
       contentFactory.createContent(ociTabbedToolBar.getContent(), title, false);
     toolWindow.getContentManager().addContent(ociTabbedToolBarContent);
