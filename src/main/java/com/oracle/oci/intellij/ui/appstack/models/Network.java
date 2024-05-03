@@ -4,7 +4,6 @@ import com.oracle.oci.intellij.ui.appstack.actions.PropertyOrder;
 import com.oracle.oci.intellij.ui.appstack.annotations.VariableMetaData;
 
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.beans.PropertyVetoException;
 
 public class Network extends VariableGroup {
@@ -165,7 +164,7 @@ public class Network extends VariableGroup {
     }
 
     @PropertyOrder(17)
-    @VariableMetaData(title="Certificate OCID",description="You must have a SSL certificate available in OCI Certificates service. Provide the certificate OCID for the host name,that will be used to configure the load balancer.",type="oci:certificatesmanagement:certificate:id",required=true,visible="open_https_port")
+    @VariableMetaData(title="Certificate OCID",description="You must have a SSL certificate available in OCI Certificates service. Provide the certificate OCID for the host name,that will be used to configure the load balancer.",type="oci:certificatesmanagement:certificate:id",required=false,visible="open_https_port")
     public Object getCertificate_ocid() {
         return certificate_ocid;
     }
