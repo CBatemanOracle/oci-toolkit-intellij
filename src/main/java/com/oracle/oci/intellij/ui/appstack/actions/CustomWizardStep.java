@@ -2,9 +2,7 @@ package com.oracle.oci.intellij.ui.appstack.actions;
 
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.components.JBPasswordField;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.*;
 import com.intellij.ui.wizard.WizardModel;
 import com.intellij.ui.wizard.WizardNavigationState;
 import com.intellij.ui.wizard.WizardStep;
@@ -23,6 +21,7 @@ import com.oracle.oci.intellij.ui.appstack.models.Controller;
 import com.oracle.oci.intellij.ui.appstack.models.Validator;
 import com.oracle.oci.intellij.ui.appstack.models.VariableGroup;
 import com.oracle.oci.intellij.ui.common.CompartmentSelection;
+import com.oracle.oci.intellij.ui.common.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -30,21 +29,19 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.ItemEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyDescriptor;
 import java.beans.PropertyVetoException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Stack;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
+
+
 
 public class CustomWizardStep extends WizardStep implements PropertyChangeListener {
     JBScrollPane mainScrollPane;
@@ -85,7 +82,11 @@ public class CustomWizardStep extends WizardStep implements PropertyChangeListen
                 continue;
             }
             try {
-               VarPanel varPanel =new VarPanel(pd,variableGroup);
+                VarPanel varPanel ;
+                if (pd.getName().equals("descriptionText"))
+                    varPanel = new TextAreaVarPanel(pd,variableGroup);
+               else
+                    varPanel =new VarPanel(pd,variableGroup);
                varPanels.add(varPanel) ;
                controller.addVariablePanel( varPanel);
                mainPanel.add(varPanel)  ;
@@ -169,14 +170,28 @@ public class CustomWizardStep extends WizardStep implements PropertyChangeListen
         JLabel errorLabel;
         PropertyDescriptor pd;
         VariableGroup variableGroup;
+        protected ResourceBundle resBundle;
+
 
 
 
         VarPanel(PropertyDescriptor pd, VariableGroup variableGroup) throws InvocationTargetException, IllegalAccessException {
+                this(pd,variableGroup,true);
+
+        }
+
+        VarPanel(PropertyDescriptor pd, VariableGroup variableGroup,boolean createVarPanel) throws InvocationTargetException, IllegalAccessException {
             this.pd = pd;
             this.variableGroup = variableGroup;
-            createVarPanel(pd,variableGroup);
+            resBundle = ResourceBundle.getBundle("appStackWizard", Locale.ROOT);
+
+            if (createVarPanel){
+                createVarPanel(pd,variableGroup);
+            }
         }
+
+
+
         private void createVarPanel( PropertyDescriptor pd,VariableGroup variableGroup) throws InvocationTargetException, IllegalAccessException {
             setLayout(new BorderLayout());
             String varTitle = "";
@@ -229,13 +244,14 @@ public class CustomWizardStep extends WizardStep implements PropertyChangeListen
 
                 JCheckBox checkBox = new JCheckBox();
                 component = checkBox;
+                boolean defaultValue = (boolean)(pd.getValue("default")!= null?pd.getValue("default"):false );
+                controller.setValue(defaultValue,varGroup,pd);
+                checkBox.setSelected(defaultValue);
 
                 checkBox.addActionListener(e -> {
                         controller.setValue(checkBox.isSelected(),varGroup,pd);
                 });
-                boolean defaultValue = (boolean)(pd.getValue("default")!= null?pd.getValue("default"):true );
-                controller.setValue(defaultValue,varGroup,pd);
-                checkBox.setSelected(defaultValue);
+
 
                 // add this to the condition || ((String)pd.getValue("type")).startsWith("oci")
             } else if (propertyType.isEnum() || ((String)pd.getValue("type")).startsWith("oci")  ) {
@@ -547,6 +563,43 @@ public class CustomWizardStep extends WizardStep implements PropertyChangeListen
             } catch (PropertyVetoException ex) {
                 controller.handleError(pd,ex.getMessage());
             }
+        }
+    }
+
+    public class TextAreaVarPanel extends VarPanel {
+        JBTextArea appStackDescription;
+
+        TextAreaVarPanel(PropertyDescriptor pd, VariableGroup variableGroup) throws InvocationTargetException, IllegalAccessException {
+            super(pd, variableGroup, false);
+            setLayout(new BorderLayout());
+            appStackDescription = new JBTextArea();
+
+            Insets currentInsets = appStackDescription.getMargin();
+            Insets newInsets = new Insets(8, 8, currentInsets.bottom, currentInsets.right);
+            appStackDescription.setMargin(newInsets);
+            appStackDescription.setEditable(false);
+            appStackDescription.setWrapStyleWord(true);
+            appStackDescription.setLineWrap(true);
+            appStackDescription.setColumns(30);
+
+            ResourceBundle messages = super.resBundle;
+            appStackDescription.setText(messages.getString("app"));
+            appStackDescription.setFont(new Font("Arial", Font.PLAIN, 14));
+
+            JBScrollPane jbScrollPane = new JBScrollPane(appStackDescription);
+            JPanel mainPanel = new JPanel();
+            mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+            mainPanel.add(jbScrollPane);
+
+            JPanel linkPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            linkPanel.add(new JBLabel("For more information and product documentation please visit the "));
+
+            ActionLink link = new ActionLink("App Stack Documentation", (ActionListener) e -> UIUtil.browseLink("https://github.com/oracle-quickstart/appstack"));
+            linkPanel.add(link);
+
+            mainPanel.setPreferredSize(new JBDimension(800, 0));
+            mainPanel.add(linkPanel);
+            add(mainPanel, BorderLayout.WEST);
         }
     }
 }

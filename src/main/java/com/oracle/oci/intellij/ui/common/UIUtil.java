@@ -4,11 +4,21 @@
  */
 package com.oracle.oci.intellij.ui.common;
 
-import java.awt.Component;
-import java.awt.Desktop;
-import java.awt.GridBagConstraints;
-import java.awt.GridLayout;
-import java.awt.Insets;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.wm.WindowManager;
+import com.oracle.oci.intellij.account.SystemPreferences;
+import io.github.resilience4j.core.lang.NonNull;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -17,29 +27,6 @@ import java.net.URISyntaxException;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JTextArea;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import com.intellij.notification.NotificationGroupManager;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.wm.WindowManager;
-import com.oracle.oci.intellij.account.SystemPreferences;
-import com.oracle.oci.intellij.ui.devops.wizard.mirrorgh.CreateSecretWizardModel.SecretWizardContext;
-
-import io.github.resilience4j.core.lang.NonNull;
 
 public class UIUtil {
   private static Project currentProject;
@@ -115,16 +102,20 @@ public class UIUtil {
     component.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        try {
-          if (!Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-            return;
-          }
-          Desktop.getDesktop().browse(new URI(uri));
-        } catch (URISyntaxException | IOException ex) {
-          throw new RuntimeException(ex);
-        }
+        browseLink(uri);
       }
     });
+  }
+
+  public static void browseLink(String uri) {
+    try {
+      if (!Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+        return;
+      }
+      Desktop.getDesktop().browse(new URI(uri));
+    } catch (URISyntaxException | IOException ex) {
+      throw new RuntimeException(ex);
+    }
   }
 
   public static SimpleDialogWrapper createDialog(String title,

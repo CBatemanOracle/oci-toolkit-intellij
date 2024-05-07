@@ -3,7 +3,6 @@ package com.oracle.oci.intellij.ui.appstack.actions;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.wizard.WizardModel;
 import com.intellij.ui.wizard.WizardStep;
-
 import com.oracle.bmc.core.model.Subnet;
 import com.oracle.bmc.core.model.Vcn;
 import com.oracle.bmc.database.model.AutonomousDatabaseSummary;
@@ -60,21 +59,25 @@ public class CustomWizardModel extends WizardModel {
         // initiate the list first here
         for (VariableGroup varGroup : varGroups) {
 
-            Class<? extends VariableGroup> varGroupClazz = varGroup.getClass();
-            BeanInfo beanInfo = Introspector.getBeanInfo(varGroupClazz);
-            PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
-
-            Arrays.sort(propertyDescriptors, Comparator.comparingInt(pd -> {
-                PropertyOrder annotation = pd.getReadMethod().getAnnotation(PropertyOrder.class);
-                return (annotation != null) ? annotation.value() : Integer.MAX_VALUE;
-            }));
-
-            // create first  wizard step
-            CustomWizardStep varWizardStep = new CustomWizardStep(varGroup, propertyDescriptors, descriptorsState, varGroups);
-            mySteps.add(varWizardStep);
-            add(varWizardStep);
+            createVariableGroupStep(varGroup);
 
         }
+    }
+
+    private void createVariableGroupStep(VariableGroup varGroup) throws IntrospectionException {
+        Class<? extends VariableGroup> varGroupClazz = varGroup.getClass();
+        BeanInfo beanInfo = Introspector.getBeanInfo(varGroupClazz);
+        PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
+
+        Arrays.sort(propertyDescriptors, Comparator.comparingInt(pd -> {
+            PropertyOrder annotation = pd.getReadMethod().getAnnotation(PropertyOrder.class);
+            return (annotation != null) ? annotation.value() : Integer.MAX_VALUE;
+        }));
+
+        // create first  wizard step
+        CustomWizardStep varWizardStep = new CustomWizardStep(varGroup, propertyDescriptors, descriptorsState, varGroups);
+        mySteps.add(varWizardStep);
+        add(varWizardStep);
     }
 
     private void initApplicationNames() {
