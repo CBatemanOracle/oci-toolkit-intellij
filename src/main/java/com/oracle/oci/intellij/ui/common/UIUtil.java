@@ -4,6 +4,8 @@
  */
 package com.oracle.oci.intellij.ui.common;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,7 +14,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.JBColor;
 import com.oracle.oci.intellij.account.SystemPreferences;
+import com.oracle.oci.intellij.util.fills.NotificationGroupShim;
+import com.oracle.oci.intellij.util.fills.Shim;
+import com.oracle.oci.intellij.util.fills.ShimMethod;
+
 import io.github.resilience4j.core.lang.NonNull;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +35,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+@Shim(forType = com.intellij.util.ui.UIUtil.class, dedicated = false)
 public class UIUtil {
   private static Project currentProject;
 
@@ -44,15 +52,29 @@ public class UIUtil {
     }
   }
 
+  /**
+   * @return true if theme is dark.  This shims the deprecated UIUtil.isUnderDarcula()
+   * call from JB's UIUtil, following the deprecation instruction to use JBColor.isBright().
+   */
+  @ShimMethod(methodName = "UIUtil.isUnderDarcula()")
+  public static boolean isUnderDarcula() {
+    return !JBColor.isBright();
+  }
+
+  public static boolean isDarkMode() {
+    return isUnderDarcula();
+  }
+
   public static void fireNotification(NotificationType notificationType,
                                       @NotNull final String msg,
                                       String eventName) {
     invokeLater(() -> {
-      NotificationGroupManager.getInstance()
-                              .getNotificationGroup(NOTIFICATION_GROUP_ID)
-                              .createNotification(NOTIFICATION_GROUP_ID, "",
-                                                  msg, notificationType)
-                              .notify(currentProject);
+      NotificationGroup notificationGroup =
+        NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID);
+      NotificationGroupShim groupShim = new NotificationGroupShim(notificationGroup);
+      Notification notification =
+        groupShim.createNotification(NOTIFICATION_GROUP_ID, "", msg, notificationType);
+      notification.notify(currentProject);
 
       if (eventName != null) {
         SystemPreferences.fireADBInstanceUpdateEvent(eventName);
@@ -88,6 +110,14 @@ public class UIUtil {
       ApplicationManager.getApplication().invokeLater(runnable, modalityState);
     }
   }
+
+  public static  void invokeAndWait(Runnable runnable,ModalityState modalityState){
+    if (modalityState == null){
+      ApplicationManager.getApplication().invokeAndWait(runnable);
+    }else {
+      ApplicationManager.getApplication().invokeAndWait(runnable,modalityState);
+    }
+  }
   public static void invokeLater(Runnable runnable) {
     ApplicationManager.getApplication().invokeLater(runnable);
   }
@@ -116,6 +146,11 @@ public class UIUtil {
     } catch (URISyntaxException | IOException ex) {
       throw new RuntimeException(ex);
     }
+  }
+
+  public static void showErrorDialog(Component parentComponent, String title, String message) {
+    // Use Swing's JOptionPane to show a modal error dialog
+    JOptionPane.showMessageDialog(parentComponent,message,title,JOptionPane.ERROR_MESSAGE);
   }
 
   public static SimpleDialogWrapper createDialog(String title,

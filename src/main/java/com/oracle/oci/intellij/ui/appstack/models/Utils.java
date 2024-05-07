@@ -195,7 +195,7 @@ public class Utils{
         return "";
     }
 
-    static public Map<String , List<String>> depondsOn = new LinkedHashMap<>(){{
+    static public Map<String , List<String>> dependsOn = new LinkedHashMap<>(){{
         put("compartment_id", List.of("availability_domain"));
         put("vault_compartment_id",List.of("vault_id","key_id"));
         put("vault_id",List.of("key_id"));

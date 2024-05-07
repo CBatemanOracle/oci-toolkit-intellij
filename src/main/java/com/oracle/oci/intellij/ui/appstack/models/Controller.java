@@ -97,7 +97,7 @@ public class Controller {
 
     public void updateDependencies(String pdName, VariableGroup varGroup){
         PropertyDescriptor pd = descriptorsState.get(pdName);
-        List<String> dependencies = Utils.depondsOn.get(pd.getName());
+        List<String> dependencies = Utils.dependsOn.get(pd.getName());
         if (dependencies != null) {
             for (String dependent : dependencies) {
                 CustomWizardStep.VarPanel varPanel = varPanels.get(dependent);
@@ -108,7 +108,7 @@ public class Controller {
                     Object pdValue = getValue(varGroup,pd);
                     String dependentValue = "";
                     if ("JAR".equalsIgnoreCase(pdValue.toString())){
-                        dependentValue = "target/.jar";
+                        dependentValue = "target/*.jar";
                     }else {
                         dependentValue = "target/*.war ";
                     }
@@ -360,9 +360,13 @@ public class Controller {
             JLabel errorLabel = varPanel.getErrorLabel();
 
             inputComponent.setBorder(BorderFactory.createLineBorder(JBColor.pink,3,true));
-            errorLabel.setText(errorMessage);
+            if (!pd.getName().equals("current_user_token"))
+                errorLabel.setText(errorMessage);
             if (pd.getValue("errorMessage") != null && !((String)pd.getValue("errorMessage")).isEmpty())
                 inputComponent.setToolTipText("Field should be : "+pd.getValue("errorMessage"));
+            else {
+                inputComponent.setToolTipText(errorMessage);
+            }
         }
     }
     public Object getValue(VariableGroup variableGroup,PropertyDescriptor pd){

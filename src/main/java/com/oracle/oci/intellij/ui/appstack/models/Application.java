@@ -147,7 +147,7 @@ public class Application extends VariableGroup {
         vcp.fireVetoableChange("build_command", oldValue, newValue);
     }
     @PropertyOrder(9)
-    @VariableMetaData(title="Artifact path",description="For example: target/MyApplication.jar",defaultVal="target/.jar",type="string",required=true,visible="eq(application_source,'SOURCE_CODE')")
+    @VariableMetaData(title="Artifact path",description="For example: target/MyApplication.jar",defaultVal="target/*.jar",type="string",required=true,visible="eq(application_source,'SOURCE_CODE')")
 
     public String getArtifact_location() {
         return artifact_location;

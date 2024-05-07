@@ -115,6 +115,8 @@ public class OracleCloudAccount {
   private final KmsVaultClientProxy kmsVaultClientProxy = new KmsVaultClientProxy();
   private final VaultClientProxy vaultClientProxy = new VaultClientProxy();
 
+  private final IdentityClientHomeRegionProxy identityClientHomeRegionProxy = new IdentityClientHomeRegionProxy();
+
   private OracleCloudAccount() {
     // Add the property change listeners in the order they have to be notified.
     SystemPreferences.addPropertyChangeListener(identityClientProxy);
@@ -175,6 +177,7 @@ public class OracleCloudAccount {
     setClientUserAgent(getUserAgent());
 
     final String region = profile.get("region");
+
     SafeRunnerUtil.run((r) -> identityClientProxy.init(r), region);
     SafeRunnerUtil.run((r) -> databaseClientProxy.init(r), region);
     SafeRunnerUtil.run((r) -> virtualNetworkClientProxy.init(r), region);
@@ -182,6 +185,9 @@ public class OracleCloudAccount {
     SafeRunnerUtil.run((r) -> devOpsClientProxy.init(r), region);
     SafeRunnerUtil.run((r) -> kmsVaultClientProxy.init(r), region);
     SafeRunnerUtil.run((r) -> vaultClientProxy.init(r), region);
+
+    final String homeRegion = getHomeRegionKey();
+    SafeRunnerUtil.run((r)->identityClientHomeRegionProxy.init(r),homeRegion);
 
     SystemPreferences.setConfigInfo(configFile, profile.getName(),
             profile.get("region"), identityClientProxy.getRootCompartment());
@@ -201,6 +207,10 @@ public class OracleCloudAccount {
   public DatabaseClientProxy getDatabaseClient() {
     validate();
     return databaseClientProxy;
+  }
+  public IdentityClientHomeRegionProxy getIdentityClientHomeRegionProxy() {
+    validate();
+    return identityClientHomeRegionProxy;
   }
 
   public KmsVaultClientProxy getKmsVaultClient() {
@@ -240,6 +250,12 @@ public class OracleCloudAccount {
   public String getCurrentTenancy() {
     return authenticationDetailsProvider.getTenantId();
   }
+  private String getHomeRegionKey() {
+    GetTenancyRequest getTenancyRequest = GetTenancyRequest.builder().tenancyId(getCurrentTenancy()).build();
+    GetTenancyResponse getTenancyResponse = identityClientProxy.getTenancy(getTenancyRequest);
+    Tenancy tenancy = getTenancyResponse.getTenancy();
+    return tenancy.getHomeRegionKey();
+  }
 
   private void reset() {
     authenticationDetailsProvider = null;
@@ -260,6 +276,7 @@ public class OracleCloudAccount {
       reset();
       identityClient = IdentityClient.builder().build(authenticationDetailsProvider);
       identityClient.setRegion(region);
+
     }
 
     /**
@@ -504,6 +521,9 @@ public class OracleCloudAccount {
       }
     }
 
+    public GetTenancyResponse getTenancy(GetTenancyRequest getTenancyRequest) {
+      return identityClient.getTenancy(getTenancyRequest);
+    }
   }
 
   /**
@@ -1550,5 +1570,61 @@ public class OracleCloudAccount {
       CreateKeyResponse createKey = kmsManagementClient.createKey(request);
       return createKey.getKey();
     }
+  }
+
+  /**
+   * This proxy class behaves similarly to IdentityClientProxy but specifically sets the home region as the region for the IdentityClient.
+   * It is designed to perform operations that must be executed from the home region, such as creating or deleting authentication tokens.
+   * <p>
+   * A key issue this class addresses is the potential delay in the visibility of token deletion. Specifically, after deleting a token from the home region,
+   * if we reset the client identity's region to the current region and then fetch the list of tokens again, the recently deleted token might still appear.
+   * This class ensures that such operations are consistently handled by always interacting with the home region for critical identity management tasks.
+   */
+  public  class IdentityClientHomeRegionProxy {
+    private IdentityClient identityClientHomeRegion;
+    private IdentityClientHomeRegionProxy(){
+    }
+
+    public void reset(){
+      if (identityClientHomeRegion != null) {
+        identityClientHomeRegion.close();
+        identityClientHomeRegion = null;
+      }
+    }
+    public void init(String region){
+      reset();
+      identityClientHomeRegion = IdentityClient.builder().build(authenticationDetailsProvider);
+      identityClientHomeRegion.setRegion(region);
+    }
+
+    public List<AuthToken> getAuthTokenList(){
+      ListAuthTokensRequest listAuthTokensRequest = ListAuthTokensRequest.builder().userId(authenticationDetailsProvider.getUserId())
+              .build();
+      ListAuthTokensResponse listAuthTokensResponse = identityClientHomeRegion.listAuthTokens(listAuthTokensRequest);
+      return listAuthTokensResponse.getItems();
+    }
+
+    public void deleteAuthToken(String id){
+      DeleteAuthTokenRequest deleteRequest = DeleteAuthTokenRequest.builder()
+              .userId(getCurrentUserId())
+              .authTokenId(id)
+              .build();
+
+      identityClientHomeRegion.deleteAuthToken(deleteRequest);
+    }
+
+
+
+    public AuthToken generateToken(String description){
+      CreateAuthTokenDetails createAuthTokenDetails = CreateAuthTokenDetails.builder()
+              .description(description)
+              .build();
+      CreateAuthTokenRequest createRequest = CreateAuthTokenRequest.builder()
+              .userId(getCurrentUserId())
+              .createAuthTokenDetails(createAuthTokenDetails)
+              .build();
+        return identityClientHomeRegion.createAuthToken(createRequest).getAuthToken();
+    }
+
   }
 }

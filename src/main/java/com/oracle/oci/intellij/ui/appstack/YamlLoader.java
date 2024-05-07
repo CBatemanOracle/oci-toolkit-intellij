@@ -1,6 +1,7 @@
 package com.oracle.oci.intellij.ui.appstack;
 
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.ProjectManager;
 import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
@@ -141,7 +142,7 @@ public class YamlLoader {
         }
         CustomWizardModel customWizardModel = new CustomWizardModel(varGroups, descriptorsState);
         AppStackParametersWizardDialog dialog = new AppStackParametersWizardDialog(customWizardModel);
-        dialog.show();
+        ApplicationManager.getApplication().invokeAndWait(dialog::show);
         if (dialog.isCreateStack()){
             isApply = dialog.isApplyJob();
             return dialog.getUserInput();
