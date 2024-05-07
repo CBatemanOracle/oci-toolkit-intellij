@@ -66,6 +66,11 @@ public class UIUtil {
   }
 
   public static void fireNotification(NotificationType notificationType,
+                                      @NotNull final String msg) {
+    fireNotification(notificationType, msg, null);
+  }
+
+  public static void fireNotification(NotificationType notificationType,
                                       @NotNull final String msg,
                                       String eventName) {
     invokeLater(() -> {
@@ -82,7 +87,7 @@ public class UIUtil {
     });
   }
 
-  public static void warn(final String msg) {
+  public static void warn(@NotNull final String msg) {
     fireNotification(NotificationType.WARNING, msg, "");
   }
 

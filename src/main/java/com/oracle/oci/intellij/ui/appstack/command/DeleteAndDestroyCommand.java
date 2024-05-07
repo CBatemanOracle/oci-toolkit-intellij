@@ -26,12 +26,12 @@ public class DeleteAndDestroyCommand extends DestroyStackCommand {
                 deleteCommand.execute();
             } catch (Exception e) {
                 String errorMessage = e.getMessage()==null?"Something went wrong ":e.getMessage();
-                UIUtil.fireNotification(NotificationType.ERROR, errorMessage, null);
+                UIUtil.fireNotification(NotificationType.ERROR, "Error in delete:"+errorMessage);
             }
         };
 
         new MyBackgroundTask().startBackgroundTask(ProjectManager.getInstance().getDefaultProject(),"Destroying Resources of \""+stackName+"\" (stack)","Destroying resources...","Destroy Job Failed please check logs of \""+stackName+"\" (stack)","Destroy job successfully applied on \""+stackName+"\" (stack)",applyJobId,deleteAfterDestroy);
-        UIUtil.fireNotification(NotificationType.INFORMATION, "Destroy Job was submitted for \""+stackName+"\" (stack)", null);
+        UIUtil.fireNotification(NotificationType.INFORMATION, "Destroy Job was submitted for \""+stackName+"\" (stack)");
         return new Result(Result.Severity.NONE, Result.Status.OK);
     }
 }

@@ -44,7 +44,7 @@ public class OCIExplorerFactory implements ToolWindowFactory {
           } catch (Exception ex) {
            final String message = "Oracle Cloud account configuration failed: " + ex.getMessage();
            LogHandler.warn(message);
-           UIUtil.fireNotification(NotificationType.ERROR, message, null);
+           UIUtil.fireNotification(NotificationType.ERROR, message);
           }}}
         );
   }
