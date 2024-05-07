@@ -121,8 +121,7 @@ public class AssociateDevOpsProjectAction extends AnAction {
             devOpsClient.listDevOpsProjects(compartmentId);
         } catch (Exception exception) {
           listDevOpsProjects = null;
-          UIUtil.fireNotification(NotificationType.ERROR, exception.getMessage(),
-                                  null);
+          UIUtil.fireNotification(NotificationType.ERROR, "Error populating projects:"+exception.getMessage());
           LogHandler.error(exception.getMessage(), exception);
         }
       };

@@ -251,7 +251,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
       lastAppliedJob= (JobSummary) OracleCloudAccount.getInstance().getResourceManagerClientProxy().getLastJob(stackId,compartmentId);
 
     }catch (RuntimeException exception){
-      UIUtil.fireNotification(NotificationType.ERROR,"Something Went Wrong ",null);
+      UIUtil.fireNotification(NotificationType.ERROR,"Something Went Wrong ");
     }
     return lastAppliedJob;
   }
@@ -346,7 +346,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
             throw execute.getException();
           }
         } catch (Throwable e1) {
-          UIUtil.fireNotification(NotificationType.ERROR,"Something Went Wrong ",null);
+          UIUtil.fireNotification(NotificationType.ERROR,"Something Went Wrong ");
 //        throw new RuntimeException(e1);
         }
       };
@@ -408,7 +408,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
         try {
           applicationUrl[0] =  getUrlOutput(lastApplyJob.getId());
         } catch (Exception e) {
-          UIUtil.fireNotification(NotificationType.ERROR,"Something Went Wrong ",null);
+          UIUtil.fireNotification(NotificationType.ERROR,"Something Went Wrong ");
           LogHandler.error(e.getMessage(), e);
 
 //            throw new RuntimeException(e);
@@ -417,7 +417,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
 
       Runnable updateUI = ()->{
         if (applicationUrl[0].isEmpty()){
-          UIUtil.fireNotification(NotificationType.ERROR,"Problem retrieving the application url , you can always  try to get url from apply job logs",null);
+          UIUtil.fireNotification(NotificationType.ERROR,"Problem retrieving the application url , you can always  try to get url from apply job logs");
           return;
         }
         try {
@@ -456,7 +456,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
           throw execute.getException();
         }
       } catch (Throwable e1) {
-        UIUtil.fireNotification(NotificationType.ERROR,"Something Went Wrong ",null);
+        UIUtil.fireNotification(NotificationType.ERROR,"Something Went Wrong ");
         LogHandler.error(e1.getMessage(), e1);
 
 //        throw new RuntimeException(e1);
@@ -577,7 +577,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
         }
       } catch (Exception exception) {
         appStackList = null;
-        UIUtil.fireNotification(NotificationType.ERROR, exception.getMessage(), null);
+        UIUtil.fireNotification(NotificationType.ERROR, "Problem with populate"+exception.getMessage());
         LogHandler.error(exception.getMessage(), exception);
       }
     };
@@ -723,7 +723,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
             this.dashboard.populateTableData();
           });
         } catch (Exception e1) {
-          UIUtil.fireNotification(NotificationType.ERROR,"Something Went Wrong",null);
+          UIUtil.fireNotification(NotificationType.ERROR,"Something Went Wrong");
 //          throw new RuntimeException(e1);
         }finally {
           dashboard.createAppStackButton.setEnabled(true);
@@ -758,7 +758,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
             try {
               CreateJobResponse createApplyJobResponse = CreateStackCommand.createApplyJob(resourceManagerClient, stackSummary.getId(), stackSummary.getDisplayName());
             }catch (JobRunningException | BmcException e1){
-              UIUtil.fireNotification(NotificationType.ERROR,e1.getMessage(),null);
+              UIUtil.fireNotification(NotificationType.ERROR,"Problem running stack apply:"+e1.getMessage());
             }finally {
               com.intellij.util.ui.UIUtil.invokeAndWaitIfNeeded((Runnable) ()->{
                 dashboard.applyAppStackButton.setEnabled(true);
@@ -786,7 +786,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
         Result r = appStackDashboard.commandStack.execute(command);
 
       } catch (CommandFailedException e1) {
-        UIUtil.fireNotification(NotificationType.ERROR,e1.getMessage(),null);
+        UIUtil.fireNotification(NotificationType.ERROR,"Problem in apply:"+e1.getMessage());
       }finally {
         com.intellij.util.ui.UIUtil.invokeAndWaitIfNeeded((Runnable) ()->{
           button.setEnabled(true);
@@ -960,7 +960,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
                   Result r = this.dashboard.commandStack.execute(compositeCommand);
 
                 } catch (CommandFailedException e1) {
-                  UIUtil.fireNotification(NotificationType.ERROR,e1.getMessage(),null);
+                  UIUtil.fireNotification(NotificationType.ERROR,"Problem with stack delete/destroy"+e1.getMessage());
                 }finally {
                   com.intellij.util.ui.UIUtil.invokeAndWaitIfNeeded((Runnable) ()->{
                     dashboard.deleteAppStackButton.setEnabled(true);

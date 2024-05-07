@@ -142,7 +142,7 @@ public class ConfigureOracleCloudDialog extends DialogWrapper {
       try {
         OracleCloudAccount.getInstance().configure(configFile, profileName);
       } catch (IOException ioException) {
-        UIUtil.fireNotification(NotificationType.ERROR, ioException.getMessage(), null);
+        UIUtil.fireNotification(NotificationType.ERROR, "Problem with OCI config:"+ioException.getMessage());
       }
     }
   }
@@ -293,7 +293,7 @@ public class ConfigureOracleCloudDialog extends DialogWrapper {
       saveProfileButton.setEnabled(false);
       myOKAction.setEnabled(true);
     } catch (IOException ioEx) {
-      UIUtil.fireNotification(NotificationType.ERROR, ioEx.getMessage(), null);
+      UIUtil.fireNotification(NotificationType.ERROR, "Problem populating profile params: "+ioEx.getMessage());
     }
   }
 

@@ -37,7 +37,8 @@ public class MyBackgroundTask {
                 Thread.sleep(5000); // Sleep for 5 seconds
             }
         } catch (BmcException e){
-            UIUtil.fireNotification(NotificationType.ERROR,e.getMessage(),null);
+            UIUtil.fireNotification(NotificationType.ERROR,
+                "Error accessing ADB to refresh dashboard"+e.getMessage());
         }catch (InterruptedException e) {
             // Handle exceptions
             throw new RuntimeException();
@@ -79,10 +80,10 @@ public class MyBackgroundTask {
 
                 if (isJobFinished.apply(jobId)){
                     progressIndicator.setText(succeededMessage);
-                    UIUtil.fireNotification(NotificationType.INFORMATION, succeededMessage, null);
+                    UIUtil.fireNotification(NotificationType.INFORMATION, "Problem:"+succeededMessage);
                 }else {
                     progressIndicator.setText(failedMessage);
-                    UIUtil.fireNotification(NotificationType.ERROR, failedMessage, null);
+                    UIUtil.fireNotification(NotificationType.ERROR, failedMessage);
                 }
                 // refresh the last job state
                 Job job = getJob(jobId);
@@ -96,7 +97,7 @@ public class MyBackgroundTask {
                         runLater.run();
                     } catch (Exception e) {
                         String errorMessage = e.getMessage()==null?"Something went wrong ":e.getMessage();
-                        UIUtil.fireNotification(NotificationType.ERROR, errorMessage, null);
+                        UIUtil.fireNotification(NotificationType.ERROR, errorMessage);
                     }
                 }
 

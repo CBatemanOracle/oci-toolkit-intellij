@@ -121,7 +121,7 @@ public class AuthenticationTokenDialog extends DialogWrapper {
             createAuthDialog.show();
 
         }else {
-            UIUtil.fireNotification(NotificationType.ERROR,"you can just have two tokens at a time ",null);
+            UIUtil.fireNotification(NotificationType.ERROR,"you can just have two tokens at a time ");
         }
     }
 
@@ -137,7 +137,7 @@ public class AuthenticationTokenDialog extends DialogWrapper {
                 OracleCloudAccount.IdentityClientHomeRegionProxy identityClientProxy = OracleCloudAccount.getInstance().getIdentityClientHomeRegionProxy();
                 tokens = identityClientProxy.getAuthTokenList();
             }catch(RuntimeException ex){
-                UIUtil.fireNotification(NotificationType.ERROR, ex.getMessage(), null);
+                UIUtil.fireNotification(NotificationType.ERROR, "Problem populating data:"+ex.getMessage());
             }
         };
 
@@ -173,7 +173,7 @@ public class AuthenticationTokenDialog extends DialogWrapper {
             }catch (BmcException ex){
                 String simplifiedMessage = ex.getMessage().substring(0,100)+"...";
                 setErrorText(simplifiedMessage);
-                UIUtil.fireNotification(NotificationType.ERROR,ex.getMessage(),null);
+                UIUtil.fireNotification(NotificationType.ERROR,"Problem deleting token:"+ex.getMessage());
             }finally {
                 deleteAction.setEnabled(true);
             }
@@ -216,7 +216,7 @@ public class AuthenticationTokenDialog extends DialogWrapper {
                 }catch (BmcException ex){
                     String simplifiedMessage = ex.getMessage().substring(0,100)+"...";
                     setErrorText(simplifiedMessage);
-                    UIUtil.fireNotification(NotificationType.ERROR,ex.getMessage(),null);
+                    UIUtil.fireNotification(NotificationType.ERROR,"Error getting token info"+ex.getMessage());
                 }finally {
                     UIUtil.invokeLater(()->{
                         getOKAction().setEnabled(true);
