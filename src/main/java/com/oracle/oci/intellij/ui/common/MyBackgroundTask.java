@@ -1,6 +1,13 @@
 package com.oracle.oci.intellij.ui.common;
 
-import com.esotericsoftware.minlog.Log;
+
+import static com.oracle.bmc.resourcemanager.model.Job.LifecycleState.Failed;
+import static com.oracle.bmc.resourcemanager.model.Job.LifecycleState.Succeeded;
+
+import java.util.function.Function;
+
+import org.jetbrains.annotations.NotNull;
+
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -10,12 +17,7 @@ import com.oracle.bmc.model.BmcException;
 import com.oracle.bmc.resourcemanager.model.Job;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.ui.appstack.AppStackDashboard;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Function;
-
-import static com.oracle.bmc.resourcemanager.model.Job.LifecycleState.Failed;
-import static com.oracle.bmc.resourcemanager.model.Job.LifecycleState.Succeeded;
+import com.oracle.oci.intellij.util.LogHandler;
 
 public class MyBackgroundTask {
     private volatile boolean isRunning = true ;
@@ -35,7 +37,8 @@ public class MyBackgroundTask {
                 Thread.sleep(5000); // Sleep for 5 seconds
             }
         } catch (BmcException e){
-            UIUtil.fireNotification(NotificationType.ERROR,e.getMessage(),null);
+            UIUtil.fireNotification(NotificationType.ERROR,
+                "Error accessing ADB to refresh dashboard"+e.getMessage());
         }catch (InterruptedException e) {
             // Handle exceptions
             throw new RuntimeException();
@@ -54,7 +57,7 @@ public class MyBackgroundTask {
             OracleCloudAccount.ResourceManagerClientProxy resourceManagerClient = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
             return resourceManagerClient.getJobDetails(jobId);
         }catch (BmcException ex){
-            Log.error(ex.getMessage());
+            LogHandler.error(ex.getMessage());
         }
         return null;
 
@@ -77,10 +80,10 @@ public class MyBackgroundTask {
 
                 if (isJobFinished.apply(jobId)){
                     progressIndicator.setText(succeededMessage);
-                    UIUtil.fireNotification(NotificationType.INFORMATION, succeededMessage, null);
+                    UIUtil.fireNotification(NotificationType.INFORMATION, "Problem:"+succeededMessage);
                 }else {
                     progressIndicator.setText(failedMessage);
-                    UIUtil.fireNotification(NotificationType.ERROR, failedMessage, null);
+                    UIUtil.fireNotification(NotificationType.ERROR, failedMessage);
                 }
                 // refresh the last job state
                 Job job = getJob(jobId);
@@ -94,7 +97,7 @@ public class MyBackgroundTask {
                         runLater.run();
                     } catch (Exception e) {
                         String errorMessage = e.getMessage()==null?"Something went wrong ":e.getMessage();
-                        UIUtil.fireNotification(NotificationType.ERROR, errorMessage, null);
+                        UIUtil.fireNotification(NotificationType.ERROR, errorMessage);
                     }
                 }
 

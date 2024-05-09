@@ -38,7 +38,7 @@ public class SafeRunnerUtil {
     public void accept(Throwable ex) {
       final String message = "Oracle Cloud account configuration failed: " + ex.getMessage();
       LogHandler.error(message, ex);
-      UIUtil.fireNotification(NotificationType.ERROR, message, null);
+      UIUtil.fireNotification(NotificationType.ERROR, message);
       ex.printStackTrace();
     }
   }

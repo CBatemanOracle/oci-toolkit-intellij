@@ -66,7 +66,7 @@ public class CreateStackCommand extends AbstractBasicCommand<CreateResult> {
 
         CreateStackResponse createStackResponse = resourceManagerClient.createStack(this.compartmentId, variables);
         System.out.println("Created Stack : " + createStackResponse.getStack());
-        UIUtil.fireNotification(NotificationType.INFORMATION," Stack instance created successfully.", null);
+        UIUtil.fireNotification(NotificationType.INFORMATION," Stack instance created successfully.");
 
         final String stackId = createStackResponse.getStack().getId();
         final String stackName = createStackResponse.getStack().getDisplayName();
@@ -116,7 +116,7 @@ public class CreateStackCommand extends AbstractBasicCommand<CreateResult> {
 
     /* Send request to the Client */
         CreateJobResponse createJobResponse =  resourceManagerClient.submitJob(createJobRequest);
-        UIUtil.fireNotification(NotificationType.INFORMATION," The Apply Job  submitted successfully. for\""+stackName+"\" (stack)", null);
+        UIUtil.fireNotification(NotificationType.INFORMATION," The Apply Job  submitted successfully. for\""+stackName+"\" (stack)");
         new MyBackgroundTask().startBackgroundTask(ProjectManager.getInstance().getDefaultProject(),"Creating Resources of \""+stackName+"\" (stack)","Creating Resources... ","Apply Job Failed please check logs \""+stackName+"\" (stack)","Apply job successfully applied  \""+stackName+"\" (stack)",createJobResponse.getJob().getId(),()->{
             try {
                 if (Job.LifecycleState.Succeeded.equals(createJobResponse.getJob().getLifecycleState()))

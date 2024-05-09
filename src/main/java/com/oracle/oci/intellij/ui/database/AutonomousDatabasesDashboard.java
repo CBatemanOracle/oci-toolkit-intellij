@@ -355,7 +355,8 @@ public final class AutonomousDatabasesDashboard implements PropertyChangeListene
                 .getDatabaseClient().getAutonomousDatabaseInstances(workLoadType);
       } catch (Exception exception) {
         autonomousDatabaseInstancesList = null;
-        UIUtil.fireNotification(NotificationType.ERROR, exception.getMessage(), null);
+        UIUtil.fireNotification(NotificationType.ERROR, 
+          "Error fetching database data to populate the table data"+exception.getMessage());
         LogHandler.error(exception.getMessage(), exception);
       }
     };

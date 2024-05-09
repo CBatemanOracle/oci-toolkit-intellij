@@ -3,10 +3,9 @@ package com.oracle.oci.intellij.ui.git.config;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.intellij.util.containers.hash.LinkedHashMap;
-import com.intellij.util.net.IOExceptionDialog;
 import com.oracle.oci.intellij.ui.git.config.GitParser.GitParserException;
 import com.oracle.oci.intellij.util.StrippingLineNumberReader;
 
