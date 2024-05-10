@@ -245,7 +245,6 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
     });
   }
   private JobSummary getLastJob(String stackId, String compartmentId) {
-    //TODO HANDLE EXCEPTION ....
     JobSummary lastAppliedJob = null;
     try {
       lastAppliedJob= (JobSummary) OracleCloudAccount.getInstance().getResourceManagerClientProxy().getLastJob(stackId,compartmentId);
@@ -583,25 +582,35 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
     };
 
     final Runnable updateUI = () -> {
-      if (appStackList != null) {
-        UIUtil.showInfoInStatusBar((appStackList.size()) + " AppStack found.");
-        final DefaultTableModel model = ((DefaultTableModel) appStacksTable.getModel());
-        model.setRowCount(0);
+      Runnable fetchJobsStateAndUpdate = ()->{
+          if (appStackList != null){
+            List<Object[]> rowDataList = new ArrayList<>();
 
-        for (StackSummary s : appStackList) {
-          final Object[] rowData = new Object[AppStackTableModel.APPSTACK_COLUMN_NAMES.length];
-//          final boolean isFreeTier =
-//                  s.getIsFreeTier() != null && s.getIsFreeTier();
-          rowData[0] = s.getDisplayName();
-          rowData[1] = s.getDescription();
-          rowData[2] = s.getTerraformVersion();
-          rowData[3] = s.getLifecycleState();
-          rowData[4] = s.getTimeCreated();
-          rowData[5] = getLastJob(s.getId(),s.getCompartmentId());
-          model.addRow(rowData);
-        }
-      }
-      refreshAppStackButton.setEnabled(true);
+            for (StackSummary s : appStackList){
+              final Object[] rowData = new Object[AppStackTableModel.APPSTACK_COLUMN_NAMES.length];
+              rowData[0] = s.getDisplayName();
+              rowData[1] = s.getDescription();
+              rowData[2] = s.getTerraformVersion();
+              rowData[3] = s.getLifecycleState();
+              rowData[4] = s.getTimeCreated();
+              rowData[5] = getLastJob(s.getId(),s.getCompartmentId());
+              rowDataList.add(rowData);
+            }
+
+            UIUtil.invokeLater(()->{
+                final DefaultTableModel tableModel = (DefaultTableModel) appStacksTable.getModel();
+                tableModel.setRowCount(0);
+
+                for (Object[] row:rowDataList){
+                  tableModel.addRow(row);
+                }
+                UIUtil.showInfoInStatusBar((appStackList.size()) + " AppStack found.");
+                refreshAppStackButton.setEnabled(true);
+            });
+          }
+      };
+
+      UIUtil.schedule(fetchJobsStateAndUpdate);
     };
 
     UIUtil.executeAndUpdateUIAsync(fetchData, updateUI);
