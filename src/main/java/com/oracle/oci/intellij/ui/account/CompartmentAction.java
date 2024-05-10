@@ -4,14 +4,14 @@
  */
 package com.oracle.oci.intellij.ui.account;
 
+import org.jetbrains.annotations.NotNull;
+
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.util.IconLoader;
 import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.oci.intellij.account.SystemPreferences;
 import com.oracle.oci.intellij.ui.common.CompartmentSelection;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * Action handler for selection event of UI component 'Compartment'.
@@ -19,8 +19,10 @@ import javax.swing.*;
 public class CompartmentAction extends AnAction {
 
   public CompartmentAction() {
-    super("Compartment", "Select compartment", new ImageIcon(
-            RegionAction.class.getResource("/icons/compartments.png")));
+    super("Compartment", "Select compartment", 
+            IconLoader.getIcon("/icons/compartments.png", RegionAction.class));
+    //new ImageIcon(
+    //RegionAction.class.getResource("/icons/compartments.png")
   }
 
   /**
