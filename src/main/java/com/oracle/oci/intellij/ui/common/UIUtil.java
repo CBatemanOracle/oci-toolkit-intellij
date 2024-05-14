@@ -19,7 +19,6 @@ import com.oracle.oci.intellij.account.SystemPreferences;
 import com.oracle.oci.intellij.util.fills.NotificationGroupShim;
 import com.oracle.oci.intellij.util.fills.Shim;
 import com.oracle.oci.intellij.util.fills.ShimMethod;
-
 import io.github.resilience4j.core.lang.NonNull;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

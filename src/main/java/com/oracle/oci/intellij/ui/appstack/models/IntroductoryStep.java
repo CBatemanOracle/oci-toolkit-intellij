@@ -1,8 +1,6 @@
 package com.oracle.oci.intellij.ui.appstack.models;
 
 
-import com.intellij.openapi.project.ProjectManager;
-import com.oracle.oci.intellij.settings.OCIApplicationSettings;
 import com.oracle.oci.intellij.ui.appstack.actions.PropertyOrder;
 import com.oracle.oci.intellij.ui.appstack.annotations.VariableMetaData;
 
@@ -11,7 +9,7 @@ public class IntroductoryStep extends VariableGroup {
     private boolean introductionDontShowAgain;
 
     @PropertyOrder(1)
-    @VariableMetaData(type = "textArea")
+    @VariableMetaData(title = "", type = "textArea")
     public String getDescriptionText() {
         return descriptionText;
     }
@@ -26,9 +24,6 @@ public class IntroductoryStep extends VariableGroup {
 
     public void setIntroductionDontShowAgain(boolean introductionDontShowAgain) {
         this.introductionDontShowAgain = introductionDontShowAgain;
-
-        OCIApplicationSettings.State state =  OCIApplicationSettings.getInstance(ProjectManager.getInstance().getDefaultProject()).getState();
-        state.setAppStackIntroductoryStepShow(!introductionDontShowAgain);
 
     }
 }

@@ -1,7 +1,5 @@
 package com.oracle.oci.intellij.ui.appstack.models;
 
-import com.oracle.oci.intellij.ui.appstack.actions.CustomWizardStep;
-
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyDescriptor;
 import java.beans.PropertyVetoException;

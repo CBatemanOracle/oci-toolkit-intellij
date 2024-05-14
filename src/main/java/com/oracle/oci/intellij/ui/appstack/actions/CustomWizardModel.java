@@ -13,8 +13,11 @@ import com.oracle.bmc.identity.model.AvailabilityDomain;
 import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.bmc.keymanagement.model.KeySummary;
 import com.oracle.bmc.keymanagement.model.VaultSummary;
+import com.oracle.oci.intellij.settings.OCIApplicationSettings;
 import com.oracle.oci.intellij.ui.appstack.models.Controller;
+import com.oracle.oci.intellij.ui.appstack.models.IntroductoryStep;
 import com.oracle.oci.intellij.ui.appstack.models.VariableGroup;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -57,12 +60,41 @@ public class CustomWizardModel extends WizardModel {
     private void initWizardSteps() throws IntrospectionException {
         // initiate the
         initApplicationNames();
+        // create introduction Wizard step
+        OCIApplicationSettings.State state = getState();
+
+        List<VariableGroup> varGroupListWithoutIntro ;
+        if (state != null && state.isAppStackIntroductoryStepShow()){
+            IntroductoryStep introductoryStep = new IntroductoryStep();
+            varGroups.add(0,introductoryStep);
+            // create wizard step for introduction .
+            IntroductoryWizardStep varWizardStep = new IntroductoryWizardStep();
+            mySteps.add(varWizardStep);
+            add(varWizardStep);
+            varGroupListWithoutIntro = varGroups.subList(1,varGroups.size()) ;
+        }else {
+            varGroupListWithoutIntro = varGroups;
+        }
+
+
         // initiate the list first here
-        for (VariableGroup varGroup : varGroups) {
+        for (VariableGroup varGroup : varGroupListWithoutIntro) {
 
             createVariableGroupStep(varGroup);
 
         }
+    }
+
+    @Nullable
+    private static OCIApplicationSettings.State getState() {
+        OCIApplicationSettings.State state = null;
+        try {
+            state = OCIApplicationSettings.getInstance().getState();
+
+        }catch (RuntimeException ex){
+            System.out.println(ex.getMessage());
+        }
+        return state;
     }
 
     private void createVariableGroupStep(VariableGroup varGroup) throws IntrospectionException {
@@ -76,7 +108,7 @@ public class CustomWizardModel extends WizardModel {
         }));
 
         // create first  wizard step
-        CustomWizardStep varWizardStep = new CustomWizardStep(varGroup, propertyDescriptors, descriptorsState, varGroups);
+        VariableWizardStep varWizardStep = new VariableWizardStep(varGroup, propertyDescriptors, descriptorsState);
         mySteps.add(varWizardStep);
         add(varWizardStep);
     }

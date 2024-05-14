@@ -185,7 +185,7 @@ public class YamlLoader {
 
         OCIApplicationSettings.State state = null;
         try {
-            state = OCIApplicationSettings.getInstance(ProjectManager.getInstance().getDefaultProject()).getState();
+            state = OCIApplicationSettings.getInstance().getState();
 
         }catch (RuntimeException ex){
             System.out.println(ex.getMessage());

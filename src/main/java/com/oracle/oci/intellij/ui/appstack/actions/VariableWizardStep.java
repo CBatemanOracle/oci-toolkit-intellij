@@ -45,7 +45,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class CustomWizardStep extends WizardStep implements PropertyChangeListener {
+public class VariableWizardStep extends AbstractWizardStep implements PropertyChangeListener {
     JBScrollPane mainScrollPane;
     JPanel mainPanel;
     VariableGroup variableGroup;
@@ -55,7 +55,7 @@ public class CustomWizardStep extends WizardStep implements PropertyChangeListen
     static private List<Stack> stackList ;
 
 
-    public CustomWizardStep(VariableGroup varGroup, PropertyDescriptor[] propertyDescriptors, LinkedHashMap<String, PropertyDescriptor> descriptorsState, List<VariableGroup> varGroups) {
+    public VariableWizardStep(VariableGroup varGroup, PropertyDescriptor[] propertyDescriptors, LinkedHashMap<String, PropertyDescriptor> descriptorsState) {
         mainPanel = new JPanel();
         mainScrollPane = new JBScrollPane(mainPanel);
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));

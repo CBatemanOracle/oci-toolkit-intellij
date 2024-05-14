@@ -5,13 +5,12 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Service(Service.Level.APP)
 @State(name = "OCIApplicationSettings",
-        storages = @Storage(value = "oracleocitoolkit.xml"))
+        storages = @Storage(value = "oracleocitoolkit3.xml"))
 public final class OCIApplicationSettings implements PersistentStateComponent<OCIApplicationSettings.State> {
     private State state = new State();
     @Override
@@ -40,7 +39,7 @@ public final class OCIApplicationSettings implements PersistentStateComponent<OC
         }
     }
 
-    public static OCIApplicationSettings getInstance(@NotNull Project project){
+    public static OCIApplicationSettings getInstance(){
 
         OCIApplicationSettings settings =      ApplicationManager.getApplication().getService(OCIApplicationSettings.class);
 
