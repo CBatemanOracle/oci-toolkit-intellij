@@ -76,6 +76,7 @@ import com.oracle.bmc.vault.requests.CreateSecretRequest;
 import com.oracle.bmc.vault.requests.ListSecretsRequest;
 import com.oracle.bmc.vault.responses.CreateSecretResponse;
 import com.oracle.bmc.vault.responses.ListSecretsResponse;
+import com.oracle.oci.intellij.ui.appstack.AppStackDashboard;
 import com.oracle.oci.intellij.ui.appstack.exceptions.JobRunningException;
 import com.oracle.oci.intellij.ui.common.AutonomousDatabaseConstants;
 import com.oracle.oci.intellij.util.BundleUtil;
@@ -1190,6 +1191,9 @@ public class OracleCloudAccount {
                           .configSource(zipUploadConfigSourceDetails)
                           .displayName(displayName)
                           .description(description)
+                .freeformTags(new HashMap<>(){
+                  {put("Type", AppStackDashboard.APP_STACK);}
+                })
                           .variables(variables == null ? Collections.emptyMap() : variables)
                           .build();
       CreateStackRequest createStackRequest =
