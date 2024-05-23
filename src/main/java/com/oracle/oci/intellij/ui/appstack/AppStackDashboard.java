@@ -34,6 +34,7 @@ import com.oracle.oci.intellij.ui.appstack.uimodel.AppStackTableModel;
 import com.oracle.oci.intellij.ui.common.Icons;
 import com.oracle.oci.intellij.ui.common.InformationDialog;
 import com.oracle.oci.intellij.ui.common.UIUtil;
+import com.oracle.oci.intellij.ui.common.cache.SimpleCache;
 import com.oracle.oci.intellij.ui.explorer.ITabbedExplorerContent;
 import com.oracle.oci.intellij.util.LogHandler;
 import org.jetbrains.annotations.NonNls;
@@ -84,6 +85,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
   private @NonNls @NotNull String toolWindowId;
   private @NotNull @NonNls String locationHash;
   private static ResourceBundle resBundle;
+  public static SimpleCache jobsStackCache;
   private static final CopyOnWriteArrayList<AppStackDashboard> ALL = new CopyOnWriteArrayList<>();
 
   public static AppStackDashboard newInstance(@NotNull Project project,
@@ -145,6 +147,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
   }
 
   private AppStackDashboard() {
+    jobsStackCache = new SimpleCache<String,List<JobSummary>>();
     // initiate property descriptors .... so we can build the form for the show appStack details .....
     YamlLoader load = new YamlLoader();
     try {
@@ -185,6 +188,8 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
     initializeLabels();
     resBundle = ResourceBundle.getBundle("appStackDashboard", Locale.ROOT);
     SystemPreferences.addPropertyChangeListener(this);
+
+    UIUtil.invokeLater(this::populateTableData);
   }
 
   private void initializeLabels() {
@@ -593,7 +598,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
   }
 
   public synchronized void populateTableData() {
-    ((DefaultTableModel) appStacksTable.getModel()).setRowCount(0);
+//    ((DefaultTableModel) appStacksTable.getModel()).setRowCount(0);
     UIUtil.showInfoInStatusBar("Refreshing stack list .");
 
     refreshAppStackButton.setEnabled(false);
@@ -602,7 +607,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
       try {
         String compartmentId = SystemPreferences.getCompartmentId();
         ListStackProxyCommand command =
-                new ListStackProxyCommand(OracleCloudAccount.getInstance().getResourceManagerClientProxy(), compartmentId);
+                new ListStackProxyCommand(OracleCloudAccount.getInstance().getResourceManagerClientProxy(), compartmentId,jobsStackCache);
         ListStackProxyCommand.ListStackProxyResult result = (ListStackProxyCommand.ListStackProxyResult) commandStack.execute(command);
         if (!result.isError()) {
           appStackList =  result.getStacks();
@@ -769,8 +774,10 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
               dashboard.createAppStackButton.setEnabled(true);
             }
           };
+          //todo just add the created one to the list
 
           Runnable updateUI = ()->{
+
             this.dashboard.populateTableData();
           };
 
@@ -806,6 +813,9 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
           UIUtil.schedule(()->{
             try {
               CreateJobResponse createApplyJobResponse = CreateStackCommand.createApplyJob(resourceManagerClient, stackSummary.getId(), stackSummary.getDisplayName());
+              // invalidate cache because now we have new element in jobs of this stack
+              jobsStackCache.remove(stackSummary.getId());
+
             }catch (JobRunningException | BmcException e1){
               UIUtil.fireNotification(NotificationType.ERROR,"Problem running stack apply:"+e1.getMessage());
             }finally {
@@ -814,7 +824,6 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
               });
             }
           });
-
 
 
 //        String applyJobId = createApplyJobResponse.getJob().getId();
@@ -1017,6 +1026,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
                   });
                 }
           });
+          jobsStackCache.remove(stackSummary.getId());
 //          invokeLater(this.dashboard,compositeCommand,dashboard.deleteAppStackButton);
         }else {
             compositeCommand = null;

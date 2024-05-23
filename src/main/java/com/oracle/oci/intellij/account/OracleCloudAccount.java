@@ -1106,6 +1106,15 @@ public class OracleCloudAccount {
       GetStackResponse response = this.resourceManagerClient.getStack(getStackRequest);
       return response.getStack();
     }
+
+//    public StackSummary getStackSummary(String stackId){
+//      GetStackRequest getStackRequest = Getstack.builder()
+//              .stackId(stackId)
+//              .build();
+//
+//      GetStackResponse response = this.resourceManagerClient.getStack(getStackRequest);
+//      return response.getStack();
+//    }
     
     public ListJobsResponse listJobs(String compartmentId, String stackId) {
       ListJobsRequest request = ListJobsRequest.builder().compartmentId(compartmentId)

@@ -5,6 +5,7 @@ import com.oracle.bmc.resourcemanager.model.StackSummary;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.common.command.AbstractBasicCommand;
 import com.oracle.oci.intellij.ui.appstack.models.proxies.StackProxy;
+import com.oracle.oci.intellij.ui.common.cache.SimpleCache;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,6 +24,7 @@ import java.util.Optional;
 public class ListStackProxyCommand extends AbstractBasicCommand<ListStackProxyCommand.ListStackProxyResult> {
     private OracleCloudAccount.ResourceManagerClientProxy resManagerClient;
     private String compartmentId;
+    private SimpleCache<String,List<JobSummary>> jobsCache ;
 
     public static class ListStackProxyResult extends AbstractBasicCommand.Result {
 
@@ -48,10 +50,11 @@ public class ListStackProxyCommand extends AbstractBasicCommand<ListStackProxyCo
 
     }
 
-    public ListStackProxyCommand(OracleCloudAccount.ResourceManagerClientProxy resManagerClient, String compartmentId) {
+    public ListStackProxyCommand(OracleCloudAccount.ResourceManagerClientProxy resManagerClient, String compartmentId,SimpleCache<String ,List<JobSummary>> jobsCache) {
         super();
         this.resManagerClient = resManagerClient;
         this.compartmentId = compartmentId;
+        this.jobsCache = jobsCache;
     }
 
     @SuppressWarnings("unchecked")
@@ -59,13 +62,7 @@ public class ListStackProxyCommand extends AbstractBasicCommand<ListStackProxyCo
     protected ListStackProxyResult doExecute() throws Exception {
         try {
             List<StackSummary> listOfAppStacks = resManagerClient.listStacks(compartmentId);
-            List<StackProxy> stackProxies = new ArrayList<>();
-            listOfAppStacks.forEach(stackSummary -> {
-                List<JobSummary> jobSummaries = resManagerClient.listJobs(stackSummary.getCompartmentId(),stackSummary.getId()).getItems();
-
-                StackProxy sp = new StackProxy(stackSummary,jobSummaries);
-                stackProxies.add(sp);
-            });
+            List<StackProxy> stackProxies = getStackProxyList(listOfAppStacks,resManagerClient);
 
             return new ListStackProxyResult(AbstractBasicCommand.Result.Severity.NONE,
                     Result.Status.OK, stackProxies);
@@ -78,5 +75,15 @@ public class ListStackProxyCommand extends AbstractBasicCommand<ListStackProxyCo
             }
             throw bmcExcep;
         }
+    }
+
+    private  List<StackProxy> getStackProxyList(List<StackSummary> listOfAppStacks, OracleCloudAccount.ResourceManagerClientProxy resManagerClient) {
+        List<StackProxy> stackProxies = new ArrayList<>();
+        listOfAppStacks.forEach(stackSummary -> {
+            StackProxy sp = new StackProxy(stackSummary,resManagerClient,jobsCache);
+
+            stackProxies.add(sp);
+        });
+        return stackProxies;
     }
 }
