@@ -5,16 +5,20 @@
 package com.oracle.oci.intellij.ui.database;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.components.ActionLink;
 import com.oracle.bmc.database.model.AutonomousDatabaseSummary;
 import com.oracle.bmc.database.model.AutonomousDatabaseSummary.LifecycleState;
+import com.oracle.oci.intellij.account.ConfigFileHandler;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.account.SystemPreferences;
 import com.oracle.oci.intellij.ui.appstack.actions.ActionFactory;
+import com.oracle.oci.intellij.ui.appstack.exceptions.OciAccountConfigException;
 import com.oracle.oci.intellij.ui.common.AutonomousDatabaseConstants;
+import com.oracle.oci.intellij.ui.common.MessageDialog;
 import com.oracle.oci.intellij.ui.common.UIUtil;
 import com.oracle.oci.intellij.ui.database.actions.AutonomousDatabaseBasicActions;
 import com.oracle.oci.intellij.ui.database.actions.AutonomousDatabaseMoreActions;
@@ -353,10 +357,16 @@ public final class AutonomousDatabasesDashboard implements PropertyChangeListene
 
         autonomousDatabaseInstancesList = OracleCloudAccount.getInstance()
                 .getDatabaseClient().getAutonomousDatabaseInstances(workLoadType);
-      } catch (Exception exception) {
+      } catch (Exception  exception  ) {
         autonomousDatabaseInstancesList = null;
-        UIUtil.fireNotification(NotificationType.ERROR, exception.getMessage(), null);
-        LogHandler.error(exception.getMessage(), exception);
+        LogHandler.warn(exception.getMessage());
+        if (exception instanceof OciAccountConfigException)
+          ApplicationManager.getApplication().invokeLater(()->{
+            MessageDialog informDialog = new MessageDialog(exception.getMessage(), MessageDialog.MessageType.ERROR, ConfigFileHandler.CONFIG_FILE_URL_EXAMPLES);
+            informDialog.show();});
+        else {
+          UIUtil.fireNotification(NotificationType.ERROR, exception.getMessage(), null);
+        }
       }
     };
 
