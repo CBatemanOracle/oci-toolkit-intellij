@@ -4,7 +4,7 @@ package com.oracle.oci.intellij.ui.appstack.models;
 import com.oracle.oci.intellij.ui.appstack.actions.PropertyOrder;
 import com.oracle.oci.intellij.ui.appstack.annotations.VariableMetaData;
 
-public class IntroductoryStep extends VariableGroup {
+public class Introduction extends VariableGroup {
     private String  descriptionText ;
     private boolean introductionDontShowAgain;
 

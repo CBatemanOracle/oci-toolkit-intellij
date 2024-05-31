@@ -2,7 +2,6 @@ package com.oracle.oci.intellij.ui.appstack;
 
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.ProjectManager;
 import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.account.SystemPreferences;
@@ -192,7 +191,7 @@ public class YamlLoader {
         }
 
         if (state != null && state.isAppStackIntroductoryStepShow()){
-            IntroductoryStep introductoryStep = new IntroductoryStep();
+            Introduction introductoryStep = new Introduction();
             varGroups.add(introductoryStep);
 
         }

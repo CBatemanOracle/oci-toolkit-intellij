@@ -8,7 +8,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.JBDimension;
 import com.oracle.oci.intellij.ui.appstack.models.Controller;
-import com.oracle.oci.intellij.ui.appstack.models.IntroductoryStep;
 import com.oracle.oci.intellij.ui.appstack.models.VariableGroup;
 import com.oracle.oci.intellij.ui.common.Icons;
 import org.jetbrains.annotations.NotNull;
@@ -52,8 +51,6 @@ public class ReviewDialog extends DialogWrapper {
         mainPanel.setLayout(new BoxLayout(mainPanel,BoxLayout.Y_AXIS));
         final PropertyDescriptor[][] pds = new PropertyDescriptor[1][1];
         varGroups.forEach(varGroup->{
-            if (varGroup.getClass().equals(IntroductoryStep.class))
-                return;
             try {
                 JPanel groupPanel = new JPanel();
                 String className = varGroup.getClass().getSimpleName().replaceAll("_"," ");
