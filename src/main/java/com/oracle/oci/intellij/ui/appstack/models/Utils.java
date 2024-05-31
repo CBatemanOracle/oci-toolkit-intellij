@@ -28,7 +28,7 @@ public class Utils{
 
     public static List<VariableGroup> variableGroups = new ArrayList<>()
     {{
-        add(new IntroductoryStep());
+//        add(new IntroductoryStep());
         add(new Stack_Information());
         add(new General_Configuration());
         add(new Application());

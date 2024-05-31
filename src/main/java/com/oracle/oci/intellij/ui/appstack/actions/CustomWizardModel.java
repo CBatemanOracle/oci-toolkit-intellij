@@ -15,7 +15,7 @@ import com.oracle.bmc.keymanagement.model.KeySummary;
 import com.oracle.bmc.keymanagement.model.VaultSummary;
 import com.oracle.oci.intellij.settings.OCIApplicationSettings;
 import com.oracle.oci.intellij.ui.appstack.models.Controller;
-import com.oracle.oci.intellij.ui.appstack.models.IntroductoryStep;
+import com.oracle.oci.intellij.ui.appstack.models.Introduction;
 import com.oracle.oci.intellij.ui.appstack.models.VariableGroup;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,8 +65,6 @@ public class CustomWizardModel extends WizardModel {
 
         List<VariableGroup> varGroupListWithoutIntro ;
         if (state != null && state.isAppStackIntroductoryStepShow()){
-            IntroductoryStep introductoryStep = new IntroductoryStep();
-            varGroups.add(0,introductoryStep);
             // create wizard step for introduction .
             IntroductoryWizardStep varWizardStep = new IntroductoryWizardStep();
             mySteps.add(varWizardStep);
@@ -79,7 +77,8 @@ public class CustomWizardModel extends WizardModel {
 
         // initiate the list first here
         for (VariableGroup varGroup : varGroupListWithoutIntro) {
-
+            if (varGroup instanceof Introduction)
+                continue;
             createVariableGroupStep(varGroup);
 
         }

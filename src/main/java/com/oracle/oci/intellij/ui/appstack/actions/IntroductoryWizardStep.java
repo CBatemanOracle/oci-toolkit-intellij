@@ -27,7 +27,7 @@ public class IntroductoryWizardStep extends AbstractWizardStep  {
         mainPanel = new JPanel();
         resBundle = ResourceBundle.getBundle("appStackWizard", Locale.ROOT);
         Border emptyBorder = BorderFactory.createEmptyBorder();
-        TitledBorder titledBorder = BorderFactory.createTitledBorder(emptyBorder, "Introductory Step");
+        TitledBorder titledBorder = BorderFactory.createTitledBorder(emptyBorder, "Introduction");
         Font currentFont = titledBorder.getTitleFont();
         if (currentFont == null) {
             currentFont = UIManager.getFont("TitledBorder.font");
@@ -55,25 +55,20 @@ public class IntroductoryWizardStep extends AbstractWizardStep  {
         appStackDescription.setFont(new Font("Arial", Font.PLAIN, 14));
 
         JBScrollPane jbScrollPane = new JBScrollPane(appStackDescription);
+        jbScrollPane.setPreferredSize(new JBDimension(700,5));
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.add(jbScrollPane);
 
         JPanel linkPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        linkPanel.add(new JBLabel("For more information and product documentation please visit the "));
+        linkPanel.add(new JBLabel("All the documention is availbale on the github project "));
 
         ActionLink link = new ActionLink("App Stack Documentation", (ActionListener) e -> UIUtil.browseLink("https://github.com/oracle-quickstart/appstack"));
         linkPanel.add(link);
 
-        panel.setPreferredSize(new JBDimension(800, 0));
         panel.add(linkPanel);
 
-        ActionLink prerequisitesLink = new ActionLink("Prerequisites",(ActionListener)e->{
-                PrerequisitesDialog prerequisitesDialog = new PrerequisitesDialog();
-                prerequisitesDialog.showAndGet();
-        });
-        panel.add(prerequisitesLink);
-        JPanel dontShowPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel dontShowPanel = new JBPanel<>(new FlowLayout(FlowLayout.LEFT));
         JBCheckBox dontShowCheckBox = new JBCheckBox();
         dontShowCheckBox.addActionListener(e->{
             boolean introductionDontShowAgain = dontShowCheckBox.isSelected();
@@ -85,6 +80,17 @@ public class IntroductoryWizardStep extends AbstractWizardStep  {
         dontShowPanel.add(dontShowCheckBox);
         dontShowPanel.add(dontShowLabel);
         panel.add(dontShowPanel);
+        panel.setPreferredSize(new JBDimension(800, 0));
+//        VerticalSeparatorComponent vet = new VerticalSeparatorComponent();
+//        vet.setOpaque(true);
+        JBPanel emtpy = new JBPanel<>();
+        emtpy.setPreferredSize(new JBDimension(800,30));
+//        linkPanel.setBorder(BorderFactory.createLineBorder(Color.RED));
+//        dontShowPanel.setBorder(BorderFactory.createLineBorder(Color.RED));
+//        panel.add(vet);
+        panel.add(emtpy);
+        linkPanel.setMaximumSize(new JBDimension(800,20));
+        dontShowPanel.setMaximumSize(new JBDimension(800,20));
         mainPanel.add(panel, BorderLayout.WEST);
     }
 

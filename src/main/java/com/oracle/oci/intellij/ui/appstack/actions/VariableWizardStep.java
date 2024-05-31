@@ -2,7 +2,9 @@ package com.oracle.oci.intellij.ui.appstack.actions;
 
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.components.*;
+import com.intellij.ui.components.JBPasswordField;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.wizard.WizardModel;
 import com.intellij.ui.wizard.WizardNavigationState;
 import com.intellij.ui.wizard.WizardStep;
@@ -21,7 +23,6 @@ import com.oracle.oci.intellij.ui.appstack.models.Controller;
 import com.oracle.oci.intellij.ui.appstack.models.Validator;
 import com.oracle.oci.intellij.ui.appstack.models.VariableGroup;
 import com.oracle.oci.intellij.ui.common.CompartmentSelection;
-import com.oracle.oci.intellij.ui.common.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,7 +31,6 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.ItemEvent;
@@ -85,8 +85,9 @@ public class VariableWizardStep extends AbstractWizardStep implements PropertyCh
             }
             try {
                 VarPanel varPanel ;
+                // we skip the introduction step
                 if (pd.getName().equals("descriptionText"))
-                    varPanel = new TextAreaVarPanel(pd,variableGroup);
+                    continue;
                else
                     varPanel =new VarPanel(pd,variableGroup);
                varPanels.add(varPanel) ;
@@ -593,42 +594,7 @@ public class VariableWizardStep extends AbstractWizardStep implements PropertyCh
         }
     }
 
-    public class TextAreaVarPanel extends VarPanel {
-        JBTextArea appStackDescription;
 
-        TextAreaVarPanel(PropertyDescriptor pd, VariableGroup variableGroup) throws InvocationTargetException, IllegalAccessException {
-            super(pd, variableGroup, false);
-            setLayout(new BorderLayout());
-            appStackDescription = new JBTextArea();
-
-            Insets currentInsets = appStackDescription.getMargin();
-            Insets newInsets = new Insets(8, 8, currentInsets.bottom, currentInsets.right);
-            appStackDescription.setMargin(newInsets);
-            appStackDescription.setEditable(false);
-            appStackDescription.setWrapStyleWord(true);
-            appStackDescription.setLineWrap(true);
-            appStackDescription.setColumns(30);
-
-            ResourceBundle messages = super.resBundle;
-            appStackDescription.setText(messages.getString("app"));
-            appStackDescription.setFont(new Font("Arial", Font.PLAIN, 14));
-
-            JBScrollPane jbScrollPane = new JBScrollPane(appStackDescription);
-            JPanel mainPanel = new JPanel();
-            mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-            mainPanel.add(jbScrollPane);
-
-            JPanel linkPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            linkPanel.add(new JBLabel("For more information and product documentation please visit the "));
-
-            ActionLink link = new ActionLink("App Stack Documentation", (ActionListener) e -> UIUtil.browseLink("https://github.com/oracle-quickstart/appstack"));
-            linkPanel.add(link);
-
-            mainPanel.setPreferredSize(new JBDimension(800, 0));
-            mainPanel.add(linkPanel);
-            add(mainPanel, BorderLayout.WEST);
-        }
-    }
 }
 
 
