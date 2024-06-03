@@ -59,7 +59,8 @@ public enum Icons {
     CONTAINER("icons/compute.png"),
     ERROR("icons/message/error/errorDialog.svg"),
     WARN("icons/message/warn/warningDialog.svg"),
-    INFO("icons/message/info/informationDialog.svg");
+    INFO("icons/message/info/informationDialog.svg"),
+    RELOAD("icons/toolbar/buildLoadChanges.svg");
 
     private final String path;
 
