@@ -77,6 +77,7 @@ import com.oracle.bmc.vault.requests.ListSecretsRequest;
 import com.oracle.bmc.vault.responses.CreateSecretResponse;
 import com.oracle.bmc.vault.responses.ListSecretsResponse;
 import com.oracle.oci.intellij.ui.appstack.exceptions.JobRunningException;
+import com.oracle.oci.intellij.ui.appstack.exceptions.OciAccountConfigException;
 import com.oracle.oci.intellij.ui.common.AutonomousDatabaseConstants;
 import com.oracle.oci.intellij.util.BundleUtil;
 import com.oracle.oci.intellij.util.LogHandler;
@@ -195,7 +196,14 @@ public class OracleCloudAccount {
 
   private void validate() {
     if (authenticationDetailsProvider == null) {
-      throw new IllegalStateException("Configure Oracle Cloud account first.");
+      // throw execption of Config file problem
+      final String message = "Oracle Cloud account configuration failed: Please check your config file ";
+      throw new OciAccountConfigException(message);
+//      LogHandler.warn(message);
+
+
+//      UIUtil.invokeLater(informDialog::show);
+//      throw new IllegalStateException("Configure Oracle Cloud account first.");
     }
   }
 
