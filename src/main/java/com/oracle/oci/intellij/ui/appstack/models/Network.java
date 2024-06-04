@@ -3,7 +3,6 @@ package com.oracle.oci.intellij.ui.appstack.models;
 import com.oracle.oci.intellij.ui.appstack.actions.PropertyOrder;
 import com.oracle.oci.intellij.ui.appstack.annotations.VariableMetaData;
 
-import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
 
 public class Network extends VariableGroup {
@@ -52,6 +51,7 @@ public class Network extends VariableGroup {
     private int health_checker_return_code;
 
     private boolean enable_session_affinity;
+    private String documentationLink;
 
     public enum Session_affinity{
         Enable_application_cookie_persistence,
@@ -382,11 +382,14 @@ public class Network extends VariableGroup {
         vcp.fireVetoableChange("certificate_ocid", oldValue, newValue);
     }
 
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
-         this.pcs.addPropertyChangeListener(listener);
-     }
+    @PropertyOrder(26)
+    @VariableMetaData(defaultVal="https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#network",type="link",required = true)
+    public String getDocumentationLink() {
+        return documentationLink;
+    }
+    public void setDocumentationLink(String documentationLink) {
+        this.documentationLink = documentationLink;
+    }
 
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
-         this.pcs.removePropertyChangeListener(listener);
-     }
+
 }
