@@ -266,11 +266,11 @@ public class Controller {
 
             if (varPanel.isVisible() && (boolean)pd.getValue("required")){
 
-                VariableGroup varGroup = getVarGroupByName(pd.getName());
+                VariableGroup varGroup = varPanel.getVariableGroup();
                 Object value = null;
                 try {
                     value  = pd.getReadMethod().invoke(varGroup);
-                } catch (IllegalAccessException | InvocationTargetException e) {
+                } catch (Exception   e) {
                     throw new RuntimeException(e);
                 }
 
@@ -346,8 +346,8 @@ public class Controller {
                 inputComponent.setBorder(UIManager.getBorder("TextArea.border")); // Reset to default border
             else
                 inputComponent.setBorder(UIManager.getBorder("TextField.border")); // Reset to default border
-
-            errorLabel.setText("");
+            if (errorLabel !=null)
+                errorLabel.setText("");
         }
 
     }

@@ -1,7 +1,7 @@
 package com.oracle.oci.intellij.ui.appstack.models;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
+import com.oracle.oci.intellij.ui.appstack.actions.PropertyOrder;
+import com.oracle.oci.intellij.ui.appstack.annotations.VariableMetaData;
 
 public class Hide_constants_and_internal_variables extends VariableGroup {
 
@@ -36,6 +36,7 @@ public class Hide_constants_and_internal_variables extends VariableGroup {
     private String db_version;
 
     private String db_license_model;
+    private String documentationLink;
 
     public String getTenancy_ocid() {
         return tenancy_ocid;
@@ -165,11 +166,14 @@ public class Hide_constants_and_internal_variables extends VariableGroup {
         this.db_license_model = db_license_model;
     }
 
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
-         this.pcs.addPropertyChangeListener(listener);
-     }
+    @PropertyOrder(13)
+    @VariableMetaData(defaultVal="https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#your-application",type="link")
+    public String getDocumentationLink() {
+        return documentationLink;
+    }
+    public void setDocumentationLink(String documentationLink) {
+        this.documentationLink = documentationLink;
+    }
 
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
-         this.pcs.removePropertyChangeListener(listener);
-     }
+
 }

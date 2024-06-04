@@ -17,6 +17,7 @@ public class Application_URL extends VariableGroup {
     private java.lang.Object zone;
 
     private java.lang.String subdomain;
+    private String documentationLink;
 
 //    private java.lang.Object certificate_ocid;
 
@@ -91,4 +92,15 @@ public class Application_URL extends VariableGroup {
     public void removePropertyChangeListener(PropertyChangeListener listener) {
          this.pcs.removePropertyChangeListener(listener);
      }
+
+    @PropertyOrder(5)
+    @VariableMetaData(defaultVal="https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#application-url",type="link")
+    public String getDocumentationLink() {
+        return documentationLink;
+    }
+    public void setDocumentationLink(String documentationLink) {
+        this.documentationLink = documentationLink;
+    }
+
+
 }
