@@ -1,7 +1,6 @@
 package com.oracle.oci.intellij.ui.appstack.actions;
 
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.components.JBCheckBox;
@@ -63,7 +62,7 @@ public class ReviewDialog extends DialogWrapper {
                 pds[0] = controller.getSortedProertyDescriptorsByVarGroup(varGroup);
 
                 for (PropertyDescriptor pd : pds[0]) {
-                    if (pd.getName().equals("class")  || !variables.containsKey(pd.getName())) {
+                    if (pd.getName().equals("class")  || !variables.containsKey(pd.getName()) || pd.getValue("type").equals("link")) {
                         continue;
                     }
                     ReviewVarPanel varPanel ;
@@ -81,7 +80,6 @@ public class ReviewDialog extends DialogWrapper {
 
 
 
-        // todo create the panel of  the check if user wants to immediately apply thr job
         if (!isShowStackVariables){
             addRunApplyCheckbox();
         }
