@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.JBColor;
@@ -19,7 +20,6 @@ import com.oracle.oci.intellij.account.SystemPreferences;
 import com.oracle.oci.intellij.util.fills.NotificationGroupShim;
 import com.oracle.oci.intellij.util.fills.Shim;
 import com.oracle.oci.intellij.util.fills.ShimMethod;
-
 import io.github.resilience4j.core.lang.NonNull;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,6 +130,43 @@ public class UIUtil {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
           runnable.run();
     });
+  }
+
+  public static IconButton createButtonIcon( String showIconPath) {
+    IconButton iconButton = new IconButton(showIconPath);
+    return iconButton;
+  }
+
+  public static class IconButton extends JButton {
+    String iconPath;
+
+    public IconButton(String iconPath) {
+      super();
+      this.iconPath = iconPath;
+      initializeButton(iconPath);
+    }
+
+    private void initializeButton(String showIconPath) {
+      this.setIcon(IconLoader.getIcon(showIconPath));
+
+      this.setBackground(null);
+      this.setBorder(null);
+      this.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      this.setOpaque(false);
+      this.setFocusable(false);
+      this.setContentAreaFilled(false);
+      this.setPreferredSize(new Dimension(20, 20));
+      this.setMargin(new Insets(0, 0, 0, 0));
+      this.setHorizontalAlignment(SwingConstants.CENTER);
+      this.setVerticalAlignment(SwingConstants.CENTER);
+    }
+
+    @Override
+    public void updateUI() {
+      super.updateUI();
+      if (iconPath != null)
+        initializeButton(iconPath);
+    }
   }
 
   public static void createWebLink(JComponent component, String uri) {
