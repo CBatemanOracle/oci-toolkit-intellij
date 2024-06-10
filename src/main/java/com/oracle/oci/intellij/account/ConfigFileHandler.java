@@ -21,6 +21,8 @@ import static com.oracle.bmc.util.internal.FileUtils.expandUserHome;
  * a "DEFAULT" profile, else validation fails. Additional profiles are optional.
  */
 public final class ConfigFileHandler {
+  public final static String CONFIG_FILE_URL_EXAMPLES = "https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdkconfig.htm";
+
   /**
    * Parses the given config file.
    *

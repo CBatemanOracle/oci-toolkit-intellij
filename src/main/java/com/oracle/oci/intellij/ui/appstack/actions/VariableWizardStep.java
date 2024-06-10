@@ -15,15 +15,11 @@ import com.oracle.bmc.database.model.AutonomousDatabaseSummary;
 import com.oracle.bmc.devops.model.RepositoryBranchSummary;
 import com.oracle.bmc.devops.model.RepositorySummary;
 import com.oracle.bmc.dns.model.ZoneSummary;
-import com.oracle.bmc.http.client.internal.ExplicitlySetBmcModel;
-import com.oracle.bmc.identity.model.AuthToken;
 import com.oracle.bmc.identity.model.AvailabilityDomain;
 import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.bmc.keymanagement.model.KeySummary;
 import com.oracle.bmc.keymanagement.model.VaultSummary;
-import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.ui.appstack.models.Controller;
-import com.oracle.oci.intellij.ui.appstack.models.Utils;
 import com.oracle.oci.intellij.ui.appstack.models.Validator;
 import com.oracle.oci.intellij.ui.appstack.models.VariableGroup;
 import com.oracle.oci.intellij.ui.common.CompartmentSelection;
@@ -33,7 +29,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentListener;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
@@ -44,17 +39,13 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyDescriptor;
 import java.beans.PropertyVetoException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Stack;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-public class CustomWizardStep extends WizardStep implements PropertyChangeListener {
+public class VariableWizardStep extends AbstractWizardStep implements PropertyChangeListener {
     JBScrollPane mainScrollPane;
     JPanel mainPanel;
     VariableGroup variableGroup;
@@ -64,7 +55,7 @@ public class CustomWizardStep extends WizardStep implements PropertyChangeListen
     static private List<Stack> stackList ;
 
 
-    public CustomWizardStep(VariableGroup varGroup, PropertyDescriptor[] propertyDescriptors, LinkedHashMap<String, PropertyDescriptor> descriptorsState, List<VariableGroup> varGroups) {
+    public VariableWizardStep(VariableGroup varGroup, PropertyDescriptor[] propertyDescriptors, LinkedHashMap<String, PropertyDescriptor> descriptorsState) {
         mainPanel = new JPanel();
         mainScrollPane = new JBScrollPane(mainPanel);
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
@@ -93,7 +84,14 @@ public class CustomWizardStep extends WizardStep implements PropertyChangeListen
                 continue;
             }
             try {
-               VarPanel varPanel =new VarPanel(pd,variableGroup);
+                VarPanel varPanel ;
+                // we skip the introduction step
+                if (pd.getName().equals("descriptionText")){
+                    continue;
+                }
+               else {
+                    varPanel = new VarPanel(pd, variableGroup);
+                }
                varPanels.add(varPanel) ;
                controller.addVariablePanel( varPanel);
                mainPanel.add(varPanel)  ;
@@ -177,13 +175,24 @@ public class CustomWizardStep extends WizardStep implements PropertyChangeListen
         JLabel errorLabel;
         PropertyDescriptor pd;
         VariableGroup variableGroup;
+        protected ResourceBundle resBundle;
+
 
 
 
         VarPanel(PropertyDescriptor pd, VariableGroup variableGroup) throws InvocationTargetException, IllegalAccessException {
+                this(pd,variableGroup,true);
+
+        }
+
+        VarPanel(PropertyDescriptor pd, VariableGroup variableGroup,boolean createVarPanel) throws InvocationTargetException, IllegalAccessException {
             this.pd = pd;
             this.variableGroup = variableGroup;
-            createVarPanel(pd,variableGroup);
+            resBundle = ResourceBundle.getBundle("appStackWizard", Locale.ROOT);
+
+            if (createVarPanel){
+                createVarPanel(pd,variableGroup);
+            }
         }
         private void createVarPanel( PropertyDescriptor pd,VariableGroup variableGroup) throws InvocationTargetException, IllegalAccessException {
             setLayout(new BorderLayout());
@@ -237,13 +246,14 @@ public class CustomWizardStep extends WizardStep implements PropertyChangeListen
 
                 JCheckBox checkBox = new JCheckBox();
                 component = checkBox;
+                boolean defaultValue = (boolean)(pd.getValue("default")!= null?pd.getValue("default"):false );
+                controller.setValue(defaultValue,varGroup,pd);
+                checkBox.setSelected(defaultValue);
 
                 checkBox.addActionListener(e -> {
                         controller.setValue(checkBox.isSelected(),varGroup,pd);
                 });
-                boolean defaultValue = (boolean)(pd.getValue("default")!= null?pd.getValue("default"):true );
-                controller.setValue(defaultValue,varGroup,pd);
-                checkBox.setSelected(defaultValue);
+
 
                 // add this to the condition || ((String)pd.getValue("type")).startsWith("oci")
             } else if (propertyType.isEnum() || ((String)pd.getValue("type")).startsWith("oci")  ) {
@@ -585,6 +595,8 @@ public class CustomWizardStep extends WizardStep implements PropertyChangeListen
             }
         }
     }
+
+
 }
 
 

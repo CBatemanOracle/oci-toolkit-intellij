@@ -12,7 +12,8 @@ import com.oracle.bmc.resourcemanager.model.StackSummary;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.common.command.AbstractBasicCommand;
 import com.oracle.oci.intellij.common.command.CommandStack;
-import com.oracle.oci.intellij.ui.appstack.actions.CustomWizardStep;
+import com.oracle.oci.intellij.settings.OCIApplicationSettings;
+import com.oracle.oci.intellij.ui.appstack.actions.VariableWizardStep;
 import com.oracle.oci.intellij.ui.appstack.actions.PropertyOrder;
 import com.oracle.oci.intellij.ui.appstack.command.ListStackCommand;
 import com.oracle.oci.intellij.ui.appstack.command.SetCommand;
@@ -30,7 +31,7 @@ import java.util.concurrent.Executors;
 
 public class Controller {
     Map<String, PropertyDescriptor> descriptorsState;
-    Map <String, CustomWizardStep.VarPanel> varPanels = new LinkedHashMap<>() ;
+    Map <String, VariableWizardStep.VarPanel> varPanels = new LinkedHashMap<>() ;
     Map<String, VariableGroup> variableGroups ;
     private static Controller instance ;
     Map<String, List<Compartment>> cachedCompartmentList = new LinkedHashMap<>();
@@ -41,7 +42,7 @@ public class Controller {
     public Map<String, PropertyDescriptor> getDescriptorsState() {
         return descriptorsState;
     }
-    public void addVariablePanel (CustomWizardStep.VarPanel varPanel){
+    public void addVariablePanel (VariableWizardStep.VarPanel varPanel){
         varPanels.put(varPanel.getPd().getName(),varPanel);
     }
 
@@ -58,19 +59,19 @@ public class Controller {
     }
 
     public JComponent getComponentByName(String pdName){
-        CustomWizardStep.VarPanel varPanel = varPanels.get(pdName);
+        VariableWizardStep.VarPanel varPanel = varPanels.get(pdName);
         return varPanel.getMainComponent();
     }
     public JComponent getErrorLabelByName(String pdName){
-        CustomWizardStep.VarPanel varPanel = varPanels.get(pdName);
+        VariableWizardStep.VarPanel varPanel = varPanels.get(pdName);
         return varPanel.getErrorLabel();
     }
     public VariableGroup getVarGroupByName(String pdName){
-        CustomWizardStep.VarPanel varPanel = varPanels.get(pdName);
+        VariableWizardStep.VarPanel varPanel = varPanels.get(pdName);
         return varPanel.getVariableGroup();
     }
 
-    public CustomWizardStep.VarPanel getVarPanelByName(String pdName){
+    public VariableWizardStep.VarPanel getVarPanelByName(String pdName){
         return varPanels.get(pdName);
     }
 
@@ -100,7 +101,7 @@ public class Controller {
         List<String> dependencies = Utils.dependsOn.get(pd.getName());
         if (dependencies != null) {
             for (String dependent : dependencies) {
-                CustomWizardStep.VarPanel varPanel = varPanels.get(dependent);
+                VariableWizardStep.VarPanel varPanel = varPanels.get(dependent);
                 PropertyDescriptor dependentPd = descriptorsState.get(dependent);
 
                 if ("string".equals(dependentPd.getValue("type"))){
@@ -172,7 +173,7 @@ public class Controller {
         if (dependencies != null) {
 
             for (String dependency : dependencies) {
-                CustomWizardStep.VarPanel varPanel = varPanels.get(dependency);
+                VariableWizardStep.VarPanel varPanel = varPanels.get(dependency);
                 JComponent dependencyComponent  = varPanel.getMainComponent();
                 if (dependencyComponent == null) continue;
 
@@ -256,10 +257,10 @@ public class Controller {
         return true;
     }
     public boolean doValidate(WizardStep wizardStep){
-        CustomWizardStep cWizardStep = (CustomWizardStep)wizardStep;
+        VariableWizardStep cWizardStep = (VariableWizardStep)wizardStep;
         JComponent errorComponent = null;
 
-        for (CustomWizardStep.VarPanel varPanel:
+        for (VariableWizardStep.VarPanel varPanel:
                 cWizardStep.getVarPanels()) {
             PropertyDescriptor pd = varPanel.getPd();
 
@@ -337,7 +338,7 @@ public class Controller {
 
 
     public void handleValidated(PropertyDescriptor pd) {
-        CustomWizardStep.VarPanel varPanel = getVarPanelByName(pd.getName());
+        VariableWizardStep.VarPanel varPanel = getVarPanelByName(pd.getName());
 
         if (varPanel != null ){
             JComponent inputComponent = varPanel.getInputComponent();
@@ -353,7 +354,7 @@ public class Controller {
     }
 
     public void handleError(PropertyDescriptor pd,String errorMessage ){
-        CustomWizardStep.VarPanel varPanel = getVarPanelByName(pd.getName());
+        VariableWizardStep.VarPanel varPanel = getVarPanelByName(pd.getName());
         if (varPanel != null){
             JComponent component = varPanel.getMainComponent();
             JComponent inputComponent = varPanel.getInputComponent();
@@ -429,5 +430,10 @@ public class Controller {
 
     private String getAppName(Stack stackDetails) {
         return stackDetails.getVariables().get("application_name");
+    }
+
+    public void setState(boolean introductionDontShowAgain) {
+        OCIApplicationSettings.State state =  OCIApplicationSettings.getInstance().getState();
+        state.setAppStackIntroductoryStepShow(!introductionDontShowAgain);
     }
 }

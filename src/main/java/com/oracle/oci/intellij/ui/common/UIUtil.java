@@ -60,7 +60,7 @@ public class UIUtil {
   public static boolean isUnderDarcula() {
     return !JBColor.isBright();
   }
- 
+
   public static boolean isDarkMode() {
     return isUnderDarcula();
   }
@@ -74,10 +74,10 @@ public class UIUtil {
                                       @NotNull final String msg,
                                       String eventName) {
     invokeLater(() -> {
-      NotificationGroup notificationGroup = 
+      NotificationGroup notificationGroup =
         NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID);
       NotificationGroupShim groupShim = new NotificationGroupShim(notificationGroup);
-      Notification notification = 
+      Notification notification =
         groupShim.createNotification(NOTIFICATION_GROUP_ID, "", msg, notificationType);
       notification.notify(currentProject);
 
@@ -174,16 +174,20 @@ public class UIUtil {
     component.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        try {
-          if (!Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-            return;
-          }
-          Desktop.getDesktop().browse(new URI(uri));
-        } catch (URISyntaxException | IOException ex) {
-          throw new RuntimeException(ex);
-        }
+        browseLink(uri);
       }
     });
+  }
+
+  public static void browseLink(String uri) {
+    try {
+      if (!Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+        return;
+      }
+      Desktop.getDesktop().browse(new URI(uri));
+    } catch (URISyntaxException | IOException ex) {
+      throw new RuntimeException(ex);
+    }
   }
 
   public static void showErrorDialog(Component parentComponent, String title, String message) {

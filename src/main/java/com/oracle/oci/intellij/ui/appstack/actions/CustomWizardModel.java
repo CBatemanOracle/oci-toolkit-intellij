@@ -3,7 +3,6 @@ package com.oracle.oci.intellij.ui.appstack.actions;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.wizard.WizardModel;
 import com.intellij.ui.wizard.WizardStep;
-
 import com.oracle.bmc.core.model.Subnet;
 import com.oracle.bmc.core.model.Vcn;
 import com.oracle.bmc.database.model.AutonomousDatabaseSummary;
@@ -14,8 +13,11 @@ import com.oracle.bmc.identity.model.AvailabilityDomain;
 import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.bmc.keymanagement.model.KeySummary;
 import com.oracle.bmc.keymanagement.model.VaultSummary;
+import com.oracle.oci.intellij.settings.OCIApplicationSettings;
 import com.oracle.oci.intellij.ui.appstack.models.Controller;
+import com.oracle.oci.intellij.ui.appstack.models.Introduction;
 import com.oracle.oci.intellij.ui.appstack.models.VariableGroup;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -58,24 +60,57 @@ public class CustomWizardModel extends WizardModel {
     private void initWizardSteps() throws IntrospectionException {
         // initiate the
         initApplicationNames();
-        // initiate the list first here
-        for (VariableGroup varGroup : varGroups) {
+        // create introduction Wizard step
+        OCIApplicationSettings.State state = getState();
 
-            Class<? extends VariableGroup> varGroupClazz = varGroup.getClass();
-            BeanInfo beanInfo = Introspector.getBeanInfo(varGroupClazz);
-            PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
-
-            Arrays.sort(propertyDescriptors, Comparator.comparingInt(pd -> {
-                PropertyOrder annotation = pd.getReadMethod().getAnnotation(PropertyOrder.class);
-                return (annotation != null) ? annotation.value() : Integer.MAX_VALUE;
-            }));
-
-            // create first  wizard step
-            CustomWizardStep varWizardStep = new CustomWizardStep(varGroup, propertyDescriptors, descriptorsState, varGroups);
+        List<VariableGroup> varGroupListWithoutIntro ;
+        if (state != null && state.isAppStackIntroductoryStepShow()){
+            // create wizard step for introduction .
+            IntroductoryWizardStep varWizardStep = new IntroductoryWizardStep();
             mySteps.add(varWizardStep);
             add(varWizardStep);
+            varGroupListWithoutIntro = varGroups.subList(1,varGroups.size()) ;
+        }else {
+            varGroupListWithoutIntro = varGroups;
+        }
+
+
+        // initiate the list first here
+        for (VariableGroup varGroup : varGroupListWithoutIntro) {
+            if (varGroup instanceof Introduction) {
+                continue;
+            }
+            createVariableGroupStep(varGroup);
 
         }
+    }
+
+    @Nullable
+    private static OCIApplicationSettings.State getState() {
+        OCIApplicationSettings.State state = null;
+        try {
+            state = OCIApplicationSettings.getInstance().getState();
+
+        }catch (RuntimeException ex){
+            System.out.println(ex.getMessage());
+        }
+        return state;
+    }
+
+    private void createVariableGroupStep(VariableGroup varGroup) throws IntrospectionException {
+        Class<? extends VariableGroup> varGroupClazz = varGroup.getClass();
+        BeanInfo beanInfo = Introspector.getBeanInfo(varGroupClazz);
+        PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
+
+        Arrays.sort(propertyDescriptors, Comparator.comparingInt(pd -> {
+            PropertyOrder annotation = pd.getReadMethod().getAnnotation(PropertyOrder.class);
+            return (annotation != null) ? annotation.value() : Integer.MAX_VALUE;
+        }));
+
+        // create first  wizard step
+        VariableWizardStep varWizardStep = new VariableWizardStep(varGroup, propertyDescriptors, descriptorsState);
+        mySteps.add(varWizardStep);
+        add(varWizardStep);
     }
 
     private void initApplicationNames() {

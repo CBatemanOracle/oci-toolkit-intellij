@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.account.SystemPreferences;
+import com.oracle.oci.intellij.settings.OCIApplicationSettings;
 import com.oracle.oci.intellij.ui.appstack.actions.AppStackParametersWizardDialog;
 import com.oracle.oci.intellij.ui.appstack.actions.CompartmentCache;
 import com.oracle.oci.intellij.ui.appstack.actions.CustomWizardModel;
@@ -42,60 +43,64 @@ public class YamlLoader {
 
         for (VariableGroup var:varGroups){
 
-            PropertyDescriptor [] propertyDescriptors =  Controller.getInstance().getSortedProertyDescriptorsByVarGroup(var);
+            setupDescriptorAttributes(var, descriptorsState);
+        }
+        return descriptorsState;
+    }
 
-            for (PropertyDescriptor pd:propertyDescriptors){
+    public void setupDescriptorAttributes(VariableGroup var, LinkedHashMap<String, PropertyDescriptor> descriptorsState) throws IntrospectionException {
+        PropertyDescriptor [] propertyDescriptors =  Controller.getInstance().getSortedProertyDescriptorsByVarGroup(var);
 
-                VariableMetaData annotation = pd.getReadMethod().getAnnotation(VariableMetaData.class);
+        for (PropertyDescriptor pd:propertyDescriptors){
 
-                if (pd.getName().equals("class") || annotation == null ) {
-                    continue;
-                }
-                pd.setDisplayName((annotation.title() != null)? annotation.title() : "");
-                pd.setShortDescription((annotation.description() != null) ? annotation.description() :  "" );
+            VariableMetaData annotation = pd.getReadMethod().getAnnotation(VariableMetaData.class);
 
-                if (annotation.dependsOn() != null && !annotation.dependsOn().isEmpty()) {
-                    pd.setValue("dependsOn",annotation.dependsOn());
-                }
+            if (pd.getName().equals("class") || annotation == null ) {
+                continue;
+            }
+            pd.setDisplayName((annotation.title() != null)? annotation.title() : "");
+            pd.setShortDescription((annotation.description() != null) ? annotation.description() :  "" );
 
-                if (annotation.defaultVal() != null  && !annotation.defaultVal().isEmpty()) {
+            if (annotation.dependsOn() != null && !annotation.dependsOn().isEmpty()) {
+                pd.setValue("dependsOn",annotation.dependsOn());
+            }
+
+            if (annotation.defaultVal() != null  && !annotation.defaultVal().isEmpty()) {
 
 //                    Object defaultValue =  getDefaultValue(pd, annotation);
 //                    System.out.println(pd.getName());
-                    pd.setValue("default", annotation.defaultVal());
+                pd.setValue("default", annotation.defaultVal());
 
-                    //  pd.setValue("value",defaultValue);
+                //  pd.setValue("value",defaultValue);
 //                    pd.getWriteMethod().invoke(appVarGroup,defaultValue);
-                }
-
-
-                pd.setValue("required", annotation.required());
-
-                if (annotation.enumValues() != null) {
-                    if (!annotation.enumValues().isEmpty()){
-                        List<String> list = getEnumList(annotation.enumValues());
-                        pd.setValue("enum", list);
-                    }            }
-                if (annotation.visible() != null) {
-                    if (!annotation.visible().isEmpty()){
-                        pd.setValue("visible", annotation.visible());
-                    }
-                }
-                if (annotation.defaultVal() != null) {
-                    pd.setValue("type", annotation.type());
-                }
-                if (annotation.pattern() != null) {
-                    pd.setValue("pattern", annotation.pattern());
-                }
-                if (annotation.errorMessage() != null) {
-                    pd.setValue("errorMessage", annotation.errorMessage());
-                }
-
-                descriptorsState.put(pd.getName(),pd);
-
             }
+
+
+            pd.setValue("required", annotation.required());
+
+            if (annotation.enumValues() != null) {
+                if (!annotation.enumValues().isEmpty()){
+                    List<String> list = getEnumList(annotation.enumValues());
+                    pd.setValue("enum", list);
+                }            }
+            if (annotation.visible() != null) {
+                if (!annotation.visible().isEmpty()){
+                    pd.setValue("visible", annotation.visible());
+                }
+            }
+            if (annotation.defaultVal() != null) {
+                pd.setValue("type", annotation.type());
+            }
+            if (annotation.pattern() != null) {
+                pd.setValue("pattern", annotation.pattern());
+            }
+            if (annotation.errorMessage() != null) {
+                pd.setValue("errorMessage", annotation.errorMessage());
+            }
+
+            descriptorsState.put(pd.getName(),pd);
+
         }
-        return descriptorsState;
     }
 
     public  Map load() throws IntrospectionException, InvocationTargetException, IllegalAccessException {
@@ -190,6 +195,21 @@ public class YamlLoader {
 
     private  List<VariableGroup> init() {
         List<VariableGroup> varGroups = new ArrayList<>();
+
+        OCIApplicationSettings.State state = null;
+        try {
+            state = OCIApplicationSettings.getInstance().getState();
+
+        }catch (RuntimeException ex){
+            System.out.println(ex.getMessage());
+        }
+
+        if (state != null && state.isAppStackIntroductoryStepShow()){
+            Introduction introductoryStep = new Introduction();
+            varGroups.add(introductoryStep);
+
+        }
+
         varGroups.add(new Stack_Information());
         varGroups.add(new General_Configuration());
         varGroups.add(new Application());
