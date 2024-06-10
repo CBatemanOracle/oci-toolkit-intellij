@@ -16,6 +16,7 @@ import com.oracle.oci.intellij.account.SystemPreferences;
 import com.oracle.oci.intellij.ui.account.CompartmentAction;
 import com.oracle.oci.intellij.ui.account.ConfigureAction;
 import com.oracle.oci.intellij.ui.account.RegionAction;
+import com.oracle.oci.intellij.ui.account.ReloadConfigFileAction;
 import com.oracle.oci.intellij.ui.appstack.AppStackDashboard;
 import com.oracle.oci.intellij.ui.common.UIUtil;
 import com.oracle.oci.intellij.ui.database.AutonomousDatabasesDashboard;
@@ -56,6 +57,7 @@ public class OCIExplorerFactory implements ToolWindowFactory {
 
     // This actions are available on the top right of the toolbar
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
+    actionGroup.add(new ReloadConfigFileAction());
     actionGroup.add(new ConfigureAction());
     actionGroup.add(new RegionAction());
     actionGroup.add(new CompartmentAction());
