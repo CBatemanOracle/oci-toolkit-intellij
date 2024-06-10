@@ -10,6 +10,7 @@ import com.intellij.util.ui.JBDimension;
 import com.oracle.oci.intellij.ui.appstack.models.Controller;
 import com.oracle.oci.intellij.ui.appstack.models.VariableGroup;
 import com.oracle.oci.intellij.ui.common.Icons;
+import com.oracle.oci.intellij.ui.common.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -154,14 +155,9 @@ public class ReviewDialog extends DialogWrapper {
                 String truncatedText = "..."+ fullText.substring(start,fullText.length()) ;
                 valueLabel.setText(truncatedText);
 
-                JButton toggleButton = new JButton(IconLoader.getIcon(showIconPath));
-                toggleButton.setToolTipText("Show");
+                UIUtil.IconButton toggleButton = UIUtil.createButtonIcon(showIconPath);
 
-                toggleButton.setBackground(null);
-                toggleButton.setBorder(null);
-                toggleButton.setOpaque(false);
-                toggleButton.setContentAreaFilled(false); //
-                toggleButton.setPreferredSize(new JBDimension(20,20));
+                toggleButton.setToolTipText("Show");
 
                 toggleButton.addActionListener(new ActionListener() {
                     private boolean isFullTextShown = false;  // Start with the full text hidden
@@ -192,12 +188,8 @@ public class ReviewDialog extends DialogWrapper {
                 String copyPath = Icons.COPY.getPath();
 
                 // Create the button and set the icon
-                JButton copyButton = new JButton(IconLoader.getIcon(copyPath));
-                copyButton.setBackground(null);
-                copyButton.setPreferredSize(new JBDimension(20,20));
-                copyButton.setBorder(null);
-                copyButton.setOpaque(false);
-                copyButton.setContentAreaFilled(false); //
+                UIUtil.IconButton copyButton = new UIUtil.IconButton(copyPath);
+                UIUtil.createButtonIcon(copyPath);
                 String finalValue = value;
                 copyButton.addActionListener(new ActionListener() {
                     @Override
@@ -207,7 +199,7 @@ public class ReviewDialog extends DialogWrapper {
                         StringSelection selection = new StringSelection(textToCopy);
                         clipboard.setContents(selection, selection);
                         copyButton.setIcon(null);
-                        copyButton.setToolTipText("Copy");
+//                        copyButton.setToolTipText("Copy");
 
 //                        copyButton.setText("copied");
                         // notify
@@ -221,6 +213,8 @@ public class ReviewDialog extends DialogWrapper {
             add(buttonsPanel,BorderLayout.EAST);
         }
     }
+
+
 
 
 }

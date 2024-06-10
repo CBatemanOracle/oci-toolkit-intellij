@@ -12,6 +12,8 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -80,14 +82,18 @@ public class IntroductoryWizardStep extends AbstractWizardStep  {
         dontShowPanel.add(dontShowCheckBox);
         dontShowPanel.add(dontShowLabel);
         panel.add(dontShowPanel);
+        dontShowLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                dontShowCheckBox.setSelected(!dontShowCheckBox.isSelected());
+                super.mouseClicked(e);
+            }
+        });
         panel.setPreferredSize(new JBDimension(800, 0));
-//        VerticalSeparatorComponent vet = new VerticalSeparatorComponent();
-//        vet.setOpaque(true);
+
         JBPanel emtpy = new JBPanel<>();
         emtpy.setPreferredSize(new JBDimension(800,30));
-//        linkPanel.setBorder(BorderFactory.createLineBorder(Color.RED));
-//        dontShowPanel.setBorder(BorderFactory.createLineBorder(Color.RED));
-//        panel.add(vet);
+
         panel.add(emtpy);
         linkPanel.setMaximumSize(new JBDimension(800,20));
         dontShowPanel.setMaximumSize(new JBDimension(800,20));

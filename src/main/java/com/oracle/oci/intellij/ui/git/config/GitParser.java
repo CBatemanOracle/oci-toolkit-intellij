@@ -88,10 +88,6 @@ public class GitParser {
   private GitConfigCore handleCore(StringTokenizer tokenizer) {
     return new GitConfigCore();
   }
-
-  private void handleOther(StringTokenizer tokenizer) {
-
-  }
   
   public static class GitParserException extends Exception {
 

@@ -5,7 +5,6 @@
 package com.oracle.oci.intellij.ui.appstack;
 
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
@@ -28,12 +27,14 @@ import com.oracle.oci.intellij.ui.appstack.actions.ActionFactory;
 import com.oracle.oci.intellij.ui.appstack.actions.ReviewDialog;
 import com.oracle.oci.intellij.ui.appstack.command.*;
 import com.oracle.oci.intellij.ui.appstack.command.GetStackJobsCommand.GetStackJobsResult;
-import com.oracle.oci.intellij.ui.appstack.command.ListStackCommand.ListStackResult;
 import com.oracle.oci.intellij.ui.appstack.exceptions.JobRunningException;
 import com.oracle.oci.intellij.ui.appstack.models.Utils;
+import com.oracle.oci.intellij.ui.appstack.models.proxies.StackProxy;
 import com.oracle.oci.intellij.ui.appstack.uimodel.AppStackTableModel;
 import com.oracle.oci.intellij.ui.common.Icons;
+import com.oracle.oci.intellij.ui.common.InformationDialog;
 import com.oracle.oci.intellij.ui.common.UIUtil;
+import com.oracle.oci.intellij.ui.common.cache.SimpleCache;
 import com.oracle.oci.intellij.ui.explorer.ITabbedExplorerContent;
 import com.oracle.oci.intellij.util.LogHandler;
 import org.jetbrains.annotations.NonNls;
@@ -75,11 +76,16 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
   private ActionLink profileValueLabel;
   private ActionLink compartmentValueLabel;
   private ActionLink regionValueLabel;
-  private List<StackSummary> appStackList;
+  private JComboBox filerStackCombo;
+  private JButton infoButton;
+  static public String APP_STACK = "App stack";
+  String ALL_STACK = "All";
+  private List<StackProxy> appStackList;
   private CommandStack commandStack = new CommandStack();
   private @NonNls @NotNull String toolWindowId;
   private @NotNull @NonNls String locationHash;
   private static ResourceBundle resBundle;
+  public static SimpleCache jobsStackCache;
   private static final CopyOnWriteArrayList<AppStackDashboard> ALL = new CopyOnWriteArrayList<>();
 
   public static AppStackDashboard newInstance(@NotNull Project project,
@@ -141,6 +147,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
   }
 
   private AppStackDashboard() {
+    jobsStackCache = new SimpleCache<String,List<JobSummary>>();
     // initiate property descriptors .... so we can build the form for the show appStack details .....
     YamlLoader load = new YamlLoader();
     try {
@@ -181,6 +188,8 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
     initializeLabels();
     resBundle = ResourceBundle.getBundle("appStackDashboard", Locale.ROOT);
     SystemPreferences.addPropertyChangeListener(this);
+
+    UIUtil.invokeLater(this::populateTableData);
   }
 
   private void initializeLabels() {
@@ -197,6 +206,11 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
     if (appStacksTable == null) {
       return;
     }
+    infoButton.addActionListener(e->{
+      InformationDialog informationDialog = new InformationDialog(
+              "This is A button to filter  your stacks that are in oci. the  \"App stack\" will show just the stacks created by this plugin and that have your java application , and you also can see all the stack in your oci account by setting it to \" All\" . ");
+      informationDialog.show();
+    });
     appStacksTable.setModel(new AppStackTableModel(0));
 
     appStacksTable.getColumn("Last Job State").setCellRenderer(new DefaultTableCellRenderer() {
@@ -229,29 +243,50 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
       public void mouseClicked(MouseEvent e){
         if (e.getButton() == 3) {
           JPopupMenu popupMenu;
-          StackSummary selectedSummary = null;
+          StackProxy selectedSummary = null;
           if (appStacksTable.getSelectedRowCount() == 1) {
-            StackSummary selectedObject = appStackList.get(appStacksTable.getSelectedRow());
+            StackProxy selectedObject = appStackList.get(appStacksTable.getSelectedRow());
             if (selectedObject != null) {
               selectedSummary = selectedObject;
             }
           }
           // TODO:
           System.out.println("Pop!");
-          popupMenu = getStackSummaryActionMenu(selectedSummary);
-          popupMenu.show(e.getComponent(), e.getX(), e.getY());
+          if (selectedSummary != null){
+            popupMenu = getStackSummaryActionMenu(selectedSummary.getStackSummary());
+            popupMenu.show(e.getComponent(), e.getX(), e.getY());
+          }
         }
       }
     });
+
+    filerStackCombo.addItemListener(e->{
+      filterStacks();
+    });
+    filerStackCombo.setSelectedItem(APP_STACK);
+
   }
+
+  private void filterStacks() {
+    if (appStackList != null){
+      List <StackProxy> filtredStackList;
+      if (APP_STACK.equals(filerStackCombo.getSelectedItem())){
+
+        filtredStackList = appStackList.stream().filter(item-> APP_STACK.equals(item.getStackSummary().getFreeformTags().get("Type"))).collect(Collectors.toList());
+      }else {
+        filtredStackList = appStackList;
+      }
+      populateTable(filtredStackList);
+    }
+  }
+
   private JobSummary getLastJob(String stackId, String compartmentId) {
-    //TODO HANDLE EXCEPTION ....
     JobSummary lastAppliedJob = null;
     try {
       lastAppliedJob= (JobSummary) OracleCloudAccount.getInstance().getResourceManagerClientProxy().getLastJob(stackId,compartmentId);
 
     }catch (RuntimeException exception){
-      UIUtil.fireNotification(NotificationType.ERROR,"Something Went Wrong ",null);
+      UIUtil.fireNotification(NotificationType.ERROR,"Something Went Wrong ");
     }
     return lastAppliedJob;
   }
@@ -308,12 +343,18 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
 
   private int getStackRow(String stackId) {
     for (int i = 0; i < appStackList.size(); i++) {
-      StackSummary object = appStackList.get(i);
-      if (object.getId().equals(stackId)) {
+      StackProxy object = appStackList.get(i);
+      if (object.getStackSummary().getId().equals(stackId)) {
         return i;
       }
     }
     return -1;
+  }
+
+  private void createUIComponents() {
+    // TODO: place custom component creation code here
+    infoButton = new UIUtil.IconButton(Icons.INFO.getPath());
+
   }
 
   private static class LoadStackJobsAction extends AbstractAction {
@@ -346,7 +387,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
             throw execute.getException();
           }
         } catch (Throwable e1) {
-          UIUtil.fireNotification(NotificationType.ERROR,"Something Went Wrong ",null);
+          UIUtil.fireNotification(NotificationType.ERROR,"Something Went Wrong ");
 //        throw new RuntimeException(e1);
         }
       };
@@ -408,7 +449,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
         try {
           applicationUrl[0] =  getUrlOutput(lastApplyJob.getId());
         } catch (Exception e) {
-          UIUtil.fireNotification(NotificationType.ERROR,"Something Went Wrong ",null);
+          UIUtil.fireNotification(NotificationType.ERROR,"Something Went Wrong ");
           LogHandler.error(e.getMessage(), e);
 
 //            throw new RuntimeException(e);
@@ -417,7 +458,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
 
       Runnable updateUI = ()->{
         if (applicationUrl[0].isEmpty()){
-          UIUtil.fireNotification(NotificationType.ERROR,"Problem retrieving the application url , you can always  try to get url from apply job logs",null);
+          UIUtil.fireNotification(NotificationType.ERROR,"Problem retrieving the application url , you can always  try to get url from apply job logs");
           return;
         }
         try {
@@ -456,7 +497,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
           throw execute.getException();
         }
       } catch (Throwable e1) {
-        UIUtil.fireNotification(NotificationType.ERROR,"Something Went Wrong ",null);
+        UIUtil.fireNotification(NotificationType.ERROR,"Something Went Wrong ");
         LogHandler.error(e1.getMessage(), e1);
 
 //        throw new RuntimeException(e1);
@@ -557,7 +598,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
   }
 
   public synchronized void populateTableData() {
-    ((DefaultTableModel) appStacksTable.getModel()).setRowCount(0);
+//    ((DefaultTableModel) appStacksTable.getModel()).setRowCount(0);
     UIUtil.showInfoInStatusBar("Refreshing stack list .");
 
     refreshAppStackButton.setEnabled(false);
@@ -565,9 +606,9 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
     final Runnable fetchData = () -> {
       try {
         String compartmentId = SystemPreferences.getCompartmentId();
-        ListStackCommand command =
-          new ListStackCommand(OracleCloudAccount.getInstance().getResourceManagerClientProxy(), compartmentId);
-        ListStackResult result = (ListStackResult) commandStack.execute(command);
+        ListStackProxyCommand command =
+                new ListStackProxyCommand(OracleCloudAccount.getInstance().getResourceManagerClientProxy(), compartmentId,jobsStackCache);
+        ListStackProxyCommand.ListStackProxyResult result = (ListStackProxyCommand.ListStackProxyResult) commandStack.execute(command);
         if (!result.isError()) {
           appStackList =  result.getStacks();
         }
@@ -583,28 +624,33 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
     };
 
     final Runnable updateUI = () -> {
-      if (appStackList != null) {
-        UIUtil.showInfoInStatusBar((appStackList.size()) + " AppStack found.");
-        final DefaultTableModel model = ((DefaultTableModel) appStacksTable.getModel());
-        model.setRowCount(0);
-
-        for (StackSummary s : appStackList) {
-          final Object[] rowData = new Object[AppStackTableModel.APPSTACK_COLUMN_NAMES.length];
-//          final boolean isFreeTier =
-//                  s.getIsFreeTier() != null && s.getIsFreeTier();
-          rowData[0] = s.getDisplayName();
-          rowData[1] = s.getDescription();
-          rowData[2] = s.getTerraformVersion();
-          rowData[3] = s.getLifecycleState();
-          rowData[4] = s.getTimeCreated();
-          rowData[5] = getLastJob(s.getId(),s.getCompartmentId());
-          model.addRow(rowData);
-        }
-      }
+      filterStacks();
       refreshAppStackButton.setEnabled(true);
     };
 
     UIUtil.executeAndUpdateUIAsync(fetchData, updateUI);
+  }
+
+  private void populateTable(List<StackProxy> stackList) {
+    if (stackList != null) {
+      UIUtil.showInfoInStatusBar((stackList.size()) + " AppStack found.");
+      final DefaultTableModel model = ((DefaultTableModel) appStacksTable.getModel());
+      model.setRowCount(0);
+
+      for (StackProxy stackProxy : stackList) {
+        StackSummary s = stackProxy.getStackSummary();
+        final Object[] rowData = new Object[AppStackTableModel.APPSTACK_COLUMN_NAMES.length];
+//          final boolean isFreeTier =
+//                  s.getIsFreeTier() != null && s.getIsFreeTier();
+        rowData[0] = s.getDisplayName();
+        rowData[1] = s.getDescription();
+        rowData[2] = s.getTerraformVersion();
+        rowData[3] = s.getLifecycleState();
+        rowData[4] = s.getTimeCreated();
+        rowData[5] =  stackProxy.getLastJob();
+        model.addRow(rowData);
+      }
+    }
   }
 
 
@@ -707,31 +753,40 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
         }
 
 
-        try {
-          ResourceManagerClientProxy proxy = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
 
-          String compartmentId = variables.get().get("appstack_compartment");
-          ClassLoader cl = AppStackDashboard.class.getClassLoader();
-          CreateStackCommand command =
-                  new CreateStackCommand(proxy, compartmentId, cl, "appstackforjava.zip",loader.isApply());
-          //          Map<String,String> variables = new ModelLoader().loadTestVariables();
-          //          variables.put("shape","CI.Standard.E3.Flex");
-          command.setVariables(variables.get());
-          //          command.setVariables(variables.get());
-          this.dashboard.commandStack.execute(command);
-          UIUtil.schedule(()->{
-            this.dashboard.populateTableData();
-          });
-        } catch (Exception e1) {
-          UIUtil.fireNotification(NotificationType.ERROR,"Something Went Wrong",null);
+          Runnable creationRequest = ()->{
+            try {
+            ResourceManagerClientProxy proxy = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
+
+            String compartmentId = variables.get().get("appstack_compartment");
+            ClassLoader cl = AppStackDashboard.class.getClassLoader();
+            CreateStackCommand command =
+                    new CreateStackCommand(proxy, compartmentId, cl, "appstackforjava.zip",loader.isApply());
+            //          Map<String,String> variables = new ModelLoader().loadTestVariables();
+            //          variables.put("shape","CI.Standard.E3.Flex");
+            command.setVariables(variables.get());
+            //          command.setVariables(variables.get());
+            this.dashboard.commandStack.execute(command);
+            } catch (Exception e1) {
+              UIUtil.fireNotification(NotificationType.ERROR,"Something Went Wrong");
 //          throw new RuntimeException(e1);
-        }finally {
-          dashboard.createAppStackButton.setEnabled(true);
-        }
+            }finally {
+              dashboard.createAppStackButton.setEnabled(true);
+            }
+          };
+          //todo just add the created one to the list
+
+          Runnable updateUI = ()->{
+
+            this.dashboard.populateTableData();
+          };
+
+          UIUtil.executeAndUpdateUIAsync(creationRequest,updateUI);
+
 
       };
-      ApplicationManager.getApplication().invokeLater(runnable);
 
+      UIUtil.schedule(runnable);
     }
   }
 
@@ -751,21 +806,24 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
       // TODO: should be better way to get select row object
       if (selectedRow >=0 && selectedRow < this.dashboard.appStackList.size()) {
         this.dashboard.applyAppStackButton.setEnabled(false);
-        StackSummary stackSummary = this.dashboard.appStackList.get(selectedRow);
+        StackProxy stackProxy = this.dashboard.appStackList.get(selectedRow);
+        StackSummary stackSummary = stackProxy.getStackSummary();
         ResourceManagerClientProxy resourceManagerClient = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
 
           UIUtil.schedule(()->{
             try {
               CreateJobResponse createApplyJobResponse = CreateStackCommand.createApplyJob(resourceManagerClient, stackSummary.getId(), stackSummary.getDisplayName());
+              // invalidate cache because now we have new element in jobs of this stack
+              jobsStackCache.remove(stackSummary.getId());
+
             }catch (JobRunningException | BmcException e1){
-              UIUtil.fireNotification(NotificationType.ERROR,e1.getMessage(),null);
+              UIUtil.fireNotification(NotificationType.ERROR,"Problem running stack apply:"+e1.getMessage());
             }finally {
               com.intellij.util.ui.UIUtil.invokeAndWaitIfNeeded((Runnable) ()->{
                 dashboard.applyAppStackButton.setEnabled(true);
               });
             }
           });
-
 
 
 //        String applyJobId = createApplyJobResponse.getJob().getId();
@@ -786,7 +844,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
         Result r = appStackDashboard.commandStack.execute(command);
 
       } catch (CommandFailedException e1) {
-        UIUtil.fireNotification(NotificationType.ERROR,e1.getMessage(),null);
+        UIUtil.fireNotification(NotificationType.ERROR,"Problem in apply:"+e1.getMessage());
       }finally {
         com.intellij.util.ui.UIUtil.invokeAndWaitIfNeeded((Runnable) ()->{
           button.setEnabled(true);
@@ -932,7 +990,8 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
       int selectedRow = this.dashboard.appStacksTable.getSelectedRow();
       // TODO: should be better way to get select row object
       if (selectedRow >=0 && selectedRow < this.dashboard.appStackList.size()) {
-        StackSummary stackSummary = this.dashboard.appStackList.get(selectedRow);
+        StackProxy stackProxy = this.dashboard.appStackList.get(selectedRow);
+        StackSummary stackSummary = stackProxy.getStackSummary();
         ResourceManagerClientProxy proxy = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
         DeleteYesNoDialog dialog = new DeleteYesNoDialog();
         //disable delete button
@@ -960,13 +1019,14 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
                   Result r = this.dashboard.commandStack.execute(compositeCommand);
 
                 } catch (CommandFailedException e1) {
-                  UIUtil.fireNotification(NotificationType.ERROR,e1.getMessage(),null);
+                  UIUtil.fireNotification(NotificationType.ERROR,"Problem with stack delete/destroy"+e1.getMessage());
                 }finally {
                   com.intellij.util.ui.UIUtil.invokeAndWaitIfNeeded((Runnable) ()->{
                     dashboard.deleteAppStackButton.setEnabled(true);
                   });
                 }
           });
+          jobsStackCache.remove(stackSummary.getId());
 //          invokeLater(this.dashboard,compositeCommand,dashboard.deleteAppStackButton);
         }else {
             compositeCommand = null;
@@ -983,7 +1043,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
   }
   @Override
   public String getTitle() {
-    return "Application Stack";
+    return "Stack";
   }
 
 

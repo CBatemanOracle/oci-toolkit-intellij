@@ -86,10 +86,12 @@ public class VariableWizardStep extends AbstractWizardStep implements PropertyCh
             try {
                 VarPanel varPanel ;
                 // we skip the introduction step
-                if (pd.getName().equals("descriptionText"))
+                if (pd.getName().equals("descriptionText")){
                     continue;
-               else
-                    varPanel =new VarPanel(pd,variableGroup);
+                }
+               else {
+                    varPanel = new VarPanel(pd, variableGroup);
+                }
                varPanels.add(varPanel) ;
                controller.addVariablePanel( varPanel);
                mainPanel.add(varPanel)  ;

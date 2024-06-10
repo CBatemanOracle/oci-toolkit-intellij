@@ -1,7 +1,7 @@
 package com.oracle.oci.intellij.ui.appstack;
 
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.account.SystemPreferences;
@@ -11,6 +11,7 @@ import com.oracle.oci.intellij.ui.appstack.actions.CompartmentCache;
 import com.oracle.oci.intellij.ui.appstack.actions.CustomWizardModel;
 import com.oracle.oci.intellij.ui.appstack.annotations.VariableMetaData;
 import com.oracle.oci.intellij.ui.appstack.models.*;
+import com.oracle.oci.intellij.ui.common.UIUtil;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
@@ -21,6 +22,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.oracle.oci.intellij.ui.appstack.models.Utils.descriptorsState;
 
@@ -139,14 +141,26 @@ public class YamlLoader {
             }
 
         }
-        CustomWizardModel customWizardModel = new CustomWizardModel(varGroups, descriptorsState);
-        AppStackParametersWizardDialog dialog = new AppStackParametersWizardDialog(customWizardModel);
-        ApplicationManager.getApplication().invokeAndWait(dialog::show);
-        if (dialog.isCreateStack()){
-            isApply = dialog.isApplyJob();
-            return dialog.getUserInput();
-        }
-        return null;
+        AtomicReference<Map<String, String>> userInputs = new AtomicReference<>();
+
+        UIUtil.invokeAndWait(()->{
+            CustomWizardModel customWizardModel = null;
+            try {
+                customWizardModel = new CustomWizardModel(varGroups, descriptorsState);
+            } catch (IntrospectionException e) {
+                throw new RuntimeException(e);
+            }
+            AppStackParametersWizardDialog dialog = new AppStackParametersWizardDialog(customWizardModel);
+            dialog.show();
+
+            if (dialog.isCreateStack()){
+                isApply = dialog.isApplyJob();
+                userInputs.set(dialog.getUserInput());
+            }
+        }, ModalityState.any());
+
+
+        return userInputs.get();
 
 
     }

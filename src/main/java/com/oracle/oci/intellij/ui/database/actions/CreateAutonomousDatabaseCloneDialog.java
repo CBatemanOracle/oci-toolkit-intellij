@@ -343,7 +343,7 @@ public class CreateAutonomousDatabaseCloneDialog extends DialogWrapper {
         OracleCloudAccount.getInstance().getDatabaseClient().createClone(createAutonomousDatabaseCloneDetailsBuilder.build());
         UIUtil.fireNotification(NotificationType.INFORMATION,"Autonomous Database instance cloned successfully.", "Clone");
       } catch (Exception e) {
-        UIUtil.fireNotification(NotificationType.ERROR, "Failed to clone Autonomous Database instance : " + e.getMessage(), null);
+        UIUtil.fireNotification(NotificationType.ERROR, "Failed to clone Autonomous Database instance : " + e.getMessage());
       }
     };
 

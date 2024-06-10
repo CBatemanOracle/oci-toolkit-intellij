@@ -117,7 +117,7 @@ public class Utils{
 
             String vault_compartment_id = ((Compartment) pds.get("vault_compartment_id").getReadMethod().invoke(general_ConfigurationVarGroup)).getId();;
 
-            List<VaultSummary> vaultList = OracleCloudAccount.getInstance().getIdentityClient().getVaultsList(vault_compartment_id);
+            List<VaultSummary> vaultList = OracleCloudAccount.getInstance().getKmsVaultClient().listVaults(vault_compartment_id);
             return vaultList;
         });
 
@@ -141,7 +141,7 @@ public class Utils{
 
             String compartment_id = ( (Compartment) pds.get("devops_compartment").getReadMethod().invoke(varGroup)).getId();
 
-            List<RepositorySummary> repositorySummaries = OracleCloudAccount.getInstance().getIdentityClient().getRepoList(compartment_id);
+            List<RepositorySummary> repositorySummaries = OracleCloudAccount.getInstance().getDevOpsClient().getRepoList(compartment_id);
 
             return repositorySummaries;
 
@@ -177,7 +177,7 @@ public class Utils{
             Object repository = controller.getValue(varGroupe,repoPd);
             if (repository == null || repository instanceof String) return null;
 
-            List branches = OracleCloudAccount.getInstance().getIdentityClient().getBranchList(((RepositorySummary)repository).getId());
+            List branches = OracleCloudAccount.getInstance().getDevOpsClient().getBranchList(((RepositorySummary)repository).getId());
             return branches;
         });
 
