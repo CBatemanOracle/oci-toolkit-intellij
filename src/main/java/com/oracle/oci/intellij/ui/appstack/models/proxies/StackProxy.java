@@ -2,6 +2,8 @@ package com.oracle.oci.intellij.ui.appstack.models.proxies;
 
 import com.oracle.bmc.resourcemanager.model.JobSummary;
 import com.oracle.bmc.resourcemanager.model.StackSummary;
+import com.oracle.oci.intellij.account.OracleCloudAccount;
+import com.oracle.oci.intellij.ui.common.cache.SimpleCache;
 
 import java.util.Collections;
 import java.util.List;
@@ -15,10 +17,14 @@ import java.util.List;
 public class StackProxy {
     private StackSummary stackSummary;
     private List<JobSummary> jobs;
+    private OracleCloudAccount.ResourceManagerClientProxy resManagerClient;
+    private final SimpleCache<String , List<JobSummary>> jobsCache;
 
-    public StackProxy(StackSummary stackSummary,List<JobSummary> jobs) {
+    public StackProxy(StackSummary stackSummary, OracleCloudAccount.ResourceManagerClientProxy resManagerClient, SimpleCache<String, List<JobSummary>> jobsCache) {
         this.stackSummary = stackSummary;
-        this.jobs = jobs;
+        this.resManagerClient = resManagerClient;
+        this.jobsCache = jobsCache;
+        jobs = fetchJobs();
     }
 
     public StackSummary getStackSummary() {
@@ -38,5 +44,17 @@ public class StackProxy {
      */
     public JobSummary getLastJob() {
         return jobs.isEmpty() ? null : jobs.get(0);
+    }
+
+    public List<JobSummary> fetchJobs() {
+        if (jobsCache!= null){
+            if (jobsCache.get(stackSummary.getId()) != null){
+                return jobsCache.get(stackSummary.getId());
+            }
+            List <JobSummary> jobSummaries = resManagerClient.listJobs(stackSummary.getCompartmentId(),stackSummary.getId()).getItems();
+            jobsCache.put(stackSummary.getId(),jobSummaries);
+            return jobSummaries;
+        }
+        return null;
     }
 }
