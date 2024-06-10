@@ -58,9 +58,9 @@ public enum Icons {
     DATABASE_UNAVAILABLE_STATE("icons/db-unavailable-state.png"),
     BACKUP_ACTIVE_STATE("icons/backup-active-state.png"),
     CONTAINER("icons/compute.png"),
-    ERROR("icons/message/error/errorDialog.svg"),
-    WARN("icons/message/warn/warningDialog.svg"),
-    INFO("icons/message/info/informationDialog.svg");
+    MESSAGE_ERROR("icons/message/error/errorDialog.svg"),
+    MESSAGE_WARN("icons/message/warn/warningDialog.svg"),
+    MESSAGE_INFO("icons/message/info/informationDialog.svg");
 
     private final String path;
 

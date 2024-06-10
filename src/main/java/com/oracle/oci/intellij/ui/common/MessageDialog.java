@@ -28,9 +28,9 @@ public class MessageDialog extends DialogWrapper {
     private JPanel linkPanel;
 
     public enum MessageType{
-        ERROR(Icons.ERROR.getPath()),
-        INFO(Icons.INFO.getPath()),
-        WARN(Icons.WARN.getPath());
+        ERROR(Icons.MESSAGE_ERROR.getPath()),
+        INFO(Icons.MESSAGE_INFO.getPath()),
+        WARN(Icons.MESSAGE_WARN.getPath());
 
         public final String label;
 

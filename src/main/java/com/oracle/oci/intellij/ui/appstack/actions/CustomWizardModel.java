@@ -77,8 +77,9 @@ public class CustomWizardModel extends WizardModel {
 
         // initiate the list first here
         for (VariableGroup varGroup : varGroupListWithoutIntro) {
-            if (varGroup instanceof Introduction)
+            if (varGroup instanceof Introduction) {
                 continue;
+            }
             createVariableGroupStep(varGroup);
 
         }
