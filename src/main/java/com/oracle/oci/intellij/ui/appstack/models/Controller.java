@@ -140,7 +140,7 @@ public class Controller {
                     suggestedValues = (List<ExplicitlySetBmcModel>) get();
                 } catch (InterruptedException | ExecutionException e) {
                     System.out.println(e);
-                    UIUtil.fireNotification(NotificationType.WARNING, "Resource not found: \n"+e.getMessage(), null);
+                    UIUtil.fireNotification(NotificationType.WARNING, "Resource not found: \n"+e.getMessage());
                     comboBox.removeAllItems();
                     comboBox.setEnabled(true);
                     String errorMessage = "There was an error retrieving options";
@@ -412,7 +412,7 @@ public class Controller {
                 }
             } catch (Exception exception) {
                 appStackList = null;
-                UIUtil.fireNotification(NotificationType.ERROR, exception.getMessage(), null);
+                UIUtil.fireNotification(NotificationType.ERROR, "Problem in initApplicationNames"+exception.getMessage());
                 LogHandler.error(exception.getMessage(), exception);
             }
             //then get Stack of each summary stack

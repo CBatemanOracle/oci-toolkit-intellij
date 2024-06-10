@@ -4,10 +4,6 @@
  */
 package com.oracle.oci.intellij.ui.explorer;
 
-import java.util.Arrays;
-
-import org.jetbrains.annotations.NotNull;
-
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
@@ -28,6 +24,9 @@ import com.oracle.oci.intellij.util.BundleUtil;
 import com.oracle.oci.intellij.util.LogHandler;
 import com.oracle.oci.intellij.util.SafeRunnerUtil;
 import com.oracle.oci.intellij.util.fills.ContentFactorySERVICEShim;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 public class OCIExplorerFactory implements ToolWindowFactory {
 
@@ -44,7 +43,7 @@ public class OCIExplorerFactory implements ToolWindowFactory {
           } catch (Exception ex) {
            final String message = "Oracle Cloud account configuration failed: " + ex.getMessage();
            LogHandler.warn(message);
-           UIUtil.fireNotification(NotificationType.ERROR, message, null);
+           UIUtil.fireNotification(NotificationType.ERROR, message);
           }}}
         );
   }
@@ -70,7 +69,7 @@ public class OCIExplorerFactory implements ToolWindowFactory {
     }, null);
     SafeRunnerUtil.run((Void) -> { 
       AppStackDashboard appStackDashboard = AppStackDashboard.newInstance(project, toolWindow); 
-      createTab(toolWindow, appStackDashboard, "Application Stack");
+      createTab(toolWindow, appStackDashboard, "Stack");
     
     }, null);
     SafeRunnerUtil.run((Void) -> { 

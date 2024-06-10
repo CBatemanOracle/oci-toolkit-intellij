@@ -18,6 +18,7 @@ public enum Icons {
     COPY("/icons/copy.svg"),
     SHOW("/icons/show.svg"),
     HIDE("/icons/hide.svg"),
+    INFO("/icons/informationDialog.svg"),
     TOOLBAR_LOGIN("icons/toolbar-login.png"),
     COMPUTE("icons/compute.png"),
     COMPUTE_INSTANCE("icons/compute-instance.png"),

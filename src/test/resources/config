@@ -20,30 +20,6 @@
 [branch "cbateman/first_changes_tns_url"]
 	remote = dbncontrib
 	merge = refs/heads/cbateman/first_changes_tns_url
-[branch "review/cbateman/single_tns_try_two"]
-	remote = dbncontrib
-	merge = refs/heads/review/cbateman/single_tns_try_two
-[branch "contrib/cbateman/initVMBasedDebug"]
-	remote = dbncontrib
-	merge = refs/heads/contrib/cbateman/initVMBasedDebug
-[branch "DBN-23.1"]
-	remote = dbncontrib
-	merge = refs/heads/DBN-23.1
-[branch "aallali/hack_jdwp_transport_hack_poc_attach_connector"]
-	remote = dbncontrib
-	merge = refs/heads/aallali/hack_jdwp_transport_hack_poc_attach_connector
-[branch "aallali/debugging_plsql_in_cloud_databases"]
-	remote = dbncontrib
-	merge = refs/heads/aallali/debugging_plsql_in_cloud_databases
-[branch "cbateman/enhanced_packet_io"]
-	remote = dbncontrib
-	merge = refs/heads/cbateman/enhanced_packet_io
-[branch "cbateman/bean_proxy_jar"]
-	remote = dbncontrib
-	merge = refs/heads/cbateman/bean_proxy_jar
-[branch "aallali/debugging_plsql_in_cloud_databases_external_apps"]
-	remote = dbncontrib
-	merge = refs/heads/aallali/debugging_plsql_in_cloud_databases_external_apps
 [remote "dbncontrib_new2"]
 	url = ssh://git@bitbucket.oci.oraclecorp.com:7999/dbjav/dbncontrib_new2.git
 	fetch = +refs/heads/*:refs/remotes/dbncontrib_new2/*
