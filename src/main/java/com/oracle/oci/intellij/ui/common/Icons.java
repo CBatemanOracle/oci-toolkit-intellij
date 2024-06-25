@@ -13,6 +13,7 @@ public enum Icons {
     CANCELED("icons/JobStatus/CANCELED.svg"),
     CANCELING("icons/JobStatus/CANCELING.svg"),
     FAILED("icons/JobStatus/FAILED.svg"),
+    RELOAD("icons/toolbar/buildLoadChanges.svg"),
     IN_PROGRESS("icons/JobStatus/IN_PROGRESS.svg"),
     SUCCEEDED("icons/JobStatus/SUCCEEDED.svg"),
     COPY("/icons/copy.svg"),
