@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.JBColor;
@@ -19,7 +20,6 @@ import com.oracle.oci.intellij.account.SystemPreferences;
 import com.oracle.oci.intellij.util.fills.NotificationGroupShim;
 import com.oracle.oci.intellij.util.fills.Shim;
 import com.oracle.oci.intellij.util.fills.ShimMethod;
-
 import io.github.resilience4j.core.lang.NonNull;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +60,7 @@ public class UIUtil {
   public static boolean isUnderDarcula() {
     return !JBColor.isBright();
   }
- 
+
   public static boolean isDarkMode() {
     return isUnderDarcula();
   }
@@ -74,10 +74,10 @@ public class UIUtil {
                                       @NotNull final String msg,
                                       String eventName) {
     invokeLater(() -> {
-      NotificationGroup notificationGroup = 
+      NotificationGroup notificationGroup =
         NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID);
       NotificationGroupShim groupShim = new NotificationGroupShim(notificationGroup);
-      Notification notification = 
+      Notification notification =
         groupShim.createNotification(NOTIFICATION_GROUP_ID, "", msg, notificationType);
       notification.notify(currentProject);
 
@@ -132,21 +132,62 @@ public class UIUtil {
     });
   }
 
+  public static IconButton createButtonIcon( String showIconPath) {
+    IconButton iconButton = new IconButton(showIconPath);
+    return iconButton;
+  }
+
+  public static class IconButton extends JButton {
+    String iconPath;
+
+    public IconButton(String iconPath) {
+      super();
+      this.iconPath = iconPath;
+      initializeButton(iconPath);
+    }
+
+    private void initializeButton(String showIconPath) {
+      this.setIcon(IconLoader.getIcon(showIconPath));
+
+      this.setBackground(null);
+      this.setBorder(null);
+      this.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      this.setOpaque(false);
+      this.setFocusable(false);
+      this.setContentAreaFilled(false);
+      this.setPreferredSize(new Dimension(20, 20));
+      this.setMargin(new Insets(0, 0, 0, 0));
+      this.setHorizontalAlignment(SwingConstants.CENTER);
+      this.setVerticalAlignment(SwingConstants.CENTER);
+    }
+
+    @Override
+    public void updateUI() {
+      super.updateUI();
+      if (iconPath != null)
+        initializeButton(iconPath);
+    }
+  }
+
   public static void createWebLink(JComponent component, String uri) {
     component.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
     component.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        try {
-          if (!Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-            return;
-          }
-          Desktop.getDesktop().browse(new URI(uri));
-        } catch (URISyntaxException | IOException ex) {
-          throw new RuntimeException(ex);
-        }
+        browseLink(uri);
       }
     });
+  }
+
+  public static void browseLink(String uri) {
+    try {
+      if (!Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+        return;
+      }
+      Desktop.getDesktop().browse(new URI(uri));
+    } catch (URISyntaxException | IOException ex) {
+      throw new RuntimeException(ex);
+    }
   }
 
   public static void showErrorDialog(Component parentComponent, String title, String message) {

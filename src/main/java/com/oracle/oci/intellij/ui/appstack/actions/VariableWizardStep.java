@@ -2,7 +2,9 @@ package com.oracle.oci.intellij.ui.appstack.actions;
 
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.components.*;
+import com.intellij.ui.components.JBPasswordField;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.wizard.WizardModel;
 import com.intellij.ui.wizard.WizardNavigationState;
 import com.intellij.ui.wizard.WizardStep;
@@ -46,8 +48,10 @@ import java.util.Stack;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class CustomWizardStep extends WizardStep implements PropertyChangeListener {
+public class VariableWizardStep extends AbstractWizardStep implements PropertyChangeListener {
     JBScrollPane mainScrollPane;
     JPanel mainPanel;
     VariableGroup variableGroup;
@@ -57,7 +61,7 @@ public class CustomWizardStep extends WizardStep implements PropertyChangeListen
     static private List<Stack> stackList ;
 
 
-    public CustomWizardStep(VariableGroup varGroup, PropertyDescriptor[] propertyDescriptors, LinkedHashMap<String, PropertyDescriptor> descriptorsState, List<VariableGroup> varGroups) {
+    public VariableWizardStep(VariableGroup varGroup, PropertyDescriptor[] propertyDescriptors, LinkedHashMap<String, PropertyDescriptor> descriptorsState) {
         mainPanel = new JPanel();
         mainScrollPane = new JBScrollPane(mainPanel);
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
@@ -260,13 +264,14 @@ public class CustomWizardStep extends WizardStep implements PropertyChangeListen
 
                 JCheckBox checkBox = new JCheckBox();
                 component = checkBox;
+                boolean defaultValue = (boolean)(pd.getValue("default")!= null?pd.getValue("default"):false );
+                controller.setValue(defaultValue,varGroup,pd);
+                checkBox.setSelected(defaultValue);
 
                 checkBox.addActionListener(e -> {
                         controller.setValue(checkBox.isSelected(),varGroup,pd);
                 });
-                boolean defaultValue = (boolean)(pd.getValue("default")!= null?pd.getValue("default"):true );
-                controller.setValue(defaultValue,varGroup,pd);
-                checkBox.setSelected(defaultValue);
+
 
                 // add this to the condition || ((String)pd.getValue("type")).startsWith("oci")
             } else if (propertyType.isEnum() || ((String)pd.getValue("type")).startsWith("oci")  ) {
@@ -608,6 +613,8 @@ public class CustomWizardStep extends WizardStep implements PropertyChangeListen
             }
         }
     }
+
+
 }
 
 

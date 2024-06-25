@@ -18,6 +18,7 @@ public enum Icons {
     COPY("/icons/copy.svg"),
     SHOW("/icons/show.svg"),
     HIDE("/icons/hide.svg"),
+    INFO("/icons/informationDialog.svg"),
     TOOLBAR_LOGIN("icons/toolbar-login.png"),
     COMPUTE("icons/compute.png"),
     COMPUTE_INSTANCE("icons/compute-instance.png"),
@@ -56,7 +57,10 @@ public enum Icons {
     DATABASE_IN_PROGRESS_STATE("icons/db-inprogress-state.png"),
     DATABASE_UNAVAILABLE_STATE("icons/db-unavailable-state.png"),
     BACKUP_ACTIVE_STATE("icons/backup-active-state.png"),
-    CONTAINER("icons/compute.png");
+    CONTAINER("icons/compute.png"),
+    MESSAGE_ERROR("icons/message/error/errorDialog.svg"),
+    MESSAGE_WARN("icons/message/warn/warningDialog.svg"),
+    MESSAGE_INFO("icons/message/info/informationDialog.svg");
 
     private final String path;
 

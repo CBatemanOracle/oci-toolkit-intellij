@@ -1,27 +1,5 @@
 package com.oracle.oci.intellij.ui.appstack.actions;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.LayoutManager;
-import java.lang.reflect.Method;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.DefaultListCellRenderer;
-import javax.swing.DefaultListModel;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.ListSelectionModel;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.wizard.WizardDialog;
@@ -34,6 +12,14 @@ import com.oracle.oci.intellij.account.SystemPreferences;
 import com.oracle.oci.intellij.ui.appstack.models.Controller;
 import com.oracle.oci.intellij.ui.appstack.models.VariableGroup;
 import com.oracle.oci.intellij.ui.common.UIUtil;
+
+import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.awt.*;
+import java.lang.reflect.Method;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class AppStackParametersWizardDialog extends WizardDialog {
     public static  boolean isProgramaticChange = false;
@@ -105,7 +91,7 @@ public class AppStackParametersWizardDialog extends WizardDialog {
 
 //        List<String> groupList = new ArrayList<>(List.of("db","network"));
         DefaultListModel<String> listModel = new DefaultListModel<>();
-        for (VariableGroup var :appStackModel.varGroups ){
+        for (VariableGroup var :appStackModel.getVarGroups() ){
             listModel.addElement(var.getClass().getSimpleName().replaceAll("_"," "));
         }
 
@@ -122,8 +108,10 @@ public class AppStackParametersWizardDialog extends WizardDialog {
                     if(!isProgramaticChange) {
                         int selectedIndex = menuList.getSelectedIndex();
                         WizardStep nextStep = null;
-                        CustomWizardStep currentStep = (CustomWizardStep) appStackModel.getMySteps().get(lastSelectedIndex[0]);
-                        boolean isValide =  Controller.getInstance().doValidate(currentStep);
+                        AbstractWizardStep currentStep = (AbstractWizardStep) appStackModel.getMySteps().get(lastSelectedIndex[0]);
+                        boolean isValide = true ;
+                        if (currentStep instanceof VariableWizardStep)
+                             isValide =  Controller.getInstance().doValidate(currentStep);
                         currentStep.setDirty(!isValide);
 
                         nextStep = nextStep != null ? nextStep : appStackModel.getMySteps().get(selectedIndex);
@@ -141,7 +129,7 @@ public class AppStackParametersWizardDialog extends WizardDialog {
         menuList.setCellRenderer(new DefaultListCellRenderer(){
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                CustomWizardStep currentStep = (CustomWizardStep) appStackModel.getMySteps().get(index);
+                AbstractWizardStep currentStep = (AbstractWizardStep) appStackModel.getMySteps().get(index);
                 JLabel renderedLabel = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
 
@@ -217,10 +205,10 @@ public class AppStackParametersWizardDialog extends WizardDialog {
         int stepindex = 0 ;
         for (WizardStep step:
              appStackModel.getMySteps()) {
-            CustomWizardStep customWizardStep = (CustomWizardStep) step;
-            if (customWizardStep.isDirty()){
+            AbstractWizardStep variableWizardStep = (AbstractWizardStep) step;
+            if (variableWizardStep.isDirty()){
                 // move to this dirty wizard step  .
-                changeToStep(customWizardStep,appStackModel);
+                changeToStep(variableWizardStep,appStackModel);
                 AppStackParametersWizardDialog.isProgramaticChange = true;
                 menuList.setSelectedIndex(stepindex);
                 AppStackParametersWizardDialog.isProgramaticChange = false;

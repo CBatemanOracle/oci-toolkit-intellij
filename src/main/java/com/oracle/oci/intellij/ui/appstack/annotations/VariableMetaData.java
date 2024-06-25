@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD,ElementType.METHOD})
 public @interface VariableMetaData {
 
-    String title() default "" ;      // Variable name
+    String title()  default "";     // Variable name
     boolean required() default false ; // Is the variable required?
     String defaultVal() default ""; // Default value for the variable
     String type() ;        // Data type of the variable

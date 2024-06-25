@@ -76,7 +76,9 @@ import com.oracle.bmc.vault.requests.CreateSecretRequest;
 import com.oracle.bmc.vault.requests.ListSecretsRequest;
 import com.oracle.bmc.vault.responses.CreateSecretResponse;
 import com.oracle.bmc.vault.responses.ListSecretsResponse;
+import com.oracle.oci.intellij.ui.appstack.AppStackDashboard;
 import com.oracle.oci.intellij.ui.appstack.exceptions.JobRunningException;
+import com.oracle.oci.intellij.ui.appstack.exceptions.OciAccountConfigException;
 import com.oracle.oci.intellij.ui.common.AutonomousDatabaseConstants;
 import com.oracle.oci.intellij.util.BundleUtil;
 import com.oracle.oci.intellij.util.LogHandler;
@@ -197,7 +199,14 @@ public class OracleCloudAccount {
 
   private void validate() {
     if (authenticationDetailsProvider == null) {
-      throw new IllegalStateException("Configure Oracle Cloud account first.");
+      // throw execption of Config file problem
+      final String message = "Oracle Cloud account configuration failed: Please check your config file ";
+      throw new OciAccountConfigException(message);
+//      LogHandler.warn(message);
+
+
+//      UIUtil.invokeLater(informDialog::show);
+//      throw new IllegalStateException("Configure Oracle Cloud account first.");
     }
   }
 
@@ -1105,6 +1114,15 @@ public class OracleCloudAccount {
       GetStackResponse response = this.resourceManagerClient.getStack(getStackRequest);
       return response.getStack();
     }
+
+//    public StackSummary getStackSummary(String stackId){
+//      GetStackRequest getStackRequest = Getstack.builder()
+//              .stackId(stackId)
+//              .build();
+//
+//      GetStackResponse response = this.resourceManagerClient.getStack(getStackRequest);
+//      return response.getStack();
+//    }
     
     public ListJobsResponse listJobs(String compartmentId, String stackId) {
       ListJobsRequest request = ListJobsRequest.builder().compartmentId(compartmentId)
@@ -1190,6 +1208,9 @@ public class OracleCloudAccount {
                           .configSource(zipUploadConfigSourceDetails)
                           .displayName(displayName)
                           .description(description)
+                .freeformTags(new HashMap<>(){
+                  {put("Type", AppStackDashboard.APP_STACK);}
+                })
                           .variables(variables == null ? Collections.emptyMap() : variables)
                           .build();
       CreateStackRequest createStackRequest =

@@ -4,10 +4,6 @@
  */
 package com.oracle.oci.intellij.ui.explorer;
 
-import java.util.Arrays;
-
-import org.jetbrains.annotations.NotNull;
-
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
@@ -20,6 +16,7 @@ import com.oracle.oci.intellij.account.SystemPreferences;
 import com.oracle.oci.intellij.ui.account.CompartmentAction;
 import com.oracle.oci.intellij.ui.account.ConfigureAction;
 import com.oracle.oci.intellij.ui.account.RegionAction;
+import com.oracle.oci.intellij.ui.account.ReloadConfigFileAction;
 import com.oracle.oci.intellij.ui.appstack.AppStackDashboard;
 import com.oracle.oci.intellij.ui.common.UIUtil;
 import com.oracle.oci.intellij.ui.database.AutonomousDatabasesDashboard;
@@ -28,6 +25,9 @@ import com.oracle.oci.intellij.util.BundleUtil;
 import com.oracle.oci.intellij.util.LogHandler;
 import com.oracle.oci.intellij.util.SafeRunnerUtil;
 import com.oracle.oci.intellij.util.fills.ContentFactorySERVICEShim;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 public class OCIExplorerFactory implements ToolWindowFactory {
 
@@ -57,6 +57,7 @@ public class OCIExplorerFactory implements ToolWindowFactory {
 
     // This actions are available on the top right of the toolbar
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
+    actionGroup.add(new ReloadConfigFileAction());
     actionGroup.add(new ConfigureAction());
     actionGroup.add(new RegionAction());
     actionGroup.add(new CompartmentAction());
@@ -70,7 +71,7 @@ public class OCIExplorerFactory implements ToolWindowFactory {
     }, null);
     SafeRunnerUtil.run((Void) -> { 
       AppStackDashboard appStackDashboard = AppStackDashboard.newInstance(project, toolWindow); 
-      createTab(toolWindow, appStackDashboard, "Application Stack");
+      createTab(toolWindow, appStackDashboard, "Stack");
     
     }, null);
     SafeRunnerUtil.run((Void) -> { 

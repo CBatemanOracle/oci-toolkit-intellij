@@ -1,13 +1,13 @@
 package com.oracle.oci.intellij.ui.appstack.command;
 
+import com.oracle.bmc.resourcemanager.model.StackSummary;
+import com.oracle.oci.intellij.account.OracleCloudAccount.ResourceManagerClientProxy;
+import com.oracle.oci.intellij.common.command.AbstractBasicCommand;
+import com.oracle.oci.intellij.ui.appstack.command.ListStackCommand.ListStackResult;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-
-import com.oracle.bmc.resourcemanager.model.StackSummary;
-import com.oracle.oci.intellij.account.OracleCloudAccount.ResourceManagerClientProxy;
-import com.oracle.oci.intellij.ui.appstack.command.ListStackCommand.ListStackResult;
-import com.oracle.oci.intellij.common.command.AbstractBasicCommand;
 
 public class ListStackCommand extends AbstractBasicCommand<ListStackResult> {
 	private ResourceManagerClientProxy resManagerClient;
