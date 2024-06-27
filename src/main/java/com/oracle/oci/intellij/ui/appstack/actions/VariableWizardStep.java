@@ -23,6 +23,7 @@ import com.oracle.oci.intellij.ui.appstack.models.Controller;
 import com.oracle.oci.intellij.ui.appstack.models.Validator;
 import com.oracle.oci.intellij.ui.appstack.models.VariableGroup;
 import com.oracle.oci.intellij.ui.common.CompartmentSelection;
+import com.oracle.oci.intellij.ui.common.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,6 +32,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.ItemEvent;
@@ -39,11 +41,15 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyDescriptor;
 import java.beans.PropertyVetoException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Stack;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class VariableWizardStep extends AbstractWizardStep implements PropertyChangeListener {
     JBScrollPane mainScrollPane;
@@ -84,14 +90,7 @@ public class VariableWizardStep extends AbstractWizardStep implements PropertyCh
                 continue;
             }
             try {
-                VarPanel varPanel ;
-                // we skip the introduction step
-                if (pd.getName().equals("descriptionText")){
-                    continue;
-                }
-               else {
-                    varPanel = new VarPanel(pd, variableGroup);
-                }
+               VarPanel varPanel =new VarPanel(pd,variableGroup);
                varPanels.add(varPanel) ;
                controller.addVariablePanel( varPanel);
                mainPanel.add(varPanel)  ;
@@ -175,25 +174,44 @@ public class VariableWizardStep extends AbstractWizardStep implements PropertyCh
         JLabel errorLabel;
         PropertyDescriptor pd;
         VariableGroup variableGroup;
-        protected ResourceBundle resBundle;
-
 
 
 
         VarPanel(PropertyDescriptor pd, VariableGroup variableGroup) throws InvocationTargetException, IllegalAccessException {
-                this(pd,variableGroup,true);
-
-        }
-
-        VarPanel(PropertyDescriptor pd, VariableGroup variableGroup,boolean createVarPanel) throws InvocationTargetException, IllegalAccessException {
             this.pd = pd;
             this.variableGroup = variableGroup;
-            resBundle = ResourceBundle.getBundle("appStackWizard", Locale.ROOT);
-
-            if (createVarPanel){
+            if (pd.getValue("type").equals("link"))
+                createVarPanelForOneElement();
+            else
                 createVarPanel(pd,variableGroup);
-            }
         }
+
+        private void createVarPanelForOneElement() {
+            setLayout(new BorderLayout());
+            JPanel documentationPanel = new JPanel();
+            JBLabel documentationLabel = new JBLabel("For more information visit :");
+            ActionLink documentationLink = new ActionLink() ;
+
+            String url = (String) pd.getValue("default");
+            AbstractAction abstractAction =new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    UIUtil.createWebLink(documentationLink,url);
+                }
+            };
+            documentationLink.setAction(abstractAction);
+            documentationLink.setText("Documentation");
+
+            documentationPanel.add(documentationLabel);
+            documentationPanel.add(documentationLink);
+            add(documentationPanel,BorderLayout.WEST);
+            mainComponent = documentationPanel;
+            inputComponent = documentationLink;
+//            setPreferredSize(new JBDimension(760,100));
+            documentationPanel.setBorder(BorderFactory.createEmptyBorder(0,24,0,0));
+
+        }
+
         private void createVarPanel( PropertyDescriptor pd,VariableGroup variableGroup) throws InvocationTargetException, IllegalAccessException {
             setLayout(new BorderLayout());
             String varTitle = "";

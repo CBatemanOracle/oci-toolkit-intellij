@@ -3,8 +3,6 @@ package com.oracle.oci.intellij.ui.appstack.models;
 import com.oracle.oci.intellij.ui.appstack.actions.PropertyOrder;
 import com.oracle.oci.intellij.ui.appstack.annotations.VariableMetaData;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.beans.PropertyVetoException;
 
 public class Stack_Authentication extends VariableGroup {
@@ -21,6 +19,7 @@ public class Stack_Authentication extends VariableGroup {
     private java.lang.Object vault_id;
 
     private java.lang.Object key_id;
+    private String documentationLink;
 
     @PropertyOrder(1)
     @VariableMetaData(title="Use existing authentication token",description="This token will be used by the stack to authenticate the user when connecting to the code repository or container registry.",defaultVal="true",type="boolean",required=true)
@@ -115,11 +114,14 @@ public class Stack_Authentication extends VariableGroup {
         vcp.fireVetoableChange("key_id", oldValue, newValue);
     }
 
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
-         this.pcs.addPropertyChangeListener(listener);
-     }
+    @PropertyOrder(8)
+    @VariableMetaData(defaultVal="https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#stack-authentication",type="link")
+    public String getDocumentationLink() {
+        return documentationLink;
+    }
+    public void setDocumentationLink(String documentationLink) {
+        this.documentationLink = documentationLink;
+    }
 
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
-         this.pcs.removePropertyChangeListener(listener);
-     }
+
 }
