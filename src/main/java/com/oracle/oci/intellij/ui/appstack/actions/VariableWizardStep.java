@@ -2,6 +2,8 @@ package com.oracle.oci.intellij.ui.appstack.actions;
 
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.ActionLink;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPasswordField;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
@@ -48,8 +50,6 @@ import java.util.Stack;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class VariableWizardStep extends AbstractWizardStep implements PropertyChangeListener {
     JBScrollPane mainScrollPane;
@@ -200,16 +200,15 @@ public class VariableWizardStep extends AbstractWizardStep implements PropertyCh
                 }
             };
             documentationLink.setAction(abstractAction);
-            documentationLink.setText("Documentation");
+            documentationLink.setText("help");
 
-            documentationPanel.add(documentationLabel);
+//            documentationPanel.add(documentationLabel);
             documentationPanel.add(documentationLink);
-            add(documentationPanel,BorderLayout.WEST);
+            add(documentationPanel,BorderLayout.EAST);
             mainComponent = documentationPanel;
             inputComponent = documentationLink;
 //            setPreferredSize(new JBDimension(760,100));
-            documentationPanel.setBorder(BorderFactory.createEmptyBorder(0,24,0,0));
-
+            documentationPanel.setBorder(BorderFactory.createEmptyBorder(0,0,0,0));
         }
 
         private void createVarPanel( PropertyDescriptor pd,VariableGroup variableGroup) throws InvocationTargetException, IllegalAccessException {
