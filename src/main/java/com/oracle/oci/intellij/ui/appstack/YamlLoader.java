@@ -157,7 +157,7 @@ public class YamlLoader {
                 isApply = dialog.isApplyJob();
                 userInputs.set(dialog.getUserInput());
             }
-        }, ModalityState.any());
+        }, ModalityState.defaultModalityState());
 
 
         return userInputs.get();
