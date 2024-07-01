@@ -26,4 +26,9 @@ public class Introduction extends VariableGroup {
         this.introductionDontShowAgain = introductionDontShowAgain;
 
     }
+
+    @Override
+    public String getDocumentationLink() {
+        return null;
+    }
 }

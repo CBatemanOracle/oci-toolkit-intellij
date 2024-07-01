@@ -44,11 +44,13 @@ public class Application extends VariableGroup {
     private java.lang.String image_path;
 
     private java.lang.String exposed_port;
+    private static final String DOCUMENTATION_LINK = "https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#your-application";
 
 
 
-
-    private String documentationLink;
+    public String getDocumentationLink() {
+        return DOCUMENTATION_LINK;
+    }
     @PropertyOrder(1)
     @VariableMetaData(title="Application name",description="This name will be used to name other needed resources.",type="string",required=true)
     public String getApplication_name() {
@@ -216,13 +218,4 @@ public class Application extends VariableGroup {
         pcs.firePropertyChange("exposed_port", oldValue, newValue);
         vcp.fireVetoableChange("exposed_port", oldValue, newValue);
     }
-    @PropertyOrder(13)
-    @VariableMetaData(defaultVal="https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#your-application",type="link")
-    public String getDocumentationLink() {
-        return documentationLink;
-    }
-    public void setDocumentationLink(String documentationLink) {
-        this.documentationLink = documentationLink;
-    }
-
 }

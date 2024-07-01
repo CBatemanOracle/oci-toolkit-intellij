@@ -10,7 +10,7 @@ public class General_Configuration extends VariableGroup {
     private java.lang.Object compartment_id;
 
     private java.lang.Object availability_domain;
-    private String documentationLink;
+    private static final String DOCUMENTATION_LINK = "https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#general-configuration";
 
     @PropertyOrder(1)
     @VariableMetaData(title="Compute Compartment",description="The compartment in which to create all Compute resources.",defaultVal="compartment_ocid",type="oci:identity:compartment:id",required=true)
@@ -38,15 +38,8 @@ public class General_Configuration extends VariableGroup {
         pcs.firePropertyChange("availability_domain", oldValue, newValue);
         vcp.fireVetoableChange("availability_domain", oldValue, newValue);
     }
-
-    @PropertyOrder(13)
-    @VariableMetaData(defaultVal="https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#general-configuration",type="link")
     public String getDocumentationLink() {
-        return documentationLink;
+        return DOCUMENTATION_LINK;
     }
-    public void setDocumentationLink(String documentationLink) {
-        this.documentationLink = documentationLink;
-    }
-
 
 }

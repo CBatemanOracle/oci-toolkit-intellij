@@ -1,10 +1,12 @@
 package com.oracle.oci.intellij.ui.appstack.actions;
 
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.components.*;
 import com.intellij.ui.wizard.WizardModel;
 import com.intellij.ui.wizard.WizardNavigationState;
 import com.intellij.ui.wizard.WizardStep;
 import com.intellij.util.ui.JBDimension;
+import com.oracle.oci.intellij.ui.common.Icons;
 import com.oracle.oci.intellij.ui.common.UIUtil;
 
 import javax.swing.*;
@@ -63,9 +65,11 @@ public class IntroductoryWizardStep extends AbstractWizardStep  {
         panel.add(jbScrollPane);
 
         JPanel linkPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        linkPanel.add(new JBLabel("All the documention is availbale on the github project "));
+        linkPanel.add(new JBLabel("All the documentation is available on the github project "));
 
         ActionLink link = new ActionLink("App Stack Documentation", (ActionListener) e -> UIUtil.browseLink("https://github.com/oracle-quickstart/appstack"));
+        link.setIcon(IconLoader.getIcon(Icons.EXTERNAL_LINK.getPath()),true);
+
         linkPanel.add(link);
 
         panel.add(linkPanel);

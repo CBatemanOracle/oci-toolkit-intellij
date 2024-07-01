@@ -19,7 +19,7 @@ public class Stack_Authentication extends VariableGroup {
     private java.lang.Object vault_id;
 
     private java.lang.Object key_id;
-    private String documentationLink;
+    private static final String DOCUMENTATION_LINK = "https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#stack-authentication";
 
     @PropertyOrder(1)
     @VariableMetaData(title="Use existing authentication token",description="This token will be used by the stack to authenticate the user when connecting to the code repository or container registry.",defaultVal="true",type="boolean",required=true)
@@ -114,14 +114,8 @@ public class Stack_Authentication extends VariableGroup {
         vcp.fireVetoableChange("key_id", oldValue, newValue);
     }
 
-    @PropertyOrder(8)
-    @VariableMetaData(defaultVal="https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#stack-authentication",type="link")
+    @Override
     public String getDocumentationLink() {
-        return documentationLink;
+        return DOCUMENTATION_LINK;
     }
-    public void setDocumentationLink(String documentationLink) {
-        this.documentationLink = documentationLink;
-    }
-
-
 }

@@ -14,7 +14,7 @@ public class Other_Parameters extends VariableGroup {
     private java.lang.String vm_options;
 
     private java.lang.String program_arguments;
-    private String documentationLink;
+    private static final String DOCUMENTATION_LINK = "https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#other-parameters";
 
     @PropertyOrder(1)
     @VariableMetaData(title="Other environment variables",description="If your application can be configured through environment variables you can configure them here. Separate variables with semicolon (var1=value1;var2=value2).",type="string")
@@ -53,14 +53,9 @@ public class Other_Parameters extends VariableGroup {
          this.pcs.removePropertyChangeListener(listener);
      }
 
-    @PropertyOrder(4)
-    @VariableMetaData(defaultVal="https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#other-parameters",type="link")
+    @Override
     public String getDocumentationLink() {
-        return documentationLink;
+        return DOCUMENTATION_LINK;
     }
-    public void setDocumentationLink(String documentationLink) {
-        this.documentationLink = documentationLink;
-    }
-
 
 }

@@ -1,8 +1,5 @@
 package com.oracle.oci.intellij.ui.appstack.models;
 
-import com.oracle.oci.intellij.ui.appstack.actions.PropertyOrder;
-import com.oracle.oci.intellij.ui.appstack.annotations.VariableMetaData;
-
 public class Hide_constants_and_internal_variables extends VariableGroup {
 
     private String tenancy_ocid;
@@ -36,7 +33,7 @@ public class Hide_constants_and_internal_variables extends VariableGroup {
     private String db_version;
 
     private String db_license_model;
-    private String documentationLink;
+    private static final String DOCUMENTATION_LINK = "https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#your-application";
 
     public String getTenancy_ocid() {
         return tenancy_ocid;
@@ -166,14 +163,9 @@ public class Hide_constants_and_internal_variables extends VariableGroup {
         this.db_license_model = db_license_model;
     }
 
-    @PropertyOrder(13)
-    @VariableMetaData(defaultVal="https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#your-application",type="link")
+
+    @Override
     public String getDocumentationLink() {
-        return documentationLink;
+        return DOCUMENTATION_LINK;
     }
-    public void setDocumentationLink(String documentationLink) {
-        this.documentationLink = documentationLink;
-    }
-
-
 }
