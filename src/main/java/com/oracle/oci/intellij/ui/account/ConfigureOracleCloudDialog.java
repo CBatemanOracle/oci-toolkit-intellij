@@ -16,6 +16,7 @@ import com.oracle.oci.intellij.account.ConfigFileHandler.ProfileSet;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.account.SystemPreferences;
 import com.oracle.oci.intellij.ui.common.UIUtil;
+import com.oracle.oci.intellij.util.BundleUtil;
 import com.oracle.oci.intellij.util.LogHandler;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,11 +132,15 @@ public class ConfigureOracleCloudDialog extends DialogWrapper {
       Messages.showErrorDialog("Invalid region", "Error");
     } else {
       close(DialogWrapper.OK_EXIT_CODE);
-      try {
-        OracleCloudAccount.getInstance().configure(configFile, profileName);
-      } catch (IOException ioException) {
-        UIUtil.fireNotification(NotificationType.ERROR, "Problem with OCI config:"+ioException.getMessage());
-      }
+
+        BundleUtil.withContextCL(this.getClass().getClassLoader(),()->{
+          try {
+            OracleCloudAccount.getInstance().configure(configFile, profileName);
+          } catch (IOException ioException) {
+            UIUtil.fireNotification(NotificationType.ERROR, "Problem with OCI config:"+ioException.getMessage());
+          }
+        });
+
     }
   }
 
