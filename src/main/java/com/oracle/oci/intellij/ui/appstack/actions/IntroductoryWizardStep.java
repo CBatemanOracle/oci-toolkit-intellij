@@ -1,7 +1,12 @@
 package com.oracle.oci.intellij.ui.appstack.actions;
 
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.components.*;
+import com.intellij.ui.components.ActionLink;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.wizard.WizardModel;
 import com.intellij.ui.wizard.WizardNavigationState;
 import com.intellij.ui.wizard.WizardStep;
@@ -10,8 +15,6 @@ import com.oracle.oci.intellij.ui.common.Icons;
 import com.oracle.oci.intellij.ui.common.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -30,20 +33,22 @@ public class IntroductoryWizardStep extends AbstractWizardStep  {
     private void initComponents() {
         mainPanel = new JPanel();
         resBundle = ResourceBundle.getBundle("appStackWizard", Locale.ROOT);
-        Border emptyBorder = BorderFactory.createEmptyBorder();
-        TitledBorder titledBorder = BorderFactory.createTitledBorder(emptyBorder, "Introduction");
-        Font currentFont = titledBorder.getTitleFont();
-        if (currentFont == null) {
-            currentFont = UIManager.getFont("TitledBorder.font");
-        }
-        titledBorder.setTitleFont(currentFont.deriveFont(Font.BOLD));
-        mainPanel.setBorder(titledBorder);
+        mainPanel.setLayout(new BorderLayout());
 
+        JPanel headerPanel = new JPanel();
+        headerPanel.setLayout(new BoxLayout(headerPanel,BoxLayout.X_AXIS));
+        JBLabel title = new JBLabel("Introduction");
+        Font currentFont = title.getFont();
+        Font boldFont = currentFont.deriveFont(Font.BOLD, currentFont.getSize());
+        title.setFont(boldFont);
+        headerPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+        headerPanel.add(title);
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(8,0,14,0));
+        mainPanel.add(headerPanel,BorderLayout.NORTH);
         JBTextArea appStackDescription;
 
         mainScrollPane = new JBScrollPane(mainPanel);
 
-        mainPanel.setLayout(new BorderLayout());
         appStackDescription = new JBTextArea();
 
         Insets currentInsets = appStackDescription.getMargin();
@@ -73,6 +78,7 @@ public class IntroductoryWizardStep extends AbstractWizardStep  {
         linkPanel.add(link);
 
         panel.add(linkPanel);
+        panel.setBorder(BorderFactory.createEmptyBorder(0,25,0,0));
 
         JPanel dontShowPanel = new JBPanel<>(new FlowLayout(FlowLayout.LEFT));
         JBCheckBox dontShowCheckBox = new JBCheckBox();
