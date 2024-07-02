@@ -613,9 +613,10 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
           throw new CommandFailedException("Failed refreshing list of stacks");
         }
       } catch (Exception exception) {
+        //todo maybe we can change the values of profile,compartment, region to none for all dashboards
         appStackList = null;
         UIUtil.fireNotification(NotificationType.ERROR, exception.getMessage(), null);
-        LogHandler.error(exception.getMessage(), exception);
+//        LogHandler.error(exception.getMessage(), exception);
       }
     };
 

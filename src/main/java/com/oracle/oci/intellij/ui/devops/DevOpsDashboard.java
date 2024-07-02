@@ -161,7 +161,7 @@ public final class DevOpsDashboard implements PropertyChangeListener, ITabbedExp
           } catch (Exception exception) {
             listRepositories = null;
             UIUtil.fireNotification(NotificationType.ERROR, "Error listing repos"+exception.getMessage());
-            LogHandler.error(exception.getMessage(), exception);
+//            LogHandler.error(exception.getMessage(), exception);
           }
         };
         
