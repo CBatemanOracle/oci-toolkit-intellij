@@ -1,5 +1,6 @@
 package com.oracle.oci.intellij.ui.appstack.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.wizard.WizardDialog;
@@ -21,7 +22,7 @@ import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class AppStackParametersWizardDialog extends WizardDialog {
+public class AppStackParametersWizardDialog extends WizardDialog<CustomWizardModel> {
     public static  boolean isProgramaticChange = false;
     JBList menuList;
     private LinkedHashMap<String,String> userInput;
@@ -30,11 +31,38 @@ public class AppStackParametersWizardDialog extends WizardDialog {
 
 
     public AppStackParametersWizardDialog(WizardModel wizardModel){
-        super(true ,  wizardModel);
+        super(true , (CustomWizardModel) wizardModel);
+        myHelpAction = null;
     }
 
 
+    @Override
+    protected JComponent createSouthPanel() {
+        JComponent southComponent =  super.createSouthPanel();
 
+      removeHelpButton(southComponent);
+        return southComponent;
+    }
+
+    /**
+     * we are delete the button help from wizard dialog
+     * @param component
+     */
+    private void removeHelpButton(Component component){
+        String helpText = IdeBundle.message("button.help", new Object[0]);
+        if (!(component instanceof JComponent))
+            return;
+        JComponent container = (JComponent)component;
+        Component[] childs =container.getComponents();
+        for (Component child : childs){
+            if (child instanceof JButton  && helpText.equals(((JButton) child).getText()) ){
+                container.remove(child);
+                return;
+            }
+
+            removeHelpButton(child);
+        }
+    }
 
     @Override
     protected JComponent createCenterPanel() {

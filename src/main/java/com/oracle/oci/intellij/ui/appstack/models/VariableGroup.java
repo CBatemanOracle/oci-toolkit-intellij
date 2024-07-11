@@ -5,10 +5,9 @@ import java.beans.PropertyChangeSupport;
 import java.beans.VetoableChangeListener;
 import java.beans.VetoableChangeSupport;
 
-public class VariableGroup {
+abstract public class VariableGroup {
     protected final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     protected  final VetoableChangeSupport vcp = new VetoableChangeSupport(this);
-
 
     public void addVetoableChangeListener(VetoableChangeListener listener) {
         this.vcp.addVetoableChangeListener(listener);
@@ -24,4 +23,5 @@ public class VariableGroup {
     public void removePropertyChangeListener(PropertyChangeListener listener) {
         this.pcs.removePropertyChangeListener(listener);
     }
+    abstract public String getDocumentationLink() ;
 }

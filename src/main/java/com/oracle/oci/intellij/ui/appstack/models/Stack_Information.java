@@ -36,4 +36,9 @@ public class Stack_Information extends VariableGroup{
     public void setAppstack_compartment(Object appstack_compartment) {
         this.appstack_compartment = appstack_compartment;
     }
+
+    @Override
+    public String getDocumentationLink() {
+        return null;
+    }
 }

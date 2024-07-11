@@ -76,7 +76,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
   private ActionLink profileValueLabel;
   private ActionLink compartmentValueLabel;
   private ActionLink regionValueLabel;
-  private JComboBox filerStackCombo;
+  private JComboBox<String> filerStackCombo;
   private JButton infoButton;
   static public String APP_STACK = "App stack";
   String ALL_STACK = "All";
@@ -207,8 +207,7 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
       return;
     }
     infoButton.addActionListener(e->{
-      InformationDialog informationDialog = new InformationDialog(
-              "This is A button to filter  your stacks that are in oci. the  \"App stack\" will show just the stacks created by this plugin and that have your java application , and you also can see all the stack in your oci account by setting it to \" All\" . ");
+      InformationDialog informationDialog = new InformationDialog(resBundle.getString("DROPDOWN_FILTER_TOOLTIP_TEXT"));
       informationDialog.show();
     });
     appStacksTable.setModel(new AppStackTableModel(0));
@@ -226,9 +225,6 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
           columnText.append(" Job  ->  ");
           columnText.append(job.getLifecycleState());
 
-//          final JBLabel statusLbl = new JBLabel(
-//                  columnText.toString());
-//          statusLbl.setIcon((getImageStatus(job.getLifecycleState())));
           this.setText(columnText.toString());
           this.setIcon(getImageStatus(job.getLifecycleState()));
           return this;
@@ -617,9 +613,10 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
           throw new CommandFailedException("Failed refreshing list of stacks");
         }
       } catch (Exception exception) {
+        //todo maybe we can change the values of profile,compartment, region to none for all dashboards
         appStackList = null;
         UIUtil.fireNotification(NotificationType.ERROR, exception.getMessage(), null);
-        LogHandler.error(exception.getMessage(), exception);
+//        LogHandler.error(exception.getMessage(), exception);
       }
     };
 

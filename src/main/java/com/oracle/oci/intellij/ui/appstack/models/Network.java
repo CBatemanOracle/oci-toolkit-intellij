@@ -51,7 +51,12 @@ public class Network extends VariableGroup {
     private int health_checker_return_code;
 
     private boolean enable_session_affinity;
-    private String documentationLink;
+    private static final String DOCUMENTATION_LINK = "https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#network";
+
+    @Override
+    public String getDocumentationLink() {
+        return DOCUMENTATION_LINK;
+    }
 
     public enum Session_affinity{
         Enable_application_cookie_persistence,
@@ -382,14 +387,6 @@ public class Network extends VariableGroup {
         vcp.fireVetoableChange("certificate_ocid", oldValue, newValue);
     }
 
-    @PropertyOrder(26)
-    @VariableMetaData(defaultVal="https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#network",type="link")
-    public String getDocumentationLink() {
-        return documentationLink;
-    }
-    public void setDocumentationLink(String documentationLink) {
-        this.documentationLink = documentationLink;
-    }
 
 
 }

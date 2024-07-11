@@ -43,7 +43,7 @@ public class Database extends VariableGroup {
     private String password_env;
 
     private Object db_compartment;
-    private String documentationLink;
+    private static final String DOCUMENTATION_LINK = "https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#database";
 
     @PropertyOrder(1)
     @VariableMetaData(title="Use existing database ",defaultVal="true",type="boolean",required=true)
@@ -287,20 +287,17 @@ public class Database extends VariableGroup {
     public void removePropertyChangeListener(PropertyChangeListener listener) {
          this.pcs.removePropertyChangeListener(listener);
      }
+
+    @Override
+    public String getDocumentationLink() {
+        return DOCUMENTATION_LINK;
+    }
+
     public void setDb_compartment(Object newValue) throws PropertyVetoException {
         Object oldValue = this.db_compartment;
         this.db_compartment = newValue;
         pcs.firePropertyChange("db_compartment", oldValue, newValue);
         vcp.fireVetoableChange("db_compartment", oldValue, newValue);
-    }
-
-    @PropertyOrder(19)
-    @VariableMetaData(defaultVal="https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#database",type="link")
-    public String getDocumentationLink() {
-        return documentationLink;
-    }
-    public void setDocumentationLink(String documentationLink) {
-        this.documentationLink = documentationLink;
     }
 
 

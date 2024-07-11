@@ -45,6 +45,7 @@ import javax.swing.text.JTextComponent;
 import org.jetbrains.annotations.NotNull;
 
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBLabel;
@@ -69,7 +70,29 @@ import com.oracle.oci.intellij.ui.appstack.models.Controller;
 import com.oracle.oci.intellij.ui.appstack.models.Validator;
 import com.oracle.oci.intellij.ui.appstack.models.VariableGroup;
 import com.oracle.oci.intellij.ui.common.CompartmentSelection;
+import com.oracle.oci.intellij.ui.common.Icons;
 import com.oracle.oci.intellij.ui.common.UIUtil;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.JTextComponent;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.ItemEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyDescriptor;
+import java.beans.PropertyVetoException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class VariableWizardStep extends AbstractWizardStep implements PropertyChangeListener {
     JBScrollPane mainScrollPane;
@@ -78,7 +101,6 @@ public class VariableWizardStep extends AbstractWizardStep implements PropertyCh
     boolean dirty = true ;
     List<VarPanel> varPanels ;
     Controller controller = Controller.getInstance();
-    static private List<Stack> stackList ;
 
 
     public VariableWizardStep(VariableGroup varGroup, PropertyDescriptor[] propertyDescriptors, LinkedHashMap<String, PropertyDescriptor> descriptorsState) {
@@ -93,20 +115,11 @@ public class VariableWizardStep extends AbstractWizardStep implements PropertyCh
 
         controller.setDescriptorsState(descriptorsState) ;
 
-        String className = varGroup.getClass().getSimpleName().replaceAll("_"," ");
-        Border emptyBorder = BorderFactory.createEmptyBorder();
-        TitledBorder titledBorder = BorderFactory.createTitledBorder(emptyBorder, className);
-
-        Font currentFont = titledBorder.getTitleFont();
-        if (currentFont == null) {
-            currentFont = UIManager.getFont("TitledBorder.font");
-        }
-        titledBorder.setTitleFont(currentFont.deriveFont(Font.BOLD));
-        mainPanel.setBorder(titledBorder);
+        addStepTitleAndDocumentationLink(varGroup);
 
 
         for (PropertyDescriptor pd : propertyDescriptors) {
-            if (pd.getName().equals("class") ) {
+            if ("class".equals(pd.getName()) || "documentationLink".equals(pd.getName()) ) {
                 continue;
             }
             try {
@@ -119,6 +132,37 @@ public class VariableWizardStep extends AbstractWizardStep implements PropertyCh
             }
         }
 
+    }
+
+    private void addStepTitleAndDocumentationLink(VariableGroup varGroup) {
+        String className = varGroup.getClass().getSimpleName().replaceAll("_"," ");
+        JPanel headerPanel = new JPanel();
+        headerPanel.setLayout(new BoxLayout(headerPanel,BoxLayout.X_AXIS));
+        JBLabel title = new JBLabel(className);
+        Font currentFont = title.getFont();
+        Font boldFont = currentFont.deriveFont(Font.BOLD, currentFont.getSize());
+        title.setFont(boldFont);
+        headerPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+        headerPanel.add(title);
+        headerPanel.add(Box.createHorizontalGlue());
+        if (varGroup.getDocumentationLink() != null){
+            ActionLink helpAction = new ActionLink();
+            String url = varGroup.getDocumentationLink();
+            AbstractAction abstractAction =new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    UIUtil.createWebLink(helpAction,url);
+                }
+            };
+            helpAction.setAction(abstractAction);
+            helpAction.setText("help");
+            helpAction.setIcon(IconLoader.getIcon(Icons.EXTERNAL_LINK.getPath()),true);
+            headerPanel.add(helpAction);
+            headerPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+        }
+
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(8,0,14,0));
+        mainPanel.add(headerPanel);
     }
 
     public List<VarPanel> getVarPanels() {
@@ -146,10 +190,10 @@ public class VariableWizardStep extends AbstractWizardStep implements PropertyCh
 
 
 
-        CustomWizardModel appStackWizardModel = (CustomWizardModel) model;
-        AppStackParametersWizardDialog.isProgramaticChange = true;
-        appStackWizardModel.getGroupMenuList().setSelectedIndex(appStackWizardModel.getGroupMenuList().getSelectedIndex()+1);
-        AppStackParametersWizardDialog.isProgramaticChange = false;
+//        CustomWizardModel appStackWizardModel = (CustomWizardModel) model;
+//        AppStackParametersWizardDialog.isProgramaticChange = true;
+//        appStackWizardModel.getGroupMenuList().setSelectedIndex(appStackWizardModel.getGroupMenuList().getSelectedIndex()+1);
+//        AppStackParametersWizardDialog.isProgramaticChange = false;
         return super.onNext(model);
     }
 
@@ -168,10 +212,10 @@ public class VariableWizardStep extends AbstractWizardStep implements PropertyCh
         boolean isValidated = controller.doValidate(this);
         setDirty(!isValidated);
 
-        CustomWizardModel appStackWizardModel = (CustomWizardModel) model;
-        AppStackParametersWizardDialog.isProgramaticChange = true;
-        appStackWizardModel.getGroupMenuList().setSelectedIndex(appStackWizardModel.getGroupMenuList().getSelectedIndex()-1);
-        AppStackParametersWizardDialog.isProgramaticChange = false;
+//        CustomWizardModel appStackWizardModel = (CustomWizardModel) model;
+//        AppStackParametersWizardDialog.isProgramaticChange = true;
+//        appStackWizardModel.getGroupMenuList().setSelectedIndex(appStackWizardModel.getGroupMenuList().getSelectedIndex()-1);
+//        AppStackParametersWizardDialog.isProgramaticChange = false;
         return super.onPrevious(model);
     }
 
@@ -200,36 +244,7 @@ public class VariableWizardStep extends AbstractWizardStep implements PropertyCh
         VarPanel(PropertyDescriptor pd, VariableGroup variableGroup) throws InvocationTargetException, IllegalAccessException {
             this.pd = pd;
             this.variableGroup = variableGroup;
-            if (pd.getValue("type").equals("link"))
-                createVarPanelForOneElement();
-            else
-                createVarPanel(pd,variableGroup);
-        }
-
-        private void createVarPanelForOneElement() {
-            setLayout(new BorderLayout());
-            JPanel documentationPanel = new JPanel();
-            JBLabel documentationLabel = new JBLabel("For more information visit :");
-            ActionLink documentationLink = new ActionLink() ;
-
-            String url = (String) pd.getValue("default");
-            AbstractAction abstractAction =new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    UIUtil.createWebLink(documentationLink,url);
-                }
-            };
-            documentationLink.setAction(abstractAction);
-            documentationLink.setText("Documentation");
-
-            documentationPanel.add(documentationLabel);
-            documentationPanel.add(documentationLink);
-            add(documentationPanel,BorderLayout.WEST);
-            mainComponent = documentationPanel;
-            inputComponent = documentationLink;
-//            setPreferredSize(new JBDimension(760,100));
-            documentationPanel.setBorder(BorderFactory.createEmptyBorder(0,24,0,0));
-
+            createVarPanel(pd,variableGroup);
         }
 
         private void createVarPanel( PropertyDescriptor pd,VariableGroup variableGroup) throws InvocationTargetException, IllegalAccessException {

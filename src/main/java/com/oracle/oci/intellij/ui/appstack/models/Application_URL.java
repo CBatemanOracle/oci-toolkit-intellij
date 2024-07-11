@@ -17,9 +17,8 @@ public class Application_URL extends VariableGroup {
     private java.lang.Object zone;
 
     private java.lang.String subdomain;
-    private String documentationLink;
+    private static final String DOCUMENTATION_LINK = "https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#application-url";
 
-//    private java.lang.Object certificate_ocid;
 
     @PropertyOrder(1)
     @VariableMetaData(title="Create DNS record",description="If you check this checkbox the stack will create a DNS record that will resolve to the load balancer's IP address.",defaultVal="true",type="boolean",required=true)
@@ -72,18 +71,7 @@ public class Application_URL extends VariableGroup {
         pcs.firePropertyChange("subdomain", oldValue, newValue);
         vcp.fireVetoableChange("subdomain", oldValue, newValue);
     }
-//    @PropertyOrder(5)
-//    @VariableMetaData(title="Certificate OCID",description="You must have a SSL certificate available in OCI Certificates service. Provide the certificate OCID for the host name,that will be used to configure the load balancer.",type="oci:certificatesmanagement:certificate:id",required=true,visible="create_fqdn")
-//    public Object getCertificate_ocid() {
-//        return certificate_ocid;
-//    }
-//
-//    public void setCertificate_ocid(Object newValue) throws PropertyVetoException {
-//        Object oldValue = this.certificate_ocid;
-//        this.certificate_ocid = newValue;
-//        pcs.firePropertyChange("certificate_ocid", oldValue, newValue);
-//        vcp.fireVetoableChange("certificate_ocid", oldValue, newValue);
-//    }
+
 
     public void addPropertyChangeListener(PropertyChangeListener listener) {
          this.pcs.addPropertyChangeListener(listener);
@@ -93,14 +81,8 @@ public class Application_URL extends VariableGroup {
          this.pcs.removePropertyChangeListener(listener);
      }
 
-    @PropertyOrder(5)
-    @VariableMetaData(defaultVal="https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#application-url",type="link")
     public String getDocumentationLink() {
-        return documentationLink;
+        return DOCUMENTATION_LINK;
     }
-    public void setDocumentationLink(String documentationLink) {
-        this.documentationLink = documentationLink;
-    }
-
 
 }

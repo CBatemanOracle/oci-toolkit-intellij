@@ -7,7 +7,12 @@ import java.beans.PropertyVetoException;
 
 public class Container_Instance_Configuration extends VariableGroup {
 
-    private String documentationLink;
+    private static final String DOCUMENTATION_LINK = "https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#container-instance-configuration";
+
+    @Override
+    public String getDocumentationLink() {
+        return DOCUMENTATION_LINK;
+    }
 
     public enum Shape{
         CI_Standard_E3_Flex,
@@ -60,14 +65,6 @@ public class Container_Instance_Configuration extends VariableGroup {
         vcp.fireVetoableChange("ocpus", oldValue, newValue);
     }
 
-    @PropertyOrder(4)
-    @VariableMetaData(defaultVal="https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#container-instance-configuration",type="link")
-    public String getDocumentationLink() {
-        return documentationLink;
-    }
-    public void setDocumentationLink(String documentationLink) {
-        this.documentationLink = documentationLink;
-    }
 
 
 }

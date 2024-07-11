@@ -7,7 +7,7 @@ public class Application_Performance_Monitoring extends VariableGroup {
 //    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     private boolean is_free_tier;
-    private String documentationLink;
+    private static final String DOCUMENTATION_LINK = "https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#application-performance-monitoring-apm";
     @PropertyOrder(1)
     @VariableMetaData(title="Create as Always Free Domain",description="Up to 1000 spans per hour, 31 day storage for trace data and 10 monitor runs per hour.",defaultVal="false",type="boolean",required=true)
     public boolean isIs_free_tier() {
@@ -19,13 +19,9 @@ public class Application_Performance_Monitoring extends VariableGroup {
         this.is_free_tier = newValue;
         pcs.firePropertyChange("is_free_tier", oldValue, newValue);
     }
-    @PropertyOrder(2)
-    @VariableMetaData(defaultVal="https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#application-performance-monitoring-apm",type="link")
-    public String getDocumentationLink() {
-        return documentationLink;
-    }
-    public void setDocumentationLink(String documentationLink) {
-        this.documentationLink = documentationLink;
-    }
 
+    @Override
+    public String getDocumentationLink() {
+        return DOCUMENTATION_LINK;
+    }
 }
