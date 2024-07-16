@@ -4,7 +4,17 @@
  */
 package com.oracle.oci.intellij.ui.account;
 
-import java.awt.event.ActionEvent;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.oracle.bmc.Region;
+import com.oracle.bmc.identity.model.RegionSubscription;
+import com.oracle.oci.intellij.account.OracleCloudAccount;
+import com.oracle.oci.intellij.account.SystemPreferences;
+import com.oracle.oci.intellij.ui.common.Icons;
+import com.oracle.oci.intellij.ui.common.UIUtil;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.net.URL;
 import java.util.Collections;
@@ -13,27 +23,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import javax.swing.ButtonGroup;
-import javax.swing.ImageIcon;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-import javax.swing.JRadioButtonMenuItem;
-
-import org.jetbrains.annotations.NotNull;
-
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.oracle.bmc.Region;
-import com.oracle.bmc.identity.model.RegionSubscription;
-import com.oracle.oci.intellij.account.OracleCloudAccount;
-import com.oracle.oci.intellij.account.SystemPreferences;
-import com.oracle.oci.intellij.ui.common.Icons;
-
 /**
  * Action handler for selection event of UI component 'Region'.
  */
 public class RegionAction extends AnAction {
 
+  private List<RegionSubscription> regionList ;
   private static final HashMap<String, String> iconMap;
   private static final ImageIcon regionIcon;
 
@@ -141,43 +136,50 @@ public static ImageIcon getCurrentRegionIcon(String regionName) {
     if (event.getInputEvent() instanceof MouseEvent) {
       final MouseEvent mouseEvent = ((MouseEvent) event.getInputEvent());
 
-      final List<RegionSubscription> regionList =
-              OracleCloudAccount.getInstance().getIdentityClient().getRegionsList();
+      Runnable fetchData = ()->{
+         regionList =
+                OracleCloudAccount.getInstance().getIdentityClient().getRegionsList();
 
-      final JPopupMenu popupMenu = new JPopupMenu();
-      final ButtonGroup regionsButtonGroup = new ButtonGroup();
-      final String currentRegion = SystemPreferences.getRegionName();
+      };
 
-      for (RegionSubscription regionSubscription : regionList) {
-        final JMenuItem regionMenu = new JRadioButtonMenuItem();
-        final Region selectedRegion = Region.fromRegionCode(regionSubscription.getRegionKey());
+      Runnable updateUi = ()->{
+        final JPopupMenu popupMenu = new JPopupMenu();
+        final ButtonGroup regionsButtonGroup = new ButtonGroup();
+        final String currentRegion = SystemPreferences.getRegionName();
 
-        if (Pattern.matches("\\w{2}-\\w+-\\d+", regionSubscription.getRegionName())) {
-          regionMenu.setText(getFormattedRegion(regionSubscription.getRegionName()));
-        } else {
-          regionMenu.setText(regionSubscription.getRegionName());
-        }
+        for (RegionSubscription regionSubscription : regionList) {
+          final JMenuItem regionMenu = new JRadioButtonMenuItem();
+          final Region selectedRegion = Region.fromRegionCode(regionSubscription.getRegionKey());
 
-        if (iconMap.get(regionSubscription.getRegionName()) != null) {
-          URL url = getClass().getResource(iconMap.get(regionSubscription.getRegionName()));
-          if (url != null) {
-            regionMenu.setIcon(new ImageIcon(url));
+          if (Pattern.matches("\\w{2}-\\w+-\\d+", regionSubscription.getRegionName())) {
+            regionMenu.setText(getFormattedRegion(regionSubscription.getRegionName()));
+          } else {
+            regionMenu.setText(regionSubscription.getRegionName());
           }
+
+          if (iconMap.get(regionSubscription.getRegionName()) != null) {
+            URL url = getClass().getResource(iconMap.get(regionSubscription.getRegionName()));
+            if (url != null) {
+              regionMenu.setIcon(new ImageIcon(url));
+            }
+          }
+
+          regionMenu.addActionListener(
+                  actionEvent -> SystemPreferences.setRegionName(selectedRegion.getRegionId())
+          );
+
+          if (currentRegion.equals(selectedRegion.getRegionId())) {
+            regionMenu.setSelected(true);
+          }
+          regionsButtonGroup.add(regionMenu);
+          popupMenu.add(regionMenu);
         }
 
-        regionMenu.addActionListener(
-                actionEvent -> SystemPreferences.setRegionName(selectedRegion.getRegionId())
-        );
+        popupMenu.show(mouseEvent.getComponent(), mouseEvent.getX(),
+                mouseEvent.getY());
+      };
 
-        if (currentRegion.equals(selectedRegion.getRegionId())) {
-          regionMenu.setSelected(true);
-        }
-        regionsButtonGroup.add(regionMenu);
-        popupMenu.add(regionMenu);
-      }
-
-      popupMenu.show(mouseEvent.getComponent(), mouseEvent.getX(),
-              mouseEvent.getY());
+      UIUtil.executeAndUpdateUIAsync(fetchData,updateUi);
     }
   }
 
