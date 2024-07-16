@@ -36,7 +36,7 @@ public class AuthenticationTokenDialog extends DialogWrapper {
     protected AuthenticationTokenDialog( ) {
         super(true);
 
-        setTitle("Auth Tokens");
+        setTitle("Authentication Tokens");
         init();
         initDialog();
     }
