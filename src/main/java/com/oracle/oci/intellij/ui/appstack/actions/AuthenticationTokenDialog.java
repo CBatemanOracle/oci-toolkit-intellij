@@ -206,11 +206,10 @@ public class AuthenticationTokenDialog extends DialogWrapper {
                     AuthToken authToken = OracleCloudAccount.getInstance().getIdentityClientHomeRegionProxy().generateToken(description);
                     message = authToken.getToken();
                     UIUtil.invokeAndWait(()->{
-                        JTextField textField = new JTextField(message);
-                        textField.setEditable(false);
+
                         ShowTokenSecretDialog dialog = new ShowTokenSecretDialog(message);
                         dialog.show();
-                    },ModalityState.any());
+                    },ModalityState.stateForComponent(descriptionTextField));
 
                     tokenDialog.populateData();
                 }catch (BmcException ex){
@@ -256,13 +255,14 @@ public class AuthenticationTokenDialog extends DialogWrapper {
 
     static class ShowTokenSecretDialog extends DialogWrapper{
 
-        private JPanel mainPanel;
-        private JBTextField tokenSecret;
-        private JButton copyButton;
+        private final JPanel mainPanel = new JPanel();
+        private final JBTextField tokenSecretTextField = new JBTextField();
+        private final JButton copyButton = new JButton();
 
         protected ShowTokenSecretDialog(String tokenSecret) {
             super(true);
-            this.tokenSecret.setText(tokenSecret);
+            this.tokenSecretTextField.setText(tokenSecret);
+            mainPanel.add(tokenSecretTextField);
 //            this.tokenSecret.setBorder(null);
 //            this.tokenSecret.setEnabled(false);
             setTitle("Token");
@@ -282,7 +282,7 @@ public class AuthenticationTokenDialog extends DialogWrapper {
             copyButton.setBorder(null);
             copyButton.setOpaque(false);
             copyButton.setContentAreaFilled(false);
-            String finalValue = tokenSecret.getText();
+            String finalValue = tokenSecretTextField.getText();
             copyButton.addActionListener(e -> {
                 String textToCopy = finalValue;  // Replace with the actual text you want to copy
                 Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -298,6 +298,9 @@ public class AuthenticationTokenDialog extends DialogWrapper {
                     copyButton.setIcon(IconLoader.getIcon(copyPath));
                 }).start();
             });
+
+            mainPanel.add(tokenSecretTextField);
+            mainPanel.add(copyButton);
         }
 
         @Override
