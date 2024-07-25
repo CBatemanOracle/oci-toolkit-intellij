@@ -889,13 +889,31 @@ public final class AppStackDashboard implements PropertyChangeListener, ITabbedE
       @SuppressWarnings("serial")
       @Override
       protected void doOKAction() {
-        Object inputVal = JOptionPane.showInputDialog(this.getContentPane(),
-                                    "This action cannot be undone.  Please type \"confirm\" to confirm your choice",
-                                    "Confirm Deletion",
-                                    JOptionPane.QUESTION_MESSAGE,
-                                    null, null, null);
-        if (inputVal != null && inputVal.equals("confirm")){
-          super.doOKAction();
+        showConfirmDialog();
+      }
+
+      private void showConfirmDialog() {
+        JTextField inputField = new JTextField();
+        Object[] message = {
+                "This action cannot be undone. Please type \"confirm\" to confirm your choice:",
+                inputField
+        };
+        int option = JOptionPane.showConfirmDialog(
+                this.getContentPane(),
+                message,
+                "Confirm Deletion",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+        if (option == JOptionPane.OK_OPTION) {
+          String input = inputField.getText();
+          if ("confirm".equalsIgnoreCase(input)) {
+            JOptionPane.showMessageDialog(this.getContentPane(), "Deletion confirmed.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            super.doOKAction();
+          } else {
+            JOptionPane.showMessageDialog(this.getContentPane(), "Input is incorrect. Please type \"confirm\".", "Error", JOptionPane.ERROR_MESSAGE);
+            showConfirmDialog(); // Show the dialog again for re-validation
+          }
         }
       }
 
