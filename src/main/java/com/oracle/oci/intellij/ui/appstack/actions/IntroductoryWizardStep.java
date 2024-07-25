@@ -95,7 +95,9 @@ public class IntroductoryWizardStep extends AbstractWizardStep  {
         dontShowLabel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                dontShowCheckBox.setSelected(!dontShowCheckBox.isSelected());
+//                dontShowCheckBox.setSelected(!dontShowCheckBox.isSelected());
+//                dontShowCheckBox.addNotify();
+                dontShowCheckBox.doClick();
                 super.mouseClicked(e);
             }
         });
