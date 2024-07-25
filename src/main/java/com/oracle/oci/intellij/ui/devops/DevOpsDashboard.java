@@ -50,7 +50,7 @@ public final class DevOpsDashboard implements PropertyChangeListener, ITabbedExp
   private ActionLink regionValueLabel;
   private JComboBox<ModelHolder<ProjectSummary>> projectCombo;
   private List<ProjectSummary> listDevOpsProjects;
-  private List<RepositorySummary> listRepositories;
+  private Optional<List<RepositorySummary>> listRepositories;
   private @NonNls @NotNull String toolWindowId;
   private @NotNull @NonNls String locationHash;
   private static final CopyOnWriteArrayList<DevOpsDashboard> ALL = new CopyOnWriteArrayList<>();
@@ -155,11 +155,11 @@ public final class DevOpsDashboard implements PropertyChangeListener, ITabbedExp
           try {
             ModelHolder<ProjectSummary> item = (ModelHolder<ProjectSummary>) e.getItem();
             ProjectSummary projectSummary = item.get();
-            listRepositories = 
-              OracleCloudAccount.getInstance().getDevOpsClient().listRepositories(projectSummary);
+            listRepositories = Optional.ofNullable(
+              OracleCloudAccount.getInstance().getDevOpsClient().listRepositories(projectSummary));
 
           } catch (Exception exception) {
-            listRepositories = null;
+            listRepositories = Optional.empty();
             UIUtil.fireNotification(NotificationType.ERROR, "Error listing repos"+exception.getMessage());
 //            LogHandler.error(exception.getMessage(), exception);
           }
@@ -169,15 +169,14 @@ public final class DevOpsDashboard implements PropertyChangeListener, ITabbedExp
           final DefaultTableModel model = ((DefaultTableModel) devOpsTable.getModel());
           model.setRowCount(0);
            final Object[] rowData = new Object[DevOpsTableModel.DEVOPS_COLUMN_NAMES.length];
-//          final boolean isFreeTier =
-//                  s.getIsFreeTier() != null && s.getIsFreeTier();
-          for (RepositorySummary s : listRepositories) {
-            rowData[0] = s.getName();
-            rowData[1] = s.getDescription();
-            rowData[2] = s.getLifecycleState();
-            rowData[3] = s.getTimeCreated();
+          listRepositories.ifPresent(summaries->summaries.forEach(summary -> {
+            rowData[0] = summary.getName();
+            rowData[1] = summary.getDescription();
+            rowData[2] = summary.getLifecycleState();
+            rowData[3] = summary.getTimeCreated();
             model.addRow(rowData);
-          }
+          }));
+
           refreshAppStackButton.setEnabled(true);
         };
         
