@@ -131,15 +131,21 @@
                     icon="/icons/toolbar-login.png"  />
         <notificationGroup id="Oracle Cloud Infrastructure" displayType="BALLOON"/>
     </extensions>
-    
-    <extensions defaultExtensionNs="com.intellij">
-        <projectConfigurable
-        parentId="tools"
-        instance="com..oracle.oci.intellij.settings.ProjectSettingsConfigurable"
-        id="com.oracle.oci.intellij.ProjectSettingsConfigurable"
-        displayName="OCI Project Settings"
-        nonDefaultProject="true"/>
-    </extensions>
+<!--    <extensions defaultExtensionNs="com.intellij"> -->
+<!--		<applicationConfigurable -->
+<!--			parentId="tools" -->
+<!--			provider="com.oracle.oci.intellij.settings.ApplicationSetingsRootConfigurable" -->
+<!--			id="com.oracle.oci.intellij.settings.ApplicationSetingsRootConfigurable" -->
+<!--			displayName="Oracle Cloud Infrastructure" />  -->
+<!--	</extensions> -->
+<!--    <extensions defaultExtensionNs="com.intellij">-->
+<!--        <projectConfigurable-->
+<!--        parentId="tools"-->
+<!--        instance="com.oracle.oci.intellij.settings.ProjectSettingsConfigurable"-->
+<!--        id="com.oracle.oci.intellij.ProjectSettingsConfigurable"-->
+<!--        displayName="Oracle Cloud Infrastructure"-->
+<!--        nonDefaultProject="true"/>-->
+<!--    </extensions>-->
 
     <actions>
         <group id="com.oracle.oci.intellij.ui.account.OCIExplorerActionGroup" class="com.intellij.openapi.actionSystem.DefaultActionGroup"
