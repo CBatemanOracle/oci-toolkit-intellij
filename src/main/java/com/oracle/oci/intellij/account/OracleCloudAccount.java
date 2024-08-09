@@ -1336,12 +1336,18 @@ public class OracleCloudAccount {
     }
 
     public List<ProjectSummary> listDevOpsProjects(String compartmentId) {
-      ListProjectsRequest request =
-        ListProjectsRequest.builder().compartmentId(compartmentId).build();
-      ListProjectsResponse listProjects = devOpsClient.listProjects(request);
-      List<ProjectSummary> items =
-        listProjects.getProjectCollection().getItems();
-      return items == null ? Collections.emptyList() : items;
+      try {
+        ListProjectsRequest request =
+          ListProjectsRequest.builder().compartmentId(compartmentId).build();
+        ListProjectsResponse listProjects = devOpsClient.listProjects(request);
+        List<ProjectSummary> items =
+          listProjects.getProjectCollection().getItems();
+        return items == null ? Collections.emptyList() : items;
+      }
+      catch(BmcException bmcExcp) {
+        // can happen if we simply didn't have access to compartmentid.
+        return Collections.emptyList();
+      }
     }
 
     public List<RepositorySummary> listRepositories(ProjectSummary projectSummary) {
