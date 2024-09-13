@@ -48,9 +48,12 @@ public class OracleCloudAccountTest {
     SystemPreferences.clearUserPreferences();
     try {
       File configFile = new File("./tests/resources/internal/config");
-      assertTrue(configFile.exists());
+      File pre_processedFile = Utils.pre_processFile(configFile);
+      pre_processedFile.deleteOnExit();
+
+      assertTrue(pre_processedFile.exists());
       OracleCloudAccount.getInstance()
-        .configure(configFile.getAbsolutePath()
+        .configure(pre_processedFile.getAbsolutePath()
                , SystemPreferences.getProfileName());
     } catch (Exception ioException) {
       /*
