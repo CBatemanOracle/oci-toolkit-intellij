@@ -1,4 +1,22 @@
+import java.net.URI
+import java.net.URL
+import java.io.File
+import java.io.FileWriter
+import java.io.FileOutputStream
+import java.net.HttpURLConnection
+import java.nio.file.Files
+import java.util.Base64
+
 fun properties(key: String) = project.findProperty(key).toString()
+
+val ADMIN_IDE_TEST_KEY_PEM = System.getenv("ADMIN_IDE_INTEGRATION_PEM")
+val IDE_INTEGRATION_KEY_PEM = System.getenv("IDE_INTEGRATION_TEST_PEM")
+val IDE_PLUGIN_JUNIT_PEM = System.getenv("IDE_PLUGIN_JUNIT_PEM")
+
+
+if (IDE_INTEGRATION_KEY_PEM == null || ADMIN_IDE_TEST_KEY_PEM == null || IDE_PLUGIN_JUNIT_PEM == null) {
+    System.err.println("Test Key Url's not found");
+}
 
 plugins {
     idea
@@ -11,9 +29,11 @@ plugins {
 
 }
 
-group = properties("pluginGroup")
-version = properties("pluginVersion")
+val group = properties("pluginGroup")
+val artifactId = "oci.intellij.plugin"
+val version = properties("pluginVersion")
 val sinceBuildVersion = properties("pluginSinceBuild")
+val pluginArtifactId = "oci.intellij.plugin"
 
 // Configure project's dependencies
 repositories {
@@ -104,8 +124,6 @@ tasks {
     } 
 
     runPluginVerifier {
-
-
     }
 }
 
@@ -116,29 +134,89 @@ distributions {
 }
 
 
+val repoUri = System.getenv("JDBC_DEV_LOCAL_URL")  //"https://artifacthub-phx.oci.oraclecorp.com/jdbc-dev-local"
+val usernameStr = System.getenv("JDBC_DEV_LOCAL_USERNAME")
+val passwordStr = System.getenv("JDBC_DEV_LOCAL_APIKEY")
 
-//publishing {
-//    publications {
-//        maven(MavenPublication) {
-//            groupId = "com.oracle.oci"
-//            artifactId = "intellij.plugin"
-//            version = "0.3-SNAPSHOT"
-//
-//            pom {
-//                name = "My Library"
-//                description = "A description of my library"
-//            }
-//        }
-//    }
+publishing {
+    publications {
+      create<MavenPublication>("mavenJava") {
+                groupId = "com.oracle" 
+                artifactId = pluginArtifactId
+ 		version = "1.1.0-SNAPSHOT"
+                from(components["java"])
+            }
+    }
 
-//    repositories {
-//        maven {
-//            credentials {
-//                username = "jdbcmaventoolsso_us@oracle.com"
-//                password = "AKCp8jQnLTKdt2DPJyJDv85u74rpyphECVUHw9uxmM1E8eyhk8msHXstPN1MvD6cwAk8YEuxA"
-//            }
-//
-//            url = "https://artifacthub-phx.oci.oraclecorp.com/jdbc-dev-local"
-//        }
-//    }
-//}
+
+    repositories {
+        maven {
+            credentials {
+                username = usernameStr
+                password = passwordStr
+            }
+            url = URI(repoUri)
+        }
+     }
+}
+
+tasks.register("downloadPemFiles") {
+    val PEM_FILE_PATH_VARS = listOf("ADMIN_IDE_INTEGRATION_TEST_USER_KEY_PATH", "IDE_INTEGRATION_TEST_USER_KEY_PATH", "IDE_PLUGIN_JUNIT_05_26_22_KEY_PATH")
+
+    // order matters
+    val PEM_KEY_FILES = listOf("ADMIN_IDE_INTEGRATION_PEM", "IDE_INTEGRATION_TEST_PEM", "IDE_PLUGIN_JUNIT_PEM")
+    doLast() {
+        for (i in PEM_FILE_PATH_VARS.indices) {
+            val localPath = System.getenv(PEM_FILE_PATH_VARS[i])
+            System.out.println("Localpath: "+localPath)
+            val pem_file_var = PEM_KEY_FILES[i]
+            System.out.println(pem_file_var)
+            val file = File(localPath)
+            System.out.println("Writing pemFile: "+file.toString());
+            val pemFile = System.getenv(pem_file_var);
+            val outFile = FileWriter(file);
+            outFile.write(pemFile);
+            outFile.flush();
+            outFile.close();
+        }
+    }
+}
+
+tasks.named("test") {
+    dependsOn("downloadPemFiles")
+}
+
+tasks.register("uploadPluginZip") {
+      doLast() {
+           val pluginZip = file("build/distributions/OCIPluginForIntelliJ.zip")
+           val dest = repoUri+"/com/oracle/oci/intellij/plugin/i_builds/OCIPluginForIntelliJ-1.0.2-SNAPSHOT.zip"
+           val url = URL(dest)
+           val connection = url.openConnection() as HttpURLConnection
+           val upass = usernameStr+":"+passwordStr
+           val upassBytes = upass.toByteArray()
+           val encodedAuth = Base64.getEncoder().encodeToString(upassBytes)
+
+           connection.setRequestProperty("Authorization", "Basic "+encodedAuth)
+
+           connection.doOutput = true
+           connection.requestMethod = "PUT"
+           connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=fileboundary")
+           connection.setRequestProperty("User-Agent", "OCI-Gradle-FileUpload")
+
+	   val boundary = "--fileboundary\r\n"
+           connection.outputStream.use{ output ->
+               // Write file content
+               output.write(boundary.toByteArray())
+               output.write("Content-Disposition: form-data; name=\"file\"; filename=\"${pluginZip.name}\"\r\n\r\n".toByteArray())
+               Files.copy(pluginZip.toPath(), output)
+               output.write("\r\n--fileboundary--\r\n".toByteArray())
+           }
+ 
+           val respCode = connection.responseCode
+           System.out.println(respCode)
+      }
+}
+
+tasks.named("publish") {
+    dependsOn("uploadPluginZip")
+}
