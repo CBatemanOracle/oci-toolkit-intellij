@@ -1,5 +1,16 @@
 #!/bin/bash
 
+# are we local or on orahub?
+if [ "${GITLAB_CI}" == "true" ]; then
+   echo "Building on Orahub...";
+else 
+   echo "Build locally..."
+   echo "Setting Orahub env vars."
+   export CI_COMMIT_SHA="LOCAL_COMMIT_SHA"
+   export CI_COMMIT_TIMESTAMP="LOCAL_COMMIT_TIMESTAMP"
+   export CI_COMMIT_BRANCH="LOCAL_COMMIT_BRANCH";
+fi
+
 if [[ -z ${ADMIN_IDE_INTEGRATION_PEM} || -z ${IDE_INTEGRATION_TEST_PEM} || -z ${IDE_PLUGIN_JUNIT_PEM} ]]; then
     source ~/.ssh/pem_files.txt;
 fi

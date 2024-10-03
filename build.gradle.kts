@@ -1,11 +1,13 @@
 import java.net.URI
 import java.net.URL
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 import java.io.FileWriter
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
-import java.nio.file.Files
 import java.util.Base64
+
 
 fun properties(key: String) = project.findProperty(key).toString()
 
@@ -31,7 +33,7 @@ plugins {
 
 val group = properties("pluginGroup")
 val artifactId = "oci.intellij.plugin"
-val version = properties("pluginVersion")
+val pluginVersion = properties("pluginVersion")
 val sinceBuildVersion = properties("pluginSinceBuild")
 val pluginArtifactId = "oci.intellij.plugin"
 
@@ -188,8 +190,37 @@ tasks.named("test") {
 
 tasks.register("uploadPluginZip") {
       doLast() {
-           val pluginZip = file("build/distributions/OCIPluginForIntelliJ.zip")
-           val dest = repoUri+"/com/oracle/oci/intellij/plugin/i_builds/OCIPluginForIntelliJ-1.0.2-SNAPSHOT.zip"
+           val pluginZip = file("build/distributions/OCIPluginForIntelliJ_stamped.zip")
+           var dest = repoUri+"/com/oracle/oci/intellij/plugin/i_builds/OCIPluginForIntelliJ"
+           dest += "-"+pluginVersion+"-"
+           val jobStartTime = System.getenv("CI_JOB_STARTED_AT")
+           var commitBranch = System.getenv("CI_COMMIT_BRANCH")
+           var mergeSourceBranch = System.getenv("CI_MERGE_REQUEST_SOURCE_BRANCH_NAME")
+           val mergeRequestNumber = System.getenv("CI_MERGE_REQUEST_IID")
+           // MR is merged.
+           if (mergeRequestNumber != null) {
+               dest+="MR_"+mergeRequestNumber
+               if (mergeSourceBranch != null) {
+                  mergeSourceBranch = mergeSourceBranch.replace('/', '_')
+                  mergeSourceBranch = mergeSourceBranch.replace('-', '_')
+                  dest+=mergeSourceBranch + ".zip"
+               
+               }
+           }
+           // MR in progress
+           else if (commitBranch != null) {
+               commitBranch = commitBranch.replace('/', '_')
+               commitBranch = commitBranch.replace('-', '_')
+               dest += commitBranch + ".zip"
+           }
+           // any other build type (TBD)
+           else if (jobStartTime != null) {
+	           dest += jobStartTime + ".zip"
+	       }
+	       // generic build with no info.
+	       else {
+	           dest += "SNAPSHOT.zip"
+	       }
            val url = URL(dest)
            val connection = url.openConnection() as HttpURLConnection
            val upass = usernameStr+":"+passwordStr
@@ -200,16 +231,15 @@ tasks.register("uploadPluginZip") {
 
            connection.doOutput = true
            connection.requestMethod = "PUT"
-           connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=fileboundary")
+           connection.setRequestProperty("Content-Type", "application/octet-stream")
+           val fileLen = pluginZip.length()
+           connection.setRequestProperty("Content-Length", fileLen.toString())
            connection.setRequestProperty("User-Agent", "OCI-Gradle-FileUpload")
 
-	   val boundary = "--fileboundary\r\n"
            connection.outputStream.use{ output ->
-               // Write file content
-               output.write(boundary.toByteArray())
-               output.write("Content-Disposition: form-data; name=\"file\"; filename=\"${pluginZip.name}\"\r\n\r\n".toByteArray())
                Files.copy(pluginZip.toPath(), output)
-               output.write("\r\n--fileboundary--\r\n".toByteArray())
+               output.flush()
+               output.close()
            }
  
            val respCode = connection.responseCode
@@ -218,5 +248,56 @@ tasks.register("uploadPluginZip") {
 }
 
 tasks.named("publish") {
+//    dependsOn("updateDistroZipWithStamp")
     dependsOn("uploadPluginZip")
 }
+
+tasks.register("createBuildStamp") {
+    doLast() {
+       val CI_COMMIT_SHA = System.getenv("CI_COMMIT_SHA")
+       val CI_COMMIT_TIMESTAMP = System.getenv("CI_COMMIT_TIMESTAMP")
+       //System.getenv("I_DEFAULT_BRANCH
+       //System.getenv("CI_JOB_ID}
+       val CI_COMMIT_BRANCH = System.getenv("CI_COMMIT_BRANCH")
+       //System.getenv("GITLAB_CI}
+       //System.getenv("CI_JOB_STARTED_AT}
+       //System.getenv("CI_MERGE_REQUEST_ID}
+       //System.getenv("CI_MERGE_REQUEST_IID}
+       //System.getenv("CI_PIPELINE_SOURCE}
+       //System.getenv("CI_MERGE_REQUEST_APPROVED}
+       //System.getenv("CI_MERGE_REQUEST_DIFF_ID}
+       //System.getenv("CI_MERGE_REQUEST_SOURCE_BRANCH_NAME})
+       val path = Path.of(project.projectDir.getAbsolutePath()+"/build/distributions/")
+       System.out.println(Files.createDirectories(path))
+       val writer = FileWriter("build/distributions/build_stamp.txt")
+		try {
+			writer.write(String.format("CI_COMMIT_SHA=%s\n", CI_COMMIT_SHA))
+			writer.write(String.format("CI_COMMIT_TIMESTAMP=%s\n", CI_COMMIT_TIMESTAMP))
+			writer.write(String.format("CI_COMMIT_BRANCH=%s\n", CI_COMMIT_BRANCH))
+			writer.flush()
+		}
+		finally {
+		    if (writer != null) {
+		        writer.close();
+		    }
+		}
+    }
+}
+
+tasks.named("assemble") {
+    dependsOn("updateDistroZipWithStamp")
+}
+
+tasks.register("updateDistroZipWithStamp", Zip::class) {
+	archiveFileName.set("OCIPluginForIntelliJ_stamped.zip")
+	destinationDirectory.set(file("build/distributions"))
+	
+	from(zipTree("build/distributions/OCIPluginForIntelliJ.zip"))
+	
+	from("build/distributions/build_stamp.txt") {
+	    into("/")
+	}
+	dependsOn("createBuildStamp")
+	dependsOn("buildPlugin")
+}
+

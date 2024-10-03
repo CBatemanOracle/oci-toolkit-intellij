@@ -15,7 +15,7 @@ variables:
   GIT_DEPTH: 10
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   # should be overwritted at project level
-  PUBLISHED_VERSION: 1.2-SNAPSHOT
+  PUBLISHED_VERSION: 1.1-SNAPSHOT
 
 
 build-job:       # This job runs in the build stage, which runs first.
@@ -23,7 +23,6 @@ build-job:       # This job runs in the build stage, which runs first.
   before_script:
     - USING_PROXY=true source ./.build_env
   script:
-    #- curl -v -s https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer | bash
     - ./gradlew --build-cache clean build
     - ls -altr build/distributions
     - ./gradlew --build-cache publish
