@@ -76,6 +76,7 @@ import com.oracle.bmc.vault.requests.CreateSecretRequest;
 import com.oracle.bmc.vault.requests.ListSecretsRequest;
 import com.oracle.bmc.vault.responses.CreateSecretResponse;
 import com.oracle.bmc.vault.responses.ListSecretsResponse;
+import com.oracle.oci.intellij.account.tenancy.TenancyService;
 import com.oracle.oci.intellij.ui.appstack.AppStackDashboard;
 import com.oracle.oci.intellij.ui.appstack.exceptions.JobRunningException;
 import com.oracle.oci.intellij.ui.appstack.exceptions.OciAccountConfigException;
@@ -129,6 +130,8 @@ public class OracleCloudAccount {
     SystemPreferences.addPropertyChangeListener(virtualNetworkClientProxy);
     SystemPreferences.addPropertyChangeListener(vaultClientProxy);
     SystemPreferences.addPropertyChangeListener(kmsVaultClientProxy);
+    SystemPreferences.addPropertyChangeListener(TenancyService.getInstance());
+
     //SystemPreferences.addPropertyChangeListener(new AutonomousDatabasesDashboard());
     //SystemPreferences.addPropertyChangeListener(AppStackDashboard.getInstance());
     //SystemPreferences.addPropertyChangeListener(DevOpsDashboard.getInstance());
@@ -195,7 +198,7 @@ public class OracleCloudAccount {
 
     SystemPreferences.setConfigInfo(configFile, profile.getName(),
             profile.get("region"), identityClientProxy.getRootCompartment());
-  }
+   }
 
   private void validate() {
     if (authenticationDetailsProvider == null) {

@@ -4,24 +4,45 @@
  */
 package com.oracle.oci.intellij.ui.common;
 
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTree;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.components.JBScrollPane;
 import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
-import com.oracle.oci.intellij.ui.appstack.actions.CompartmentCache;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeExpansionListener;
-import javax.swing.tree.*;
-import java.awt.*;
-import java.util.*;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import com.oracle.oci.intellij.account.tenancy.CacheManager;
+import com.oracle.oci.intellij.account.tenancy.ListTargets;
+import com.oracle.oci.intellij.account.tenancy.TenancyManager;
+import com.oracle.oci.intellij.account.tenancy.TenancyService;
+import com.oracle.oci.intellij.resource.Resource;
+import com.oracle.oci.intellij.resource.cache.CachedResourceFactory;
+import com.oracle.oci.intellij.resource.provider.ListProvider;
+import com.oracle.oci.intellij.resource.provider.ProviderUtil;
 
 /**
  * The compartment selection dialog implementation.
@@ -33,10 +54,9 @@ public class CompartmentSelection extends DialogWrapper {
   // The user selected compartment.
   private Compartment selectedCompartment = null;
   private DefaultMutableTreeNode rootTreeNode = null;
-  private static final CompartmentCache compartmentCache = CompartmentCache.getInstance() ;
-  //static Map<String,List<Compartment> > cachedCompartments = new LinkedHashMap<>();
   private final List<Thread> liveThreadsList = Collections.synchronizedList(new LinkedList<>());
   private final AtomicInteger liveTasksCount = new AtomicInteger();
+  long startTime ;
 
   /**
    * Factory method for new instance.
@@ -75,6 +95,7 @@ public class CompartmentSelection extends DialogWrapper {
    * Disables the UI components before loading the compartments.
    */
   private void beforeCompartmentsLoading() {
+    startTime = System.nanoTime();
     compartmentTree.setEnabled(false);
     getOKAction().setEnabled(false);
     getOKAction().putValue(Action.NAME, "Loading...");
@@ -88,6 +109,8 @@ public class CompartmentSelection extends DialogWrapper {
     getOKAction().putValue(Action.NAME, "Select");
     getOKAction().setEnabled(true);
     compartmentTree.setEnabled(true);
+    long howLong = System.nanoTime() - startTime ;
+    System.out.println("heil time " + howLong);
   }
 
   /**
@@ -107,10 +130,10 @@ public class CompartmentSelection extends DialogWrapper {
     public void run() {
       final Compartment givenCompartment = (Compartment) givenNode.getUserObject();
 
-      /**
-       * If the sub compartments are already in place for the given compartment,
-       * just iterate up to the requested level. Fetch only the missing
-       * compartments, if any.
+      /*
+        If the sub compartments are already in place for the given compartment,
+        just iterate up to the requested level. Fetch only the missing
+        compartments, if any.
        */
       if (givenNode.getChildCount() > 0) {
         final Iterator<TreeNode> treeNodeIterator = givenNode.children().asIterator();
@@ -120,16 +143,21 @@ public class CompartmentSelection extends DialogWrapper {
           }
         });
       } else {
-        // this call is expensive
-//        if ()
         long currentTime = System.nanoTime();
-        final List<Compartment> childCompartments = compartmentCache.getCompartmentList(givenCompartment);
-
+ 
+        TenancyManager tenancyManager = TenancyService.getInstance().getTenancyManager();
+        ListProvider<Compartment,Compartment> compartmentProvider =  
+          ProviderUtil.cast(tenancyManager.getListProvider(ListTargets.COMPARTMENTS));
+        List<Compartment> childCompartments = 
+          ((Resource<List<Compartment>>) compartmentProvider.list(givenCompartment)).getContent();
 
         long howLong = System.nanoTime() - currentTime ;
         System.out.println(howLong);
 
         for(Compartment childCompartment: childCompartments) {
+          if (Thread.currentThread().isInterrupted()) {
+            return; // Gracefully exit if interrupted
+          }
           final DefaultMutableTreeNode childTreeNode = new DefaultMutableTreeNode(childCompartment);
           givenNode.add(childTreeNode);
 
@@ -256,6 +284,21 @@ public class CompartmentSelection extends DialogWrapper {
   @Override
   protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction(), getCancelAction()};
+  }
+
+  @Override
+  protected Action @NotNull [] createLeftSideActions() {
+    return new Action[] { new DialogWrapperAction("Refresh") {
+
+      @Override
+      protected void doAction(ActionEvent e) {
+        TenancyManager tenancyManager = TenancyService.getInstance().getTenancyManager();
+        CacheManager cacheManager = tenancyManager.getCacheManager(tenancyManager.getCurrentTenancy().getId());
+        CachedResourceFactory<?> cache = cacheManager.getCache(Compartment.class);
+        cache.clearCache();
+        buildCompartmentsAsync();
+      }
+    }};
   }
 
 }
