@@ -115,7 +115,7 @@ public class Utils{
         suggestedValues.put("oci:kms:vault:id",(pd,pds,varGroup)->{
             VariableGroup general_ConfigurationVarGroup = Controller.getInstance().getVariableGroups().get("Stack_Authentication");
 
-            String vault_compartment_id = ((Compartment) pds.get("vault_compartment_id").getReadMethod().invoke(general_ConfigurationVarGroup)).getId();;
+            String vault_compartment_id = ((Compartment) pds.get("vault_compartment_id").getReadMethod().invoke(general_ConfigurationVarGroup)).getId();
 
             List<VaultSummary> vaultList = OracleCloudAccount.getInstance().getKmsVaultClient().listVaults(vault_compartment_id);
             return vaultList;

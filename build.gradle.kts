@@ -116,7 +116,7 @@ tasks {
             "-Xms512m",
             "-Xmx2048m",
             "-ea",
-            "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044",
+            "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=1044",
         )
     }
 

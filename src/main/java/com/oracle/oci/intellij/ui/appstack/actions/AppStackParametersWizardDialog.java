@@ -40,7 +40,7 @@ public class AppStackParametersWizardDialog extends WizardDialog<CustomWizardMod
     protected JComponent createSouthPanel() {
         JComponent southComponent =  super.createSouthPanel();
 
-      removeHelpButton(southComponent);
+        removeHelpButton(southComponent);
         return southComponent;
     }
 

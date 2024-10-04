@@ -33,8 +33,10 @@ public class CompartmentAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     final CompartmentSelection compartmentSelection = CompartmentSelection.newInstance();
-
+    long currentTime = System.nanoTime();
     if (compartmentSelection.showAndGet()) {
+      long howLong = System.nanoTime() - currentTime ;
+      System.out.println("heil time " + howLong);
       final Compartment selectedCompartment = compartmentSelection.getSelectedCompartment();
       SystemPreferences.setCompartment(selectedCompartment);
     }

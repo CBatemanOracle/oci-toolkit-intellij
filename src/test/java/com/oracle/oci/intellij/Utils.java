@@ -41,8 +41,6 @@ public class Utils {
         lines.add(trimmedLine);
       }
       Files.write(tempFile,lines);
-    }catch (Exception e){
-      throw new RuntimeException(e);
     }
     return tempFile.toFile();
   }
