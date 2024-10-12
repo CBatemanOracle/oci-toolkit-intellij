@@ -4,34 +4,7 @@
  */
 package com.oracle.oci.intellij.ui.database;
 
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.ui.components.ActionLink;
-import com.oracle.bmc.database.model.AutonomousDatabaseSummary;
-import com.oracle.bmc.database.model.AutonomousDatabaseSummary.LifecycleState;
-import com.oracle.oci.intellij.account.ConfigFileHandler;
-import com.oracle.oci.intellij.account.OracleCloudAccount;
-import com.oracle.oci.intellij.account.SystemPreferences;
-import com.oracle.oci.intellij.ui.appstack.actions.ActionFactory;
-import com.oracle.oci.intellij.ui.appstack.exceptions.OciAccountConfigException;
-import com.oracle.oci.intellij.ui.common.AutonomousDatabaseConstants;
-import com.oracle.oci.intellij.ui.common.MessageDialog;
-import com.oracle.oci.intellij.ui.common.UIUtil;
-import com.oracle.oci.intellij.ui.database.actions.AutonomousDatabaseBasicActions;
-import com.oracle.oci.intellij.ui.database.actions.AutonomousDatabaseMoreActions;
-import com.oracle.oci.intellij.ui.database.actions.CreateAutonomousDatabaseDialog;
-import com.oracle.oci.intellij.ui.explorer.ITabbedExplorerContent;
-import com.oracle.oci.intellij.util.LogHandler;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseAdapter;
@@ -44,6 +17,51 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import javax.swing.AbstractAction;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.components.ActionLink;
+import com.oracle.bmc.database.model.AutonomousDatabaseSummary;
+import com.oracle.bmc.database.model.AutonomousDatabaseSummary.LifecycleState;
+import com.oracle.oci.intellij.account.ConfigFileHandler;
+import com.oracle.oci.intellij.account.OracleCloudAccount;
+import com.oracle.oci.intellij.account.SystemPreferences;
+import com.oracle.oci.intellij.api.ext.ContributeADBActions.ExtensionContextAction;
+import com.oracle.oci.intellij.api.ext.UIModelContext;
+import com.oracle.oci.intellij.api.oci.OCIDatabase;
+import com.oracle.oci.intellij.api.oci.OCIModelFactory;
+import com.oracle.oci.intellij.api.services.DatabaseContextMenuExtension;
+import com.oracle.oci.intellij.ui.appstack.actions.ActionFactory;
+import com.oracle.oci.intellij.ui.appstack.exceptions.OciAccountConfigException;
+import com.oracle.oci.intellij.ui.common.AutonomousDatabaseConstants;
+import com.oracle.oci.intellij.ui.common.MessageDialog;
+import com.oracle.oci.intellij.ui.common.UIUtil;
+import com.oracle.oci.intellij.ui.database.actions.AutonomousDatabaseBasicActions;
+import com.oracle.oci.intellij.ui.database.actions.AutonomousDatabaseMoreActions;
+import com.oracle.oci.intellij.ui.database.actions.CreateAutonomousDatabaseDialog;
+import com.oracle.oci.intellij.ui.explorer.ITabbedExplorerContent;
+import com.oracle.oci.intellij.util.LogHandler;
+import com.oracle.oci.intellij.util.SafeRunnerUtil;
+import com.oracle.oci.intellij.util.SafeRunnerUtil.SafeRunner;
 
 public final class AutonomousDatabasesDashboard implements PropertyChangeListener, ITabbedExplorerContent {
 
@@ -316,6 +334,20 @@ public final class AutonomousDatabasesDashboard implements PropertyChangeListene
                 AutonomousDatabaseMoreActions.Action.ADB_INFO,
                 selectedSummary,
                 "Autonomous Database Information")));
+
+        SafeRunnerUtil.run(a -> {
+          // add menu extensions if available
+          DatabaseContextMenuExtension dbContextMenuExt = 
+            ApplicationManager.getApplication().getService(DatabaseContextMenuExtension.class);
+          OCIDatabase adbSummary = OCIModelFactory.createDatabase(selectedSummary);
+          UIModelContext uiContext = new UIModelContext(adbSummary);
+          if (dbContextMenuExt != null) {
+            List<ExtensionContextAction> actions = dbContextMenuExt.getActions(uiContext);
+            if (!actions.isEmpty()) {
+              popupMenu.addSeparator();
+              actions.forEach(action -> popupMenu.add(new JMenuItem(action)));
+            }
+          }}, null);
 
         popupMenu.addSeparator();
       } else if (selectedSummary.getLifecycleState() == LifecycleState.Stopped) {
