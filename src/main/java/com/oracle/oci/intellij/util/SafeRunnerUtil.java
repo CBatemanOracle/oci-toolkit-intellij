@@ -43,8 +43,10 @@ public class SafeRunnerUtil {
     }
   }
 
+  @SuppressWarnings("unchecked")
   public static <T> void run(Consumer<T> r, T arg) {
-   SafeRunner<T> runner = new SafeRunner(r, Optional.of(new DefaultErrorRunnable()));
+   @SuppressWarnings("rawtypes")
+  SafeRunner<T> runner = new SafeRunner(r, Optional.of(new DefaultErrorRunnable()));
    try
    {
      runner.run(arg);

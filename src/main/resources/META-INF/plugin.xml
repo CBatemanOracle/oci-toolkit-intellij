@@ -161,6 +161,13 @@
                     icon="/icons/toolbar-login.png"  />
         <notificationGroup id="Oracle Cloud Infrastructure" displayType="BALLOON"/>
     </extensions>
+    
+    <extensionPoints>
+    	<extensionPoint
+            name="contributeADBAction"
+            interface="com.oracle.oci.intellij.api.ext.ContributeADBActions"/>
+	  </extensionPoints>
+
 <!--    <extensions defaultExtensionNs="com.intellij"> -->
 <!--		<applicationConfigurable -->
 <!--			parentId="tools" -->
