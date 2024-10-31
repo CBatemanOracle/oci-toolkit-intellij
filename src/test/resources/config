@@ -1,0 +1,25 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+	ignorecase = true
+	precomposeunicode = true
+[remote "origin"]
+	url = https://bitbucket.org/dancioca/dbn.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[branch "master"]
+	remote = origin
+	merge = refs/heads/master
+[remote "dbncontrib"]
+	url = ssh://git@bitbucket.oci.oraclecorp.com:7999/dbjav/dbncontrib.git
+	fetch = +refs/heads/*:refs/remotes/dbncontrib/*
+[branch "cbateman/review/first_changes_tns_url"]
+	remote = dbncontrib
+	merge = refs/heads/cbateman/review/first_changes_tns_url
+[branch "cbateman/first_changes_tns_url"]
+	remote = dbncontrib
+	merge = refs/heads/cbateman/first_changes_tns_url
+[remote "dbncontrib_new2"]
+	url = ssh://git@bitbucket.oci.oraclecorp.com:7999/dbjav/dbncontrib_new2.git
+	fetch = +refs/heads/*:refs/remotes/dbncontrib_new2/*

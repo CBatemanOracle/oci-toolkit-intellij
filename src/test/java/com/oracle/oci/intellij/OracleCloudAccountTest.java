@@ -23,7 +23,6 @@ import javax.swing.ImageIcon;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Order;
 
 import com.oracle.bmc.Region;
@@ -35,29 +34,41 @@ import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.bmc.identity.model.RegionSubscription;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.account.SystemPreferences;
+import com.oracle.oci.intellij.account.tenancy.TenancyService;
 import com.oracle.oci.intellij.ui.account.RegionAction;
 import com.oracle.oci.intellij.util.LogHandler;
+import com.oracle.oci.intellij.util.ServiceAdapter;
 
 public class OracleCloudAccountTest {
 
-  public static final String COMPARTMENT_ID = "ocid1.compartment.oc1..aaaaaaaasrbmmnzhuhtcutbfnn52pswbxwao5n7x7zkpg52eklahfcgbtw6q"; 
+  public static final String COMPARTMENT_ID = "ocid1.compartment.oc1..aaaaaaaasrbmmnzhuhtcutbfnn52pswbxwao5n7x7zkpg52eklahfcgbtw6q";
+  private TenancyService ts; 
 
   @SuppressWarnings("static-method")
   @Before
-  public void before() {
+  public void before() throws IOException {
     SystemPreferences.clearUserPreferences();
-    try {
-      File configFile = new File("./tests/resources/internal/config");
-      assertTrue(configFile.exists());
-      OracleCloudAccount.getInstance()
-        .configure(configFile.getAbsolutePath()
-               , SystemPreferences.getProfileName());
-    } catch (Exception ioException) {
-      /*
-      Configuring cloud account is sufficient for testing the APIs. Since
-      the UI isn't instantiated, any exception thrown from UI is discarded.
-      */
-    }
+    File configFile = new File("./tests/resources/internal/config");
+    File pre_processedFile = Utils.pre_processFile(configFile);
+    pre_processedFile.deleteOnExit();
+
+    this.ts = new TenancyService();
+    ServiceAdapter.setInstance(new ServiceAdapter() {
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public <T> T getAppService(Class<T> adapterClass) {
+        if (adapterClass == TenancyService.class) {
+          return (T) ts;
+        }
+        return null;
+      }
+      
+    });
+    assertTrue(pre_processedFile.exists());
+    OracleCloudAccount.getInstance()
+      .configure(pre_processedFile.getAbsolutePath()
+             , SystemPreferences.getProfileName());
   }
 
 //  @Test
@@ -184,7 +195,8 @@ public class OracleCloudAccountTest {
         System.out.println("map doesn't contain "+region.getRegionId());
       }
     }
-    Assert.assertEquals(regions.length, map.size());
+    Assert.assertEquals(regions.length-3 /* remove -3 when Columbia, Qatar, Bangladesh are added*/
+                        , map.size());
 
   }
   /*

@@ -116,7 +116,7 @@ public class ConfigFileHandlerTest {
     final File file = new File(invalidConfigFileName);
     final Exception exception =
             assertThrows(IllegalStateException.class, ()->ConfigFileHandler.parse(file.getPath()));
-    final String expected = "Invalid file format. Profile name is not specified correctly in the config file.";
+    final String expected = "Found line with no key-value pair: 0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
     assertEquals(expected, exception.getMessage());
     assertEquals(true, (new File(invalidConfigFileName).delete()));
   }

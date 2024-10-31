@@ -4,11 +4,28 @@
  */
 package com.oracle.oci.intellij.ui.common;
 
-import java.awt.Component;
-import java.awt.Desktop;
-import java.awt.GridBagConstraints;
-import java.awt.GridLayout;
-import java.awt.Insets;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.JBColor;
+import com.oracle.oci.intellij.account.SystemPreferences;
+import com.oracle.oci.intellij.util.fills.NotificationGroupShim;
+import com.oracle.oci.intellij.util.fills.Shim;
+import com.oracle.oci.intellij.util.fills.ShimMethod;
+import io.github.resilience4j.core.lang.NonNull;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -18,29 +35,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JTextArea;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import com.intellij.notification.NotificationGroupManager;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.wm.WindowManager;
-import com.oracle.oci.intellij.account.SystemPreferences;
-import com.oracle.oci.intellij.ui.devops.wizard.mirrorgh.CreateSecretWizardModel.SecretWizardContext;
-
-import io.github.resilience4j.core.lang.NonNull;
-
+@Shim(forType = com.intellij.util.ui.UIUtil.class, dedicated = false)
 public class UIUtil {
   private static Project currentProject;
 
@@ -57,15 +52,34 @@ public class UIUtil {
     }
   }
 
+  /**
+   * @return true if theme is dark.  This shims the deprecated UIUtil.isUnderDarcula()
+   * call from JB's UIUtil, following the deprecation instruction to use JBColor.isBright().
+   */
+  @ShimMethod(methodName = "UIUtil.isUnderDarcula()")
+  public static boolean isUnderDarcula() {
+    return !JBColor.isBright();
+  }
+
+  public static boolean isDarkMode() {
+    return isUnderDarcula();
+  }
+
+  public static void fireNotification(NotificationType notificationType,
+                                      @NotNull final String msg) {
+    fireNotification(notificationType, msg, null);
+  }
+
   public static void fireNotification(NotificationType notificationType,
                                       @NotNull final String msg,
                                       String eventName) {
     invokeLater(() -> {
-      NotificationGroupManager.getInstance()
-                              .getNotificationGroup(NOTIFICATION_GROUP_ID)
-                              .createNotification(NOTIFICATION_GROUP_ID, "",
-                                                  msg, notificationType)
-                              .notify(currentProject);
+      NotificationGroup notificationGroup =
+        NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID);
+      NotificationGroupShim groupShim = new NotificationGroupShim(notificationGroup);
+      Notification notification =
+        groupShim.createNotification(NOTIFICATION_GROUP_ID, "", msg, notificationType);
+      notification.notify(currentProject);
 
       if (eventName != null) {
         SystemPreferences.fireADBInstanceUpdateEvent(eventName);
@@ -73,7 +87,7 @@ public class UIUtil {
     });
   }
 
-  public static void warn(final String msg) {
+  public static void warn(@NotNull final String msg) {
     fireNotification(NotificationType.WARNING, msg, "");
   }
 
@@ -101,14 +115,58 @@ public class UIUtil {
       ApplicationManager.getApplication().invokeLater(runnable, modalityState);
     }
   }
+
+  public static  void invokeAndWait(Runnable runnable,ModalityState modalityState){
+    if (modalityState == null){
+      ApplicationManager.getApplication().invokeAndWait(runnable);
+    }else {
+      ApplicationManager.getApplication().invokeAndWait(runnable,modalityState);
+    }
+  }
   public static void invokeLater(Runnable runnable) {
     ApplicationManager.getApplication().invokeLater(runnable);
   }
   public static void schedule(Runnable runnable){
-    Thread t = new Thread(() -> {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
           runnable.run();
     });
-    t.start();
+  }
+
+  public static IconButton createButtonIcon( String showIconPath) {
+    IconButton iconButton = new IconButton(showIconPath);
+    return iconButton;
+  }
+
+  public static class IconButton extends JButton {
+    String iconPath;
+
+    public IconButton(String iconPath) {
+      super();
+      this.iconPath = iconPath;
+      initializeButton(iconPath);
+    }
+
+    private void initializeButton(String showIconPath) {
+      this.setIcon(IconLoader.getIcon(showIconPath));
+
+      this.setBackground(null);
+      this.setBorder(null);
+      this.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      this.setOpaque(false);
+      this.setFocusable(false);
+      this.setContentAreaFilled(false);
+      this.setPreferredSize(new Dimension(20, 20));
+      this.setMargin(new Insets(0, 0, 0, 0));
+      this.setHorizontalAlignment(SwingConstants.CENTER);
+      this.setVerticalAlignment(SwingConstants.CENTER);
+    }
+
+    @Override
+    public void updateUI() {
+      super.updateUI();
+      if (iconPath != null)
+        initializeButton(iconPath);
+    }
   }
 
   public static void createWebLink(JComponent component, String uri) {
@@ -116,16 +174,25 @@ public class UIUtil {
     component.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        try {
-          if (!Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-            return;
-          }
-          Desktop.getDesktop().browse(new URI(uri));
-        } catch (URISyntaxException | IOException ex) {
-          throw new RuntimeException(ex);
-        }
+        browseLink(uri);
       }
     });
+  }
+
+  public static void browseLink(String uri) {
+    try {
+      if (!Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+        return;
+      }
+      Desktop.getDesktop().browse(new URI(uri));
+    } catch (URISyntaxException | IOException ex) {
+      throw new RuntimeException(ex);
+    }
+  }
+
+  public static void showErrorDialog(Component parentComponent, String title, String message) {
+    // Use Swing's JOptionPane to show a modal error dialog
+    JOptionPane.showMessageDialog(parentComponent,message,title,JOptionPane.ERROR_MESSAGE);
   }
 
   public static SimpleDialogWrapper createDialog(String title,

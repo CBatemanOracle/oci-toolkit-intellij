@@ -27,12 +27,24 @@ import com.oracle.bmc.identity.model.RegionSubscription;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.account.SystemPreferences;
 import com.oracle.oci.intellij.ui.common.Icons;
+import com.oracle.oci.intellij.ui.common.UIUtil;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.awt.event.MouseEvent;
+import java.net.URL;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Action handler for selection event of UI component 'Region'.
  */
 public class RegionAction extends AnAction {
 
+  private List<RegionSubscription> regionList ;
   private static final HashMap<String, String> iconMap;
   private static final ImageIcon regionIcon;
 
@@ -48,6 +60,8 @@ public class RegionAction extends AnAction {
         put("ap-seoul-1", Icons.REGION_SOUTH_KOREA.getPath());
         put("ap-tokyo-1", Icons.REGION_JAPAN.getPath());
         put("eu-zurich-1", Icons.REGION_SWITZERLAND.getPath());
+        put("eu-dcc-zurich-1", Icons.REGION_SWITZERLAND.getPath());
+
         put("ap-sydney-1", Icons.REGION_AUSTRALIA.getPath());
 
 
@@ -75,6 +89,8 @@ public class RegionAction extends AnAction {
         put("mx-queretaro-1", Icons.REGION_MEXICO.getPath());
         put("sa-santiago-1", Icons.REGION_CHILE.getPath());
         put("ap-singapore-1", Icons.REGION_SINGAPORE.getPath());
+        put("ap-singapore-2", Icons.REGION_SINGAPORE.getPath());
+
         put("sa-vinhedo-1", Icons.REGION_BRAZIL.getPath());
 
         put("eu-milan-1", Icons.REGION_ITALY.getPath());
@@ -99,6 +115,18 @@ public class RegionAction extends AnAction {
         put("eu-madrid-2", Icons.REGION_SPAIN.getPath());
         put("eu-frankfurt-2", Icons.REGION_GERMANY.getPath());
         put("mx-monterrey-1", Icons.REGION_MEXICO.getPath());
+        
+        put("us-saltlake-2", Icons.REGION_US.getPath());
+        //put("sa-bogata-1", Icons.REGION_COLUMBIA.getPath());
+        put("sa-valparaiso-1", Icons.REGION_CHILE.getPath());
+        put("me-riyadh-1", Icons.REGION_SAUDI_ARABIA.getPath());
+//        put("me-dcc-doha-1", Icons.REGION_QATAR.getPath());
+        put("me-abudhabi-1", Icons.REGION_UNITED_ARABE_EMIRATES.getPath());
+        put("me-abudhabi-2", Icons.REGION_UNITED_ARABE_EMIRATES.getPath());
+        put("me-abudhabi-3", Icons.REGION_UNITED_ARABE_EMIRATES.getPath());
+        put("me-abudhabi-4", Icons.REGION_UNITED_ARABE_EMIRATES.getPath());
+        
+//        put("ap-dcc-gazipur-1", Icons.REGION_BANGLADESH.getPath());
       }
     };
     String regionName = SystemPreferences.getRegionName();
@@ -140,43 +168,50 @@ public static ImageIcon getCurrentRegionIcon(String regionName) {
     if (event.getInputEvent() instanceof MouseEvent) {
       final MouseEvent mouseEvent = ((MouseEvent) event.getInputEvent());
 
-      final List<RegionSubscription> regionList =
-              OracleCloudAccount.getInstance().getIdentityClient().getRegionsList();
+      Runnable fetchData = ()->{
+         regionList =
+                OracleCloudAccount.getInstance().getIdentityClient().getRegionsList();
 
-      final JPopupMenu popupMenu = new JPopupMenu();
-      final ButtonGroup regionsButtonGroup = new ButtonGroup();
-      final String currentRegion = SystemPreferences.getRegionName();
+      };
 
-      for (RegionSubscription regionSubscription : regionList) {
-        final JMenuItem regionMenu = new JRadioButtonMenuItem();
-        final Region selectedRegion = Region.fromRegionCode(regionSubscription.getRegionKey());
+      Runnable updateUi = ()->{
+        final JPopupMenu popupMenu = new JPopupMenu();
+        final ButtonGroup regionsButtonGroup = new ButtonGroup();
+        final String currentRegion = SystemPreferences.getRegionName();
 
-        if (Pattern.matches("\\w{2}-\\w+-\\d+", regionSubscription.getRegionName())) {
-          regionMenu.setText(getFormattedRegion(regionSubscription.getRegionName()));
-        } else {
-          regionMenu.setText(regionSubscription.getRegionName());
-        }
+        for (RegionSubscription regionSubscription : regionList) {
+          final JMenuItem regionMenu = new JRadioButtonMenuItem();
+          final Region selectedRegion = Region.fromRegionCode(regionSubscription.getRegionKey());
 
-        if (iconMap.get(regionSubscription.getRegionName()) != null) {
-          URL url = getClass().getResource(iconMap.get(regionSubscription.getRegionName()));
-          if (url != null) {
-            regionMenu.setIcon(new ImageIcon(url));
+          if (Pattern.matches("\\w{2}-\\w+-\\d+", regionSubscription.getRegionName())) {
+            regionMenu.setText(getFormattedRegion(regionSubscription.getRegionName()));
+          } else {
+            regionMenu.setText(regionSubscription.getRegionName());
           }
+
+          if (iconMap.get(regionSubscription.getRegionName()) != null) {
+            URL url = getClass().getResource(iconMap.get(regionSubscription.getRegionName()));
+            if (url != null) {
+              regionMenu.setIcon(new ImageIcon(url));
+            }
+          }
+
+          regionMenu.addActionListener(
+                  actionEvent -> SystemPreferences.setRegionName(selectedRegion.getRegionId())
+          );
+
+          if (currentRegion.equals(selectedRegion.getRegionId())) {
+            regionMenu.setSelected(true);
+          }
+          regionsButtonGroup.add(regionMenu);
+          popupMenu.add(regionMenu);
         }
 
-        regionMenu.addActionListener(
-                actionEvent -> SystemPreferences.setRegionName(selectedRegion.getRegionId())
-        );
+        popupMenu.show(mouseEvent.getComponent(), mouseEvent.getX(),
+                mouseEvent.getY());
+      };
 
-        if (currentRegion.equals(selectedRegion.getRegionId())) {
-          regionMenu.setSelected(true);
-        }
-        regionsButtonGroup.add(regionMenu);
-        popupMenu.add(regionMenu);
-      }
-
-      popupMenu.show(mouseEvent.getComponent(), mouseEvent.getX(),
-              mouseEvent.getY());
+      UIUtil.executeAndUpdateUIAsync(fetchData,updateUi);
     }
   }
 

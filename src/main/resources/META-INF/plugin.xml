@@ -72,7 +72,66 @@
     </description>
     <change-notes>
         <![CDATA[
-          <h2>Added</h3>
+          <h2>1.0.2</h2>
+          
+          <h3>Added</h3>
+          
+          <ul>
+			<li>O2912 -- IntelliJ Plugin -- put documentation link for each wizard step in the form to create new app stack </li>
+			<li>O2328 -- Icon for compartments should be changed to be more visible</li>
+			<li>O2706 -- Cache the existing app stacks under the app stack dashboard</li>
+            <li>O2758 -- IntelliJ Plugin -- reload the config file </li>
+            <li>O2169 -- IntelliJ Plugin --  Enhance Error Handling for Missing Configuration File in IntelliJ Plugin</li>
+            <li>O2738 -- """Home"" region causes issue finding resources in other regions."</li>
+          </ul>
+          
+          <h3>Fixed</h3>
+          
+          <ul>
+			 <li>O2763 -- IntelliJ Plugin -- Bug: UI Freezes During App Stack List Refresh in Dashboard</li>
+             <li>O3097 -- IntelliJ Plugin -- Generating new auth token cause null pointer exception </li>
+             <li>O3100 -- IntelliJ Plugin -- introduction step is always there even i check don't show again </li>
+             <li>O2605 -- App Stack dashboard doesn't filter out other stacks and jobs</li>
+             <li>O2749 -- Git Config parser fails to pick up second section.</li>
+             <li>O2751 -- NPE when Associate Project is called with bad compartment in prefs.</li>
+             <li>O3078 -- Fix language in the Create App Stack wizard</li>
+             <li>O3080 -- Regions API called on UI thread.</li>
+             <li>O3109 -- "Profile config doesn't support ""inherited"" profiles."</li>
+             <li>O3140 -- DevOps dashboard throws NPE on empty list.</li>
+             <li>O3163 -- DevOpsClient throws BmcException when a compartment can't be read for projects</li>
+             <li>O3168 -- Invalid settings extension throws lots of exceptions</li>
+          </ul>
+
+          <h2>1.0.1</h2>
+
+          <h3>Added</h3>
+             <ul>
+             <li>O2685 -- minor enhancements to the application config to provide better artifact defaults.</li>
+             <li>O2340 -- enhancements to the Show Jobs dialog for App Stack.</li>
+             <li>O2546 -- Mirror repo action does nothing when there are no repos in the project to use.</li>
+             <li>O2543 -- Dialog to list the auth tokens</li>
+             </ul>
+
+          <h3>Fixed</h3>
+          <h4>Github Issues</h4>
+          <p>Please visit the links at github.com for more information</p>
+          <ul>
+          <li><a href="https://github.com/oracle/oci-toolkit-intellij/issues/7">O2566 -- Job dialog for Stack Jobs may be slow or seem non-responsive</a></li>
+          <li><a href="https://github.com/oracle/oci-toolkit-intellij/issues/8">O2565 -- Performance degraded when there a multiple jobs in the AppStack dashboard</a></li>
+          <li><a href="https://github.com/oracle/oci-toolkit-intellij/issues/9">O2545 -- OCI Explorer tables can disappear in multiple window scenario</a></li>
+          <li><a href="https://github.com/oracle/oci-toolkit-intellij/issues/10">O2435 -- Destroy Job Failed because for ambiguous reason</a></li>
+          </ul>
+
+          <h4>Other Issues</h4>
+          <ul>
+          <li>O2554 -- General improvements in text clarity in Delete Wizard.</li>
+          <li>O2426 -- Unclosable Ghost Panel created when clicking on Update ACL</li>
+          <li>O2292 -- compartment doesn't change in the appstack dashboard</li>
+          </ul> 
+
+
+          <h2>1.0.0</h2>
+          <h3>Added</h3>
 
           <h3>New App Stack Dashboard</h3>
             <ul>
@@ -103,14 +162,27 @@
         <notificationGroup id="Oracle Cloud Infrastructure" displayType="BALLOON"/>
     </extensions>
     
-    <extensions defaultExtensionNs="com.intellij">
-        <projectConfigurable
-        parentId="tools"
-        instance="com..oracle.oci.intellij.settings.ProjectSettingsConfigurable"
-        id="com.oracle.oci.intellij.ProjectSettingsConfigurable"
-        displayName="OCI Project Settings"
-        nonDefaultProject="true"/>
-    </extensions>
+    <extensionPoints>
+    	<extensionPoint
+            name="contributeADBAction"
+            interface="com.oracle.oci.intellij.api.ext.ContributeADBActions"/>
+	  </extensionPoints>
+
+<!--    <extensions defaultExtensionNs="com.intellij"> -->
+<!--		<applicationConfigurable -->
+<!--			parentId="tools" -->
+<!--			provider="com.oracle.oci.intellij.settings.ApplicationSetingsRootConfigurable" -->
+<!--			id="com.oracle.oci.intellij.settings.ApplicationSetingsRootConfigurable" -->
+<!--			displayName="Oracle Cloud Infrastructure" />  -->
+<!--	</extensions> -->
+<!--    <extensions defaultExtensionNs="com.intellij">-->
+<!--        <projectConfigurable-->
+<!--        parentId="tools"-->
+<!--        instance="com.oracle.oci.intellij.settings.ProjectSettingsConfigurable"-->
+<!--        id="com.oracle.oci.intellij.ProjectSettingsConfigurable"-->
+<!--        displayName="Oracle Cloud Infrastructure"-->
+<!--        nonDefaultProject="true"/>-->
+<!--    </extensions>-->
 
     <actions>
         <group id="com.oracle.oci.intellij.ui.account.OCIExplorerActionGroup" class="com.intellij.openapi.actionSystem.DefaultActionGroup"

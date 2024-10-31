@@ -1,0 +1,86 @@
+#!/bin/bash
+
+# are we local or on orahub?
+if [ "${GITLAB_CI}" == "true" ]; then
+   echo "Building on Orahub...";
+else 
+   echo "Build locally..."
+   echo "Setting Orahub env vars."
+   export CI_COMMIT_SHA="LOCAL_COMMIT_SHA"
+   export CI_COMMIT_TIMESTAMP="LOCAL_COMMIT_TIMESTAMP"
+   export CI_COMMIT_BRANCH="LOCAL_COMMIT_BRANCH";
+fi
+
+if [[ -z ${ADMIN_IDE_INTEGRATION_PEM} || -z ${IDE_INTEGRATION_TEST_PEM} || -z ${IDE_PLUGIN_JUNIT_PEM} ]]; then
+    source ~/.ssh/pem_files.txt;
+fi
+
+if [ -z $TEMP_FILE_DIRECTORY ]; then
+   export TEMP_FILE_DIRECTORY=$(mktemp -d)
+fi
+
+if [ ! -d $TEMP_FILE_DIRECTORY ]; then
+    mkdir -p $TEMP_FILE_DIRECTORY;
+fi
+
+if [ -z $IDE_INTEGRATION_TEST_USER_KEY_PATH ]; then
+    export IDE_INTEGRATION_TEST_USER_KEY_PATH="$TEMP_FILE_DIRECTORY/ide_integration_test_user_key.pem";
+fi
+
+if [ -z $ADMIN_IDE_INTEGRATION_TEST_USER_KEY_PATH ]; then
+    export ADMIN_IDE_INTEGRATION_TEST_USER_KEY_PATH="$TEMP_FILE_DIRECTORY/admin_ide_integration_test_user_key.pem";
+fi
+
+if [ -z $IDE_PLUGIN_JUNIT_05_26_22_KEY_PATH ]; then
+    export IDE_PLUGIN_JUNIT_05_26_22_KEY_PATH="$TEMP_FILE_DIRECTORY/ide_plugin_junit_05-26-22.pem";
+fi
+
+export JDBC_DEV_LOCAL_URL="https://artifacthub-phx.oci.oraclecorp.com/jdbc-dev-local"
+export PUBLISHED_VERSION=1.0.2Z
+export JDBC_DEV_LOCAL_USERNAME="jdbcmaventoolsso_us@oracle.com"
+
+if [ -z $JDBC_DEV_LOCAL_APIKEY ]; then
+   source ~/.ssh/jdbc_token.txt
+
+   if [ -z $JDBC_DEV_LOCAL_APIKEY ]; then
+       echo "You must set JDBC_DEV_LOCAL_APIKEY either as an env variable or under $home/.ssh/jdbc_token.txt"
+   fi;
+fi
+
+# defaults
+if [ -z $ORACLE_HTTP_PROXY_HOST ]; then
+   ORACLE_HTTP_PROXY_HOST=www-proxy-hqdc.us.oracle.com
+   export ORACLE_HTTP_PROXY_HOST;
+fi
+
+if [ -z $ORACLE_HTTP_PROXY_PORT ]; then
+   ORACLE_HTTP_PROXY_PORT=80
+   export ORACLE_HTTP_PROXY_PORT;
+fi
+
+if [ -z $ORACLE_HTTP_PROXY_NONPROXYHOSTS ]; then
+   ORACLE_HTTP_PROXY_NONPROXYHOSTS="artifacthub-phx.oci.oraclecorp.com"
+   export ORACLE_HTTP_PROXY_NONPROXYHOSTS;
+fi
+
+if [[ -z ${USING_PROXY} || ${USING_PROXY} == "false" ]]; then 
+    echo "Not using proxy"
+    unset no_proxy
+    unset NO_PROXY
+    unset https_proxy
+    unset HTTPS_PROXY
+    unset http_proxy
+    unset PROXY_OPTS; 
+else 
+    PROXY_OPTS="-Dhttp.proxyHost=$ORACLE_HTTP_PROXY_HOST -Dhttp.proxyPort=$ORACLE_HTTP_PROXY_PORT -Dhttp.nonProxyHosts=$ORACLE_HTTP_PROXY_NONPROXYHOSTS -Dhttps.proxyHost=$ORACLE_HTTP_PROXY_HOST -Dhttps.proxyPort=$ORACLE_HTTP_PROXY_PORT -Dhttps.nonProxyHosts=$ORACLE_HTTP_PROXY_NONPROXYHOSTS"
+    export PROXY_OPTS
+    export https_proxy=$ORACLE_HTTP_PROXY_HOST:$ORACLE_HTTP_PROXY_PORT 
+    export HTTPS_PROXY=$ORACLE_HTTP_PROXY_HOST:$ORACLE_HTTP_PROXY_PORT 
+    export http_proxy=$ORACLE_HTTP_PROXY_HOST:$ORACLE_HTTP_PROXY_PORT
+    export no_proxy=$ORACLE_HTTP_PROXY_NONPROXYHOSTS
+    export NO_PROXY=$ORACLE_HTTP_PROXY_NONPROXYHOSTS
+    echo "Proxy opts are ${PROXY_OPTS}";
+fi
+
+export JAVA_TOOL_OPTIONS="$PROXY_OPTS"
+

@@ -1,0 +1,23 @@
+[IDE]
+# IDEIntegrationTestUser
+user = ocid1.user.oc1..aaaaaaaa3uu2ktd5zz6hggttksdnx22edjxhb4ftnh6ptzflewq4pn54xjtq
+fingerprint = 10:e5:74:93:24:ec:3b:07:ce:32:11:47:5f:f1:c7:19
+key_file = ${IDE_INTEGRATION_TEST_USER_KEY_PATH}
+tenancy = ocid1.tenancy.oc1..aaaaaaaa3vi3ft3yi3sq4nhiql4nvbzjz6gipbn72h7werl6njs6xsq4wgdq
+region = us-phoenix-1
+
+[IDE-ADMIN]
+# IDEIntegrationTestAdminUser
+user = ocid1.user.oc1..aaaaaaaafdiunr5jxf4cb7klsb3czwaxeez2krguskapjpilukuwyj3sgh6q
+fingerprint = 04:58:e6:8e:23:62:15:d1:87:29:59:04:bf:21:e4:1f
+key_file = ${ADMIN_IDE_INTEGRATION_TEST_USER_KEY_PATH}
+tenancy = ocid1.tenancy.oc1..aaaaaaaa3vi3ft3yi3sq4nhiql4nvbzjz6gipbn72h7werl6njs6xsq4wgdq
+region = us-phoenix-1
+
+[DEFAULT]
+# NewIDEAdmin
+user=ocid1.user.oc1..aaaaaaaaqtqi7jgyfst4kbrd5blqusk2fzc4unqm4ijxbv22em5mib4m25ga
+fingerprint=d4:09:f6:38:d2:8c:ca:6b:8a:cd:46:04:3b:fb:c1:56
+tenancy=ocid1.tenancy.oc1..aaaaaaaagojvam7c7hthdm7h2pgshjmiqntcvei4skgysz3galuejn3rioia
+region=us-phoenix-1
+key_file = ${IDE_PLUGIN_JUNIT_05_26_22_KEY_PATH}

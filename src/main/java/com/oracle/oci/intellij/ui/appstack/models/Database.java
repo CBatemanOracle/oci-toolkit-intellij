@@ -4,7 +4,6 @@ import com.oracle.oci.intellij.ui.appstack.actions.PropertyOrder;
 import com.oracle.oci.intellij.ui.appstack.annotations.VariableMetaData;
 
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.beans.PropertyVetoException;
 
 public class Database extends VariableGroup {
@@ -44,6 +43,7 @@ public class Database extends VariableGroup {
     private String password_env;
 
     private Object db_compartment;
+    private static final String DOCUMENTATION_LINK = "https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#database";
 
     @PropertyOrder(1)
     @VariableMetaData(title="Use existing database ",defaultVal="true",type="boolean",required=true)
@@ -287,11 +287,19 @@ public class Database extends VariableGroup {
     public void removePropertyChangeListener(PropertyChangeListener listener) {
          this.pcs.removePropertyChangeListener(listener);
      }
+
+    @Override
+    public String getDocumentationLink() {
+        return DOCUMENTATION_LINK;
+    }
+
     public void setDb_compartment(Object newValue) throws PropertyVetoException {
         Object oldValue = this.db_compartment;
         this.db_compartment = newValue;
         pcs.firePropertyChange("db_compartment", oldValue, newValue);
         vcp.fireVetoableChange("db_compartment", oldValue, newValue);
     }
+
+
 
 }

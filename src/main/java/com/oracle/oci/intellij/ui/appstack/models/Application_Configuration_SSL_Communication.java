@@ -27,6 +27,7 @@ public class Application_Configuration_SSL_Communication extends VariableGroup {
     private java.lang.Object private_key_pem;
 
     private java.lang.Object ca_pem;
+    private static final String DOCUMENTATION_LINK = "https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#ssl-configuration-between-load-balancer-and-backend";
 
     @PropertyOrder(1)
     @VariableMetaData(title="Use default SSL properties for Spring",description="The stack creates a self-signed certificate that will be used for the communication between the load balancer and the backends. This self-signed certificate is stored in a JKS keystore. The following properties can be used to configure the web server to use this JKS keystore. By default Spring boot properties will be used by the stack. Click on this checkbox to specify your own property names.",defaultVal="true",type="boolean",visible="and(eq(application_type,'JAR'),not(eq(application_source,'IMAGE')))")
@@ -153,4 +154,10 @@ public class Application_Configuration_SSL_Communication extends VariableGroup {
     public void removePropertyChangeListener(PropertyChangeListener listener) {
          this.pcs.removePropertyChangeListener(listener);
      }
+
+    @Override
+    public String getDocumentationLink() {
+        return DOCUMENTATION_LINK;
+    }
+
 }

@@ -4,39 +4,49 @@
  */
 package com.oracle.oci.intellij.account;
 
-import com.intellij.openapi.util.SystemInfo;
+import static com.oracle.bmc.util.internal.FileUtils.expandUserHome;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
-import static com.oracle.bmc.util.internal.FileUtils.expandUserHome;
+import com.intellij.openapi.util.SystemInfo;
+import com.oracle.oci.intellij.account.ConfigFileReader.ConfigFile;
 
 /**
  * Implementation to read OCI configuration file. The config files MUST contain
  * a "DEFAULT" profile, else validation fails. Additional profiles are optional.
  */
 public final class ConfigFileHandler {
+  public final static String CONFIG_FILE_URL_EXAMPLES = "https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdkconfig.htm";
+
   /**
    * Parses the given config file.
    *
-   * @param configFile path of config file.
+   * @param configFileName path of config file.
    * @return the ProfilesSet.
    * @throws IOException is thrown if I/O fails.
    */
-  public static ProfileSet parse(String configFile) throws IOException {
-    final File file = new File(expandUserHome(configFile));
+  public static ProfileSet parse(String configFileName) throws IOException {
+    final File file = new File(expandUserHome(configFileName));
     if (file.length() > 50000) {
-      throw new IllegalStateException("File too large : " + configFile);
+      throw new IllegalStateException("File too large : " + configFileName);
     }
 
-    try (BufferedReader bufferedReader = new BufferedReader(new FileReader(file))) {
-      return populate(bufferedReader);
-    }
+    ConfigFile config = ConfigFileReader.parse(configFileName);
+    return ProfileSet.create(config);
   }
 
   /**
@@ -46,6 +56,7 @@ public final class ConfigFileHandler {
    * @return ProfilesSet.
    * @throws IOException throws if file read fails.
    */
+  @SuppressWarnings("unused")
   private static ProfileSet populate(BufferedReader bufferedReader) throws IOException {
     final Map<String, Properties> mapOfProfiles = new LinkedHashMap<>();
 
@@ -195,6 +206,18 @@ public final class ConfigFileHandler {
 
     private ProfileSet(Map<String, Properties> mapOfProfiles) {
       this.mapOfProfiles = mapOfProfiles;
+    }
+
+    public static ProfileSet create(ConfigFile config) {
+      Map<String,Properties> mapOfProfiles = new HashMap<>();
+      for (String profName : config.getProfileNames()) {
+        Properties props = new Properties();
+        for (Map.Entry<String,String> keyValPairs : config.getProfileKeys(profName).entrySet()) {
+          props.put(keyValPairs.getKey(), keyValPairs.getValue());
+        }
+        mapOfProfiles.put(profName, props);
+      }
+      return new ProfileSet(mapOfProfiles);
     }
 
     public Profile get(String profileName) {

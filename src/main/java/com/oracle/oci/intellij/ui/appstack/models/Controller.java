@@ -3,36 +3,35 @@ package com.oracle.oci.intellij.ui.appstack.models;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.wizard.WizardStep;
 import com.oracle.bmc.http.client.internal.ExplicitlySetBmcModel;
 import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.bmc.resourcemanager.model.Stack;
 import com.oracle.bmc.resourcemanager.model.StackSummary;
-import com.oracle.bmc.resourcemanager.responses.ListStacksResponse;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
-import com.oracle.oci.intellij.account.SystemPreferences;
 import com.oracle.oci.intellij.common.command.AbstractBasicCommand;
 import com.oracle.oci.intellij.common.command.CommandStack;
-import com.oracle.oci.intellij.ui.appstack.actions.CustomWizardStep;
+import com.oracle.oci.intellij.settings.OCIApplicationSettings;
+import com.oracle.oci.intellij.ui.appstack.actions.VariableWizardStep;
 import com.oracle.oci.intellij.ui.appstack.actions.PropertyOrder;
 import com.oracle.oci.intellij.ui.appstack.command.ListStackCommand;
 import com.oracle.oci.intellij.ui.appstack.command.SetCommand;
 import com.oracle.oci.intellij.ui.common.UIUtil;
 import com.oracle.oci.intellij.util.LogHandler;
-import jnr.ffi.Struct;
 
 import javax.swing.*;
 import java.awt.*;
 import java.beans.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
 public class Controller {
     Map<String, PropertyDescriptor> descriptorsState;
-    Map <String, CustomWizardStep.VarPanel> varPanels = new LinkedHashMap<>() ;
+    Map <String, VariableWizardStep.VarPanel> varPanels = new LinkedHashMap<>() ;
     Map<String, VariableGroup> variableGroups ;
     private static Controller instance ;
     Map<String, List<Compartment>> cachedCompartmentList = new LinkedHashMap<>();
@@ -43,7 +42,7 @@ public class Controller {
     public Map<String, PropertyDescriptor> getDescriptorsState() {
         return descriptorsState;
     }
-    public void addVariablePanel (CustomWizardStep.VarPanel varPanel){
+    public void addVariablePanel (VariableWizardStep.VarPanel varPanel){
         varPanels.put(varPanel.getPd().getName(),varPanel);
     }
 
@@ -60,19 +59,19 @@ public class Controller {
     }
 
     public JComponent getComponentByName(String pdName){
-        CustomWizardStep.VarPanel varPanel = varPanels.get(pdName);
+        VariableWizardStep.VarPanel varPanel = varPanels.get(pdName);
         return varPanel.getMainComponent();
     }
     public JComponent getErrorLabelByName(String pdName){
-        CustomWizardStep.VarPanel varPanel = varPanels.get(pdName);
+        VariableWizardStep.VarPanel varPanel = varPanels.get(pdName);
         return varPanel.getErrorLabel();
     }
     public VariableGroup getVarGroupByName(String pdName){
-        CustomWizardStep.VarPanel varPanel = varPanels.get(pdName);
+        VariableWizardStep.VarPanel varPanel = varPanels.get(pdName);
         return varPanel.getVariableGroup();
     }
 
-    public CustomWizardStep.VarPanel getVarPanelByName(String pdName){
+    public VariableWizardStep.VarPanel getVarPanelByName(String pdName){
         return varPanels.get(pdName);
     }
 
@@ -99,16 +98,29 @@ public class Controller {
 
     public void updateDependencies(String pdName, VariableGroup varGroup){
         PropertyDescriptor pd = descriptorsState.get(pdName);
-        List<String> dependencies = Utils.depondsOn.get(pd.getName());
+        List<String> dependencies = Utils.dependsOn.get(pd.getName());
         if (dependencies != null) {
             for (String dependent : dependencies) {
-                CustomWizardStep.VarPanel varPanel = varPanels.get(dependent);
+                VariableWizardStep.VarPanel varPanel = varPanels.get(dependent);
+                PropertyDescriptor dependentPd = descriptorsState.get(dependent);
+
+                if ("string".equals(dependentPd.getValue("type"))){
+                    JBTextField textField = (JBTextField) varPanel.getMainComponent();
+                    Object pdValue = getValue(varGroup,pd);
+                    String dependentValue = "";
+                    if ("JAR".equalsIgnoreCase(pdValue.toString())){
+                        dependentValue = "target/*.jar";
+                    }else {
+                        dependentValue = "target/*.war ";
+                    }
+                    textField.setText(dependentValue);
+                    continue;
+                }
                 ComboBox jComboBox = (ComboBox) varPanel.getMainComponent();
                 if (jComboBox == null) continue;
                 jComboBox.removeAllItems();
                 jComboBox.setModel(new DefaultComboBoxModel<>(new String[] {"Loading..."}));
                 jComboBox.setEnabled(false);
-                PropertyDescriptor dependentPd = descriptorsState.get(dependent);
                 loadComboBoxValues(dependentPd,varPanel.getVariableGroup(),jComboBox);
             }
         }
@@ -127,7 +139,8 @@ public class Controller {
                 try {
                     suggestedValues = (List<ExplicitlySetBmcModel>) get();
                 } catch (InterruptedException | ExecutionException e) {
-                    UIUtil.fireNotification(NotificationType.WARNING, "Resource not found: \n"+e.getMessage(), null);
+                    System.out.println(e);
+                    UIUtil.fireNotification(NotificationType.WARNING, "Resource not found: \n"+e.getMessage());
                     comboBox.removeAllItems();
                     comboBox.setEnabled(true);
                     String errorMessage = "There was an error retrieving options";
@@ -160,7 +173,7 @@ public class Controller {
         if (dependencies != null) {
 
             for (String dependency : dependencies) {
-                CustomWizardStep.VarPanel varPanel = varPanels.get(dependency);
+                VariableWizardStep.VarPanel varPanel = varPanels.get(dependency);
                 JComponent dependencyComponent  = varPanel.getMainComponent();
                 if (dependencyComponent == null) continue;
 
@@ -244,21 +257,21 @@ public class Controller {
         return true;
     }
     public boolean doValidate(WizardStep wizardStep){
-        CustomWizardStep cWizardStep = (CustomWizardStep)wizardStep;
+        VariableWizardStep cWizardStep = (VariableWizardStep)wizardStep;
         JComponent errorComponent = null;
 
-        for (CustomWizardStep.VarPanel varPanel:
+        for (VariableWizardStep.VarPanel varPanel:
                 cWizardStep.getVarPanels()) {
             PropertyDescriptor pd = varPanel.getPd();
 
 
             if (varPanel.isVisible() && (boolean)pd.getValue("required")){
 
-                VariableGroup varGroup = getVarGroupByName(pd.getName());
+                VariableGroup varGroup = varPanel.getVariableGroup();
                 Object value = null;
                 try {
                     value  = pd.getReadMethod().invoke(varGroup);
-                } catch (IllegalAccessException | InvocationTargetException e) {
+                } catch (Exception   e) {
                     throw new RuntimeException(e);
                 }
 
@@ -325,7 +338,7 @@ public class Controller {
 
 
     public void handleValidated(PropertyDescriptor pd) {
-        CustomWizardStep.VarPanel varPanel = getVarPanelByName(pd.getName());
+        VariableWizardStep.VarPanel varPanel = getVarPanelByName(pd.getName());
 
         if (varPanel != null ){
             JComponent inputComponent = varPanel.getInputComponent();
@@ -334,23 +347,27 @@ public class Controller {
                 inputComponent.setBorder(UIManager.getBorder("TextArea.border")); // Reset to default border
             else
                 inputComponent.setBorder(UIManager.getBorder("TextField.border")); // Reset to default border
-
-            errorLabel.setText("");
+            if (errorLabel !=null)
+                errorLabel.setText("");
         }
 
     }
 
     public void handleError(PropertyDescriptor pd,String errorMessage ){
-        CustomWizardStep.VarPanel varPanel = getVarPanelByName(pd.getName());
+        VariableWizardStep.VarPanel varPanel = getVarPanelByName(pd.getName());
         if (varPanel != null){
             JComponent component = varPanel.getMainComponent();
             JComponent inputComponent = varPanel.getInputComponent();
             JLabel errorLabel = varPanel.getErrorLabel();
 
             inputComponent.setBorder(BorderFactory.createLineBorder(JBColor.pink,3,true));
-            errorLabel.setText(errorMessage);
+            if (!pd.getName().equals("current_user_token"))
+                errorLabel.setText(errorMessage);
             if (pd.getValue("errorMessage") != null && !((String)pd.getValue("errorMessage")).isEmpty())
                 inputComponent.setToolTipText("Field should be : "+pd.getValue("errorMessage"));
+            else {
+                inputComponent.setToolTipText(errorMessage);
+            }
         }
     }
     public Object getValue(VariableGroup variableGroup,PropertyDescriptor pd){
@@ -395,7 +412,7 @@ public class Controller {
                 }
             } catch (Exception exception) {
                 appStackList = null;
-                UIUtil.fireNotification(NotificationType.ERROR, exception.getMessage(), null);
+                UIUtil.fireNotification(NotificationType.ERROR, "Problem in initApplicationNames"+exception.getMessage());
                 LogHandler.error(exception.getMessage(), exception);
             }
             //then get Stack of each summary stack
@@ -413,5 +430,10 @@ public class Controller {
 
     private String getAppName(Stack stackDetails) {
         return stackDetails.getVariables().get("application_name");
+    }
+
+    public void setState(boolean introductionDontShowAgain) {
+        OCIApplicationSettings.State state =  OCIApplicationSettings.getInstance().getState();
+        state.setAppStackIntroductoryStepShow(!introductionDontShowAgain);
     }
 }

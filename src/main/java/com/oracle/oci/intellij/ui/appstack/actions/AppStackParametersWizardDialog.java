@@ -1,5 +1,6 @@
 package com.oracle.oci.intellij.ui.appstack.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.wizard.WizardDialog;
@@ -7,11 +8,11 @@ import com.intellij.ui.wizard.WizardModel;
 import com.intellij.ui.wizard.WizardStep;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.account.SystemPreferences;
 import com.oracle.oci.intellij.ui.appstack.models.Controller;
 import com.oracle.oci.intellij.ui.appstack.models.VariableGroup;
+import com.oracle.oci.intellij.ui.common.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -21,7 +22,7 @@ import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class AppStackParametersWizardDialog extends WizardDialog {
+public class AppStackParametersWizardDialog extends WizardDialog<CustomWizardModel> {
     public static  boolean isProgramaticChange = false;
     JBList menuList;
     private LinkedHashMap<String,String> userInput;
@@ -30,11 +31,38 @@ public class AppStackParametersWizardDialog extends WizardDialog {
 
 
     public AppStackParametersWizardDialog(WizardModel wizardModel){
-        super(true ,  wizardModel);
+        super(true , (CustomWizardModel) wizardModel);
+        myHelpAction = null;
     }
 
 
+    @Override
+    protected JComponent createSouthPanel() {
+        JComponent southComponent =  super.createSouthPanel();
 
+        removeHelpButton(southComponent);
+        return southComponent;
+    }
+
+    /**
+     * we are delete the button help from wizard dialog
+     * @param component
+     */
+    private void removeHelpButton(Component component){
+        String helpText = IdeBundle.message("button.help", new Object[0]);
+        if (!(component instanceof JComponent))
+            return;
+        JComponent container = (JComponent)component;
+        Component[] childs =container.getComponents();
+        for (Component child : childs){
+            if (child instanceof JButton  && helpText.equals(((JButton) child).getText()) ){
+                container.remove(child);
+                return;
+            }
+
+            removeHelpButton(child);
+        }
+    }
 
     @Override
     protected JComponent createCenterPanel() {
@@ -44,9 +72,9 @@ public class AppStackParametersWizardDialog extends WizardDialog {
         JPanel mainPanel = new JPanel(new BorderLayout());
         JPanel leftPanel = (JPanel) createMenuPanel();
 
-        if (!UIUtil.isUnderDarcula())
+        if (!UIUtil.isUnderDarcula()) {
             leftPanel.setBackground(Color.white);
-
+        }
 
         mainPanel.add(leftPanel,BorderLayout.WEST);
         wizard.setBorder(BorderFactory.createEmptyBorder(0,10,0,0));
@@ -91,7 +119,7 @@ public class AppStackParametersWizardDialog extends WizardDialog {
 
 //        List<String> groupList = new ArrayList<>(List.of("db","network"));
         DefaultListModel<String> listModel = new DefaultListModel<>();
-        for (VariableGroup var :appStackModel.varGroups ){
+        for (VariableGroup var :appStackModel.getVarGroups() ){
             listModel.addElement(var.getClass().getSimpleName().replaceAll("_"," "));
         }
 
@@ -108,8 +136,10 @@ public class AppStackParametersWizardDialog extends WizardDialog {
                     if(!isProgramaticChange) {
                         int selectedIndex = menuList.getSelectedIndex();
                         WizardStep nextStep = null;
-                        CustomWizardStep currentStep = (CustomWizardStep) appStackModel.getMySteps().get(lastSelectedIndex[0]);
-                        boolean isValide =  Controller.getInstance().doValidate(currentStep);
+                        AbstractWizardStep currentStep = (AbstractWizardStep) appStackModel.getMySteps().get(lastSelectedIndex[0]);
+                        boolean isValide = true ;
+                        if (currentStep instanceof VariableWizardStep)
+                             isValide =  Controller.getInstance().doValidate(currentStep);
                         currentStep.setDirty(!isValide);
 
                         nextStep = nextStep != null ? nextStep : appStackModel.getMySteps().get(selectedIndex);
@@ -127,7 +157,7 @@ public class AppStackParametersWizardDialog extends WizardDialog {
         menuList.setCellRenderer(new DefaultListCellRenderer(){
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                CustomWizardStep currentStep = (CustomWizardStep) appStackModel.getMySteps().get(index);
+                AbstractWizardStep currentStep = (AbstractWizardStep) appStackModel.getMySteps().get(index);
                 JLabel renderedLabel = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
 
@@ -203,10 +233,10 @@ public class AppStackParametersWizardDialog extends WizardDialog {
         int stepindex = 0 ;
         for (WizardStep step:
              appStackModel.getMySteps()) {
-            CustomWizardStep customWizardStep = (CustomWizardStep) step;
-            if (customWizardStep.isDirty()){
+            AbstractWizardStep variableWizardStep = (AbstractWizardStep) step;
+            if (variableWizardStep.isDirty()){
                 // move to this dirty wizard step  .
-                changeToStep(customWizardStep,appStackModel);
+                changeToStep(variableWizardStep,appStackModel);
                 AppStackParametersWizardDialog.isProgramaticChange = true;
                 menuList.setSelectedIndex(stepindex);
                 AppStackParametersWizardDialog.isProgramaticChange = false;

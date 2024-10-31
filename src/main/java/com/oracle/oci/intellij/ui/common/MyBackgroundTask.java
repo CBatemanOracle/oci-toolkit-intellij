@@ -1,56 +1,70 @@
 package com.oracle.oci.intellij.ui.common;
 
+
+import static com.oracle.bmc.resourcemanager.model.Job.LifecycleState.Failed;
+import static com.oracle.bmc.resourcemanager.model.Job.LifecycleState.Succeeded;
+
+import java.util.function.Function;
+
+import org.jetbrains.annotations.NotNull;
+
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.oracle.bmc.model.BmcException;
+import com.oracle.bmc.resourcemanager.model.Job;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
-import com.oracle.oci.intellij.common.command.BasicCommand;
 import com.oracle.oci.intellij.ui.appstack.AppStackDashboard;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Function;
+import com.oracle.oci.intellij.util.LogHandler;
 
 public class MyBackgroundTask {
-    private final Project project;
-    private static final Function<String,Boolean> isJobFinished=(jobId)->{
+    private volatile boolean isRunning = true ;
+    private  final Function<String,Boolean> isJobFinished=(jobId)->{
         try {
-            while (true) {
-                String status = getJobStatus(jobId);
-                if ("SUCCEEDED".equals(status)) {
+            while (isRunning) {
+                Job job = getJob(jobId);
+//                String status =job.getLifecycleState().getValue();
+                if (Succeeded.equals(job.getLifecycleState())) {
                     return true;
-                } else if ("FAILED".equals(status)) {
+                } else if (Failed.equals(job.getLifecycleState())) {
                     return false;
                 }
-                AppStackDashboard.getInstance().populateTableData();
+                AppStackDashboard.getAllInstances().forEach(d -> d.refreshLastJobState(job));
 
                 // Wait a bit before checking again
                 Thread.sleep(5000); // Sleep for 5 seconds
             }
         } catch (BmcException e){
-            UIUtil.fireNotification(NotificationType.ERROR,e.getMessage(),null);
+            UIUtil.fireNotification(NotificationType.ERROR,
+                "Error accessing ADB to refresh dashboard"+e.getMessage());
         }catch (InterruptedException e) {
             // Handle exceptions
             throw new RuntimeException();
         }
 
-        return null;
+        return false;
     };
-
-
-
-    private static String getJobStatus(String jobId) {
-         OracleCloudAccount.ResourceManagerClientProxy resourceManagerClient = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
-        return resourceManagerClient.getJobDetails(jobId).getLifecycleState().getValue();
+    public void stopCheckingJobState(){
+        isRunning = false;
     }
 
-    public MyBackgroundTask(Project project) {
-        this.project = project;
+
+
+    public static Job getJob(String jobId) {
+        try {
+            OracleCloudAccount.ResourceManagerClientProxy resourceManagerClient = OracleCloudAccount.getInstance().getResourceManagerClientProxy();
+            return resourceManagerClient.getJobDetails(jobId);
+        }catch (BmcException ex){
+            LogHandler.error(ex.getMessage());
+        }
+        return null;
+
     }
 
-    public static void startBackgroundTask(Project project, String title, String processingMessage, String failedMessage , String succeededMessage ,String jobId, BasicCommand<?> runLater) {
+
+    public  void startBackgroundTask(Project project, String title, String processingMessage, String failedMessage , String succeededMessage ,String jobId, Runnable runLater) {
         Task.Backgroundable task = new Task.Backgroundable(project, title, false) {
 
             @Override
@@ -66,23 +80,24 @@ public class MyBackgroundTask {
 
                 if (isJobFinished.apply(jobId)){
                     progressIndicator.setText(succeededMessage);
-                    UIUtil.fireNotification(NotificationType.INFORMATION, succeededMessage, null);
+                    UIUtil.fireNotification(NotificationType.INFORMATION, "Problem:"+succeededMessage);
                 }else {
                     progressIndicator.setText(failedMessage);
-                    UIUtil.fireNotification(NotificationType.ERROR, failedMessage, null);
+                    UIUtil.fireNotification(NotificationType.ERROR, failedMessage);
                 }
                 // refresh the last job state
-                AppStackDashboard.getInstance().populateTableData();
+                Job job = getJob(jobId);
+                AppStackDashboard.getAllInstances().forEach(d -> d.refreshLastJobState(job));
             }
 
             @Override
             public void onFinished() {
                 if (runLater != null){
                     try {
-                        runLater.execute();
+                        runLater.run();
                     } catch (Exception e) {
                         String errorMessage = e.getMessage()==null?"Something went wrong ":e.getMessage();
-                        UIUtil.fireNotification(NotificationType.ERROR, errorMessage, null);
+                        UIUtil.fireNotification(NotificationType.ERROR, errorMessage);
                     }
                 }
 
@@ -92,10 +107,10 @@ public class MyBackgroundTask {
         // Run the task with a progress indicator
         ProgressManager.getInstance().run(task);
     }
-    public static void startBackgroundTask(Project project, String title, String processingMessage, String failedMessage , String succeededMessage , String jobId) {
+    public  void startBackgroundTask(Project project, String title, String processingMessage, String failedMessage , String succeededMessage , String jobId) {
         startBackgroundTask(project,title,processingMessage,failedMessage,succeededMessage,jobId,null);
     }
 
 
 
-    }
+}

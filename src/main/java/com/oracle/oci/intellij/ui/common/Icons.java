@@ -13,11 +13,14 @@ public enum Icons {
     CANCELED("icons/JobStatus/CANCELED.svg"),
     CANCELING("icons/JobStatus/CANCELING.svg"),
     FAILED("icons/JobStatus/FAILED.svg"),
+    RELOAD("icons/toolbar/buildLoadChanges.svg"),
+    EXTERNAL_LINK("icons/arrow/external_link_arrow.svg"),
     IN_PROGRESS("icons/JobStatus/IN_PROGRESS.svg"),
     SUCCEEDED("icons/JobStatus/SUCCEEDED.svg"),
     COPY("/icons/copy.svg"),
     SHOW("/icons/show.svg"),
     HIDE("/icons/hide.svg"),
+    INFO("/icons/informationDialog.svg"),
     TOOLBAR_LOGIN("icons/toolbar-login.png"),
     COMPUTE("icons/compute.png"),
     COMPUTE_INSTANCE("icons/compute-instance.png"),
@@ -34,6 +37,7 @@ public enum Icons {
     REGION_AUSTRALIA("/icons/regions/australia-flag.png"),
     REGION_BRAZIL("/icons/regions/brazil-flag.png"),
     REGION_CHILE("/icons/regions/chile.png"),
+    //REGION_COLUMBIA("/icons/regions/colombia.png"),
     REGION_OMAN("/icons/regions/oman.png"),
     REGION_FRANCE("/icons/regions/france.png"),
     REGION_ISRAEL("/icons/regions/israel.png"),
@@ -56,7 +60,10 @@ public enum Icons {
     DATABASE_IN_PROGRESS_STATE("icons/db-inprogress-state.png"),
     DATABASE_UNAVAILABLE_STATE("icons/db-unavailable-state.png"),
     BACKUP_ACTIVE_STATE("icons/backup-active-state.png"),
-    CONTAINER("icons/compute.png");
+    CONTAINER("icons/compute.png"),
+    MESSAGE_ERROR("icons/message/error/errorDialog.svg"),
+    MESSAGE_WARN("icons/message/warn/warningDialog.svg"),
+    MESSAGE_INFO("icons/message/info/informationDialog.svg");
 
     private final String path;
 

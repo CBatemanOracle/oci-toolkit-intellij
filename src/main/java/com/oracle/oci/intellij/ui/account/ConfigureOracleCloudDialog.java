@@ -37,7 +37,21 @@ import com.oracle.oci.intellij.account.ConfigFileHandler.ProfileSet;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
 import com.oracle.oci.intellij.account.SystemPreferences;
 import com.oracle.oci.intellij.ui.common.UIUtil;
+import com.oracle.oci.intellij.util.BundleUtil;
 import com.oracle.oci.intellij.util.LogHandler;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.Objects;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.oracle.bmc.util.internal.FileUtils.expandUserHome;
 
 public class ConfigureOracleCloudDialog extends DialogWrapper {
 
@@ -139,11 +153,15 @@ public class ConfigureOracleCloudDialog extends DialogWrapper {
       Messages.showErrorDialog("Invalid region", "Error");
     } else {
       close(DialogWrapper.OK_EXIT_CODE);
-      try {
-        OracleCloudAccount.getInstance().configure(configFile, profileName);
-      } catch (IOException ioException) {
-        UIUtil.fireNotification(NotificationType.ERROR, ioException.getMessage(), null);
-      }
+
+        BundleUtil.withContextCL(this.getClass().getClassLoader(),()->{
+          try {
+            OracleCloudAccount.getInstance().configure(configFile, profileName);
+          } catch (IOException ioException) {
+            UIUtil.fireNotification(NotificationType.ERROR, "Problem with OCI config:"+ioException.getMessage());
+          }
+        });
+
     }
   }
 
@@ -293,7 +311,7 @@ public class ConfigureOracleCloudDialog extends DialogWrapper {
       saveProfileButton.setEnabled(false);
       myOKAction.setEnabled(true);
     } catch (IOException ioEx) {
-      UIUtil.fireNotification(NotificationType.ERROR, ioEx.getMessage(), null);
+      UIUtil.fireNotification(NotificationType.ERROR, "Problem populating profile params: "+ioEx.getMessage());
     }
   }
 

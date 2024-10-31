@@ -1,10 +1,11 @@
 package com.oracle.oci.intellij.ui.git.config;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.oracle.oci.intellij.ui.git.config.GitParser.GitParserException;
 import com.oracle.oci.intellij.util.StrippingLineNumberReader;
 
@@ -15,11 +16,12 @@ public abstract class ConsumingGitConfigObject {
     return this.values.get(key);
   }
 
-  public void consume(StrippingLineNumberReader reader) throws GitParserException {
+  protected void consume(StrippingLineNumberReader reader) throws GitParserException {
     boolean consumedLastLine = true;
     try {
       startLine(reader);
-      while (consumeLine(reader)) {
+      while (consumedLastLine = consumeLine(reader)) {
+        startLine(reader);
       }
     } catch (IOException ioe) {
       throw new GitParserException(ioe);
@@ -28,7 +30,19 @@ public abstract class ConsumingGitConfigObject {
         try {
           endLine(reader);
         } catch (IOException e) {
-          throw new GitParserException(e);
+          try {
+            // just ignore it if we've hit EOF
+            if (reader.read() > -1) {
+              throw new GitParserException(e);
+            }
+          }
+          catch (EOFException ioe) {
+            // ignore
+          }
+          catch (IOException ioe) {
+            throw new GitParserException(ioe);
+            
+          }
         }
       }
     }
@@ -43,11 +57,17 @@ public abstract class ConsumingGitConfigObject {
   }
 
   protected boolean consumeLine(StrippingLineNumberReader reader) throws IOException {
+    reader.mark(0);
     String strippedLine = reader.readLine();
     if (strippedLine == null) {
       return false;
     }
 
+    // don't consume the line (push it back) if it's a new section
+    // a false return will cause it to wind back the line.
+    if (strippedLine.charAt(0) == '[') {
+      return false;
+    }
     // ignore comments
     if (strippedLine.charAt(0) == ';' || strippedLine.charAt(0) == '#') {
       return true;

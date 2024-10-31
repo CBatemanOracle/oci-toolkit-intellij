@@ -3,11 +3,16 @@ package com.oracle.oci.intellij.ui.appstack.models;
 import com.oracle.oci.intellij.ui.appstack.actions.PropertyOrder;
 import com.oracle.oci.intellij.ui.appstack.annotations.VariableMetaData;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.beans.PropertyVetoException;
 
 public class Container_Instance_Configuration extends VariableGroup {
+
+    private static final String DOCUMENTATION_LINK = "https://github.com/oracle-quickstart/appstack/blob/main/usage_instructions.md#container-instance-configuration";
+
+    @Override
+    public String getDocumentationLink() {
+        return DOCUMENTATION_LINK;
+    }
 
     public enum Shape{
         CI_Standard_E3_Flex,
@@ -60,11 +65,6 @@ public class Container_Instance_Configuration extends VariableGroup {
         vcp.fireVetoableChange("ocpus", oldValue, newValue);
     }
 
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
-         this.pcs.addPropertyChangeListener(listener);
-     }
 
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
-         this.pcs.removePropertyChangeListener(listener);
-     }
+
 }

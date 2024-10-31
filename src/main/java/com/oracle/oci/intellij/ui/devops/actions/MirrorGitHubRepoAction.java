@@ -5,6 +5,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import javax.swing.JOptionPane;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,27 +43,18 @@ public class MirrorGitHubRepoAction extends AnAction {
           @Nullable
           State state = OCIProjectSettings.getInstance(project).getState();
           if (githubUrls.isEmpty()) {
-            if (state != null) {
-
-            }
-            // JOptionPane.showMessageDialog(null, "Must have a github remote",
-            // "Must have github remote",
-            // JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(null, "This project must be enabled for Git and must have at least one github.com remote.",
+                                          "Must have a github remote",JOptionPane.INFORMATION_MESSAGE);
           } else {
             MyWizardContext context = new MyWizardContext(project);
             MirrorGitHubWizardModel model =
               new MirrorGitHubWizardModel("Mirror Repository Wizard", context);
             WizardDialog<MirrorGitHubWizardModel> wizardDialog =
-              new WizardDialog<MirrorGitHubWizardModel>(true,
-                                                                               model);
+              new WizardDialog<MirrorGitHubWizardModel>(true, model);
             wizardDialog.show();
             if (wizardDialog.isOK()) {
               createConnection(state.getDevOpsProjectId(), context);
             }
-
-            // MirrorSelectionDialog dialog = new
-            // MirrorSelectionDialog(project);
-            // dialog.show();
           }
         }
 

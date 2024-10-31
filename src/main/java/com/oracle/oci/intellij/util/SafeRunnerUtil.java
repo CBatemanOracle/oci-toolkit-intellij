@@ -38,13 +38,15 @@ public class SafeRunnerUtil {
     public void accept(Throwable ex) {
       final String message = "Oracle Cloud account configuration failed: " + ex.getMessage();
       LogHandler.error(message, ex);
-      UIUtil.fireNotification(NotificationType.ERROR, message, null);
+      UIUtil.fireNotification(NotificationType.ERROR, message);
       ex.printStackTrace();
     }
   }
 
+  @SuppressWarnings("unchecked")
   public static <T> void run(Consumer<T> r, T arg) {
-   SafeRunner<T> runner = new SafeRunner(r, Optional.of(new DefaultErrorRunnable()));
+   @SuppressWarnings("rawtypes")
+  SafeRunner<T> runner = new SafeRunner(r, Optional.of(new DefaultErrorRunnable()));
    try
    {
      runner.run(arg);

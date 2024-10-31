@@ -2,6 +2,7 @@ package com.oracle.oci.intellij.ui.git.config;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -9,7 +10,7 @@ import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.hash.LinkedHashMap;
+
 
 public class GitConfig {
   
@@ -82,5 +83,17 @@ public class GitConfig {
   public void setConfigFile(@Nullable VirtualFile gitConfigFile) {
     this.gitConfigFile = Optional.ofNullable(gitConfigFile);
     this.gitConfigFile.ifPresent(gcf -> configFileTimeStamp = gcf.getTimeStamp());
+  }
+  
+  public GitConfigCore getConfigCore() {
+    return this.core;
+  }
+  
+  public Map<String, GitConfigRemote> getRemotes() {
+    return Collections.unmodifiableMap(this.remotes);
+  }
+  
+  public Map<String, GitConfigBranch> getBranches() {
+    return Collections.unmodifiableMap(this.branches);
   }
 }

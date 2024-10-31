@@ -15,7 +15,7 @@ public class DeleteStackCommand extends AbstractBasicCommand<Result> {
   private ResourceManagerClientProxy resManagerClientProxy;
   private String stackId;
   private String stackName ;
-  private final String SUCCESSFUL_MESSAGE = "Stack has been successfully deleted" ;
+  private final String SUCCESSFUL_MESSAGE =  "Stack has been successfully deleted" ;
 
   public DeleteStackCommand(ResourceManagerClientProxy resourceManagerClientProxy, String stackId,String stackName) {
     super();
@@ -27,9 +27,9 @@ public class DeleteStackCommand extends AbstractBasicCommand<Result> {
   @Override
   protected Result doExecute() throws Exception {
     resManagerClientProxy.deleteStack(this.stackId);
-    UIUtil.fireNotification(NotificationType.INFORMATION, SUCCESSFUL_MESSAGE+" : \""+stackName+"\" (stack)", null);
+    UIUtil.fireNotification(NotificationType.INFORMATION, SUCCESSFUL_MESSAGE+" : \""+stackName+"\" (stack)");
     UIUtil.invokeLater(()->{
-      AppStackDashboard.getInstance().populateTableData();
+      AppStackDashboard.getAllInstances().forEach(dashboard -> dashboard.populateTableData());
     });
     return Result.OK_RESULT;
   }

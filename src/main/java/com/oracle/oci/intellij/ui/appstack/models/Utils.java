@@ -12,9 +12,7 @@ import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.bmc.keymanagement.model.KeySummary;
 import com.oracle.bmc.keymanagement.model.VaultSummary;
 import com.oracle.oci.intellij.account.OracleCloudAccount;
-import com.oracle.oci.intellij.ui.appstack.YamlLoader;
 
-import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -30,6 +28,7 @@ public class Utils{
 
     public static List<VariableGroup> variableGroups = new ArrayList<>()
     {{
+//        add(new IntroductoryStep());
         add(new Stack_Information());
         add(new General_Configuration());
         add(new Application());
@@ -116,9 +115,9 @@ public class Utils{
         suggestedValues.put("oci:kms:vault:id",(pd,pds,varGroup)->{
             VariableGroup general_ConfigurationVarGroup = Controller.getInstance().getVariableGroups().get("Stack_Authentication");
 
-            String vault_compartment_id = ((Compartment) pds.get("vault_compartment_id").getReadMethod().invoke(general_ConfigurationVarGroup)).getId();;
+            String vault_compartment_id = ((Compartment) pds.get("vault_compartment_id").getReadMethod().invoke(general_ConfigurationVarGroup)).getId();
 
-            List<VaultSummary> vaultList = OracleCloudAccount.getInstance().getIdentityClient().getVaultsList(vault_compartment_id);
+            List<VaultSummary> vaultList = OracleCloudAccount.getInstance().getKmsVaultClient().listVaults(vault_compartment_id);
             return vaultList;
         });
 
@@ -142,15 +141,17 @@ public class Utils{
 
             String compartment_id = ( (Compartment) pds.get("devops_compartment").getReadMethod().invoke(varGroup)).getId();
 
-            List<RepositorySummary> repositorySummaries = OracleCloudAccount.getInstance().getIdentityClient().getRepoList(compartment_id);
+            List<RepositorySummary> repositorySummaries = OracleCloudAccount.getInstance().getDevOpsClient().getRepoList(compartment_id);
 
             return repositorySummaries;
 
         });
         suggestedValues.put("oci:certificatesmanagement:certificate:id",(pd,pds,varGroup)->{
 //            VariableGroup general_ConfigurationVarGroup =  Controller.getInstance().getVariableGroups().get("General_Configuration");
+            //todo to recheck
+            VariableGroup applicationUrlGroup =  Controller.getInstance().getVariableGroups().get("Application_URL");
 
-            String compartment_id = ( (Compartment) pds.get("dns_compartment").getReadMethod().invoke(varGroup)).getId();
+            String compartment_id = ( (Compartment) pds.get("dns_compartment").getReadMethod().invoke(applicationUrlGroup)).getId();
 
             List<CertificateSummary> certificateSummaries = OracleCloudAccount.getInstance().getIdentityClient().getAllCertificates(compartment_id);
 
@@ -169,6 +170,17 @@ public class Utils{
 
         });
 
+        suggestedValues.put("oci:devops:branch:id",(pd,pds,varGroupe)->{
+            Controller controller =  Controller.getInstance();
+            PropertyDescriptor repoPd = pds.get("repo_name");
+
+            Object repository = controller.getValue(varGroupe,repoPd);
+            if (repository == null || repository instanceof String) return null;
+
+            List branches = OracleCloudAccount.getInstance().getDevOpsClient().getBranchList(((RepositorySummary)repository).getId());
+            return branches;
+        });
+
 
 
     }
@@ -183,7 +195,7 @@ public class Utils{
         return "";
     }
 
-    static public Map<String , List<String>> depondsOn = new LinkedHashMap<>(){{
+    static public Map<String , List<String>> dependsOn = new LinkedHashMap<>(){{
         put("compartment_id", List.of("availability_domain"));
         put("vault_compartment_id",List.of("vault_id","key_id"));
         put("vault_id",List.of("key_id"));
@@ -192,6 +204,8 @@ public class Utils{
         put("db_compartment",List.of("autonomous_database"));
         put("devops_compartment",List.of("repo_name"));
         put("dns_compartment",List.of("zone","certificate_ocid"));
+        put("application_type",List.of("artifact_location"));
+        put("repo_name",List.of("branch"));
 
     }};
 
@@ -206,13 +220,15 @@ public class Utils{
         put("use_password_env", List.of("password_env"));
         put("use_tns_admin_env", List.of("tns_admin_env"));
         put("use_default_ssl_configuration", List.of("port_property", "keystore_property", "key_alias_property", "keystore_password_property", "keystore_type_property"));
-        put("create_fqdn", List.of("dns_compartment", "zone", "subdomain", "certificate_ocid"));
+        put("create_fqdn", List.of("dns_compartment", "zone", "subdomain"));
         put("create_new_vcn", List.of("vcn_compartment_id", "existing_vcn_id", "vcn_cidr", "use_existing_app_subnet", "use_existing_db_subnet", "use_existing_lb_subnet"));
         put("use_existing_app_subnet", List.of("existing_app_subnet_id", "app_subnet_cidr"));
         put("use_existing_db_subnet", List.of("existing_db_subnet_id", "db_subnet_cidr"));
         put("use_existing_lb_subnet", List.of("existing_lb_subnet_id", "lb_subnet_cidr"));
         put("use_default_lb_configuration", List.of("maximum_bandwidth_in_mbps", "minimum_bandwidth_in_mbps", "health_checker_url_path", "health_checker_return_code", "enable_session_affinity"));
         put("enable_session_affinity", List.of("session_affinity", "session_affinity_cookie_name"));
+        put("use_reserved_ip_address",List.of("reserved_ip_address"));
+        put("open_https_port",List.of("certificate_ocid"));
     }};
 
     public static SuggestConsumor<PropertyDescriptor,LinkedHashMap<String,PropertyDescriptor> ,List<? extends ExplicitlySetBmcModel>,VariableGroup> getSuggestedValuesOf(String type){

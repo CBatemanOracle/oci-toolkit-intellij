@@ -1,7 +1,6 @@
 package com.oracle.oci.intellij.ui.appstack.actions;
 
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.components.JBCheckBox;
@@ -11,6 +10,7 @@ import com.intellij.util.ui.JBDimension;
 import com.oracle.oci.intellij.ui.appstack.models.Controller;
 import com.oracle.oci.intellij.ui.appstack.models.VariableGroup;
 import com.oracle.oci.intellij.ui.common.Icons;
+import com.oracle.oci.intellij.ui.common.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +63,7 @@ public class ReviewDialog extends DialogWrapper {
                 pds[0] = controller.getSortedProertyDescriptorsByVarGroup(varGroup);
 
                 for (PropertyDescriptor pd : pds[0]) {
-                    if (pd.getName().equals("class")  || !variables.containsKey(pd.getName())) {
+                    if (pd.getName().equals("class")  || !variables.containsKey(pd.getName()) || pd.getValue("type").equals("link")) {
                         continue;
                     }
                     ReviewVarPanel varPanel ;
@@ -81,7 +81,6 @@ public class ReviewDialog extends DialogWrapper {
 
 
 
-        // todo create the panel of  the check if user wants to immediately
         if (!isShowStackVariables){
             addRunApplyCheckbox();
         }
@@ -140,8 +139,9 @@ public class ReviewDialog extends DialogWrapper {
             setBorder(BorderFactory.createEmptyBorder(0,8,0,0));
 
             add(keyLabel,BorderLayout.WEST);
+            add(valueLabel,BorderLayout.CENTER);
             JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            buttonsPanel.add(valueLabel);
+//            buttonsPanel.add(valueLabel);
 
 
             String fullText = value;
@@ -154,14 +154,9 @@ public class ReviewDialog extends DialogWrapper {
                 String truncatedText = "..."+ fullText.substring(start,fullText.length()) ;
                 valueLabel.setText(truncatedText);
 
-                JButton toggleButton = new JButton(IconLoader.getIcon(showIconPath));
-                toggleButton.setToolTipText("Show");
+                UIUtil.IconButton toggleButton = UIUtil.createButtonIcon(showIconPath);
 
-                toggleButton.setBackground(null);
-                toggleButton.setBorder(null);
-                toggleButton.setOpaque(false);
-                toggleButton.setContentAreaFilled(false); //
-                toggleButton.setPreferredSize(new JBDimension(20,20));
+                toggleButton.setToolTipText("Show");
 
                 toggleButton.addActionListener(new ActionListener() {
                     private boolean isFullTextShown = false;  // Start with the full text hidden
@@ -192,10 +187,8 @@ public class ReviewDialog extends DialogWrapper {
                 String copyPath = Icons.COPY.getPath();
 
                 // Create the button and set the icon
-                JButton copyButton = new JButton(IconLoader.getIcon(copyPath));
-                copyButton.setBackground(null);
-                copyButton.setPreferredSize(new JBDimension(20,20));
-                copyButton.setBorder(null);
+                UIUtil.IconButton copyButton = new UIUtil.IconButton(copyPath);
+                UIUtil.createButtonIcon(copyPath);
                 String finalValue = value;
                 copyButton.addActionListener(new ActionListener() {
                     @Override
@@ -205,9 +198,8 @@ public class ReviewDialog extends DialogWrapper {
                         StringSelection selection = new StringSelection(textToCopy);
                         clipboard.setContents(selection, selection);
                         copyButton.setIcon(null);
-                        copyButton.setToolTipText("Copy");
-                        copyButton.setOpaque(false);
-                        copyButton.setContentAreaFilled(false); //
+//                        copyButton.setToolTipText("Copy");
+
 //                        copyButton.setText("copied");
                         // notify
                         new Timer(500,ev->{
@@ -217,9 +209,11 @@ public class ReviewDialog extends DialogWrapper {
                 });
                 buttonsPanel.add(copyButton);
             }
-            add(buttonsPanel,BorderLayout.CENTER);
+            add(buttonsPanel,BorderLayout.EAST);
         }
     }
+
+
 
 
 }
