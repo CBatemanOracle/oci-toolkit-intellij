@@ -32,7 +32,8 @@ public class ConfigFileTenancyDataFactory {
     ConfigFileTenancyData data = 
       new ConfigFileTenancyData(new File(configFile), profile.getName());
     data.setId(profile.get("tenancy"));
-    data.setName(profile.get("name"));
+    String name = profile.get("name");
+    data.setName(name != null ? name : profile.getName());
     data.setHomeRegionKey(profile.get("region"));
     data.setUserId(profile.get("user"));
     data.setKeyFile(profile.get("key_file"));

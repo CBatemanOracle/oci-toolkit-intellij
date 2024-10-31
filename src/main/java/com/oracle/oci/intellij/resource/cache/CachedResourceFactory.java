@@ -45,7 +45,7 @@ public class CachedResourceFactory<TO> implements ResourceFactory<TO>{
     public static int MAX_CACHE = 100 ;
     public static long LOCK_TIMEOUT = 6;
     public static TimeUnit  LOCK_TIMEOUT_UNIT = TimeUnit.MINUTES;
-    Map<ParameterSet, Future<Resource<TO>>> values;
+    LRUCache<ParameterSet, Future<Resource<TO>>> values;
     private volatile boolean isCaching;
     private ObjectName objectName;
     private final ResourceFactory<TO> resourceFactory;
@@ -291,5 +291,11 @@ public class CachedResourceFactory<TO> implements ResourceFactory<TO>{
             LogHandler.info("Cache Misses: " + getMisses());
             LogHandler.info("Cache Hit Ratio: " + getCacheHitRatio());
         }
+    }
+    /*
+     * TODO: this isn't so bad but we should be able to use mbeans for this.
+     */
+    public LRUCacheMBean getCache() {
+      return this.values;
     }
 }

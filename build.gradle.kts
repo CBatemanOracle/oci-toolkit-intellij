@@ -42,44 +42,46 @@ repositories {
     mavenCentral()
 }
 
+val oci_java_sdk_version = "3.48.0"
+
 dependencies {
-    implementation("com.oracle.oci.sdk:oci-java-sdk-common-httpclient-jersey:3.24.0") {
+    implementation("com.oracle.oci.sdk:oci-java-sdk-common-httpclient-jersey:$oci_java_sdk_version") {
         exclude(group="org.slf4j", module="slf4j-api")
     }
-    implementation("com.oracle.oci.sdk:oci-java-sdk-common:3.24.0") {
+    implementation("com.oracle.oci.sdk:oci-java-sdk-common:$oci_java_sdk_version") {
         exclude(group="org.slf4j", module="slf4j-api")
     }
-    implementation("com.oracle.oci.sdk:oci-java-sdk-core:3.24.0") {
+    implementation("com.oracle.oci.sdk:oci-java-sdk-core:$oci_java_sdk_version") {
         exclude(group="org.slf4j", module="slf4j-api")
     }
-    implementation("com.oracle.oci.sdk:oci-java-sdk-database:3.24.0") {
+    implementation("com.oracle.oci.sdk:oci-java-sdk-database:$oci_java_sdk_version") {
         exclude(group="org.slf4j", module="slf4j-api")
     }
-    implementation("com.oracle.oci.sdk:oci-java-sdk-identity:3.24.0") {
+    implementation("com.oracle.oci.sdk:oci-java-sdk-identity:$oci_java_sdk_version") {
         exclude(group="org.slf4j", module="slf4j-api")
     }
-    implementation("com.oracle.oci.sdk:oci-java-sdk-identitydataplane:3.24.0") {
+    implementation("com.oracle.oci.sdk:oci-java-sdk-identitydataplane:$oci_java_sdk_version") {
         exclude(group="org.slf4j", module="slf4j-api")
     }
-    implementation("com.oracle.oci.sdk:oci-java-sdk-resourcemanager:3.24.0") {
+    implementation("com.oracle.oci.sdk:oci-java-sdk-resourcemanager:$oci_java_sdk_version") {
         exclude(group="org.slf4j", module="slf4j-api")
     }
-    implementation("com.oracle.oci.sdk:oci-java-sdk-vault:3.24.0") {
+    implementation("com.oracle.oci.sdk:oci-java-sdk-vault:$oci_java_sdk_version") {
         exclude(group="org.slf4j", module="slf4j-api")
     }
-    implementation("com.oracle.oci.sdk:oci-java-sdk-keymanagement:3.24.0") {
+    implementation("com.oracle.oci.sdk:oci-java-sdk-keymanagement:$oci_java_sdk_version") {
         exclude(group="org.slf4j", module="slf4j-api")
     }
-    implementation("com.oracle.oci.sdk:oci-java-sdk-devops:3.24.0") {
+    implementation("com.oracle.oci.sdk:oci-java-sdk-devops:$oci_java_sdk_version") {
         exclude(group="org.slf4j", module="slf4j-api")
     }
-    implementation("com.oracle.oci.sdk:oci-java-sdk-certificatesmanagement:3.24.0") {
+    implementation("com.oracle.oci.sdk:oci-java-sdk-certificatesmanagement:$oci_java_sdk_version") {
         exclude(group="org.slf4j", module="slf4j-api")
     }
-    implementation("com.oracle.oci.sdk:oci-java-sdk-dns:3.24.0") {
+    implementation("com.oracle.oci.sdk:oci-java-sdk-dns:$oci_java_sdk_version") {
         exclude(group="org.slf4j", module="slf4j-api")
     }
-    implementation("com.oracle.oci.sdk:oci-java-sdk-artifacts:3.24.0") {
+    implementation("com.oracle.oci.sdk:oci-java-sdk-artifacts:$oci_java_sdk_version") {
         exclude(group="org.slf4j", module="slf4j-api")
     }
 
@@ -136,7 +138,7 @@ distributions {
 }
 
 
-val repoUri = System.getenv("JDBC_DEV_LOCAL_URL")  //"https://artifacthub-phx.oci.oraclecorp.com/jdbc-dev-local"
+val repoUri = "https://artifacthub-phx.oci.oraclecorp.com/jdbc-dev-local"
 val usernameStr = System.getenv("JDBC_DEV_LOCAL_USERNAME")
 val passwordStr = System.getenv("JDBC_DEV_LOCAL_APIKEY")
 

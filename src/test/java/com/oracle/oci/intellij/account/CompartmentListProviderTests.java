@@ -29,6 +29,7 @@ import com.oracle.oci.intellij.account.tenancy.TenancyManager;
 import com.oracle.oci.intellij.account.tenancy.TenancyService;
 import com.oracle.oci.intellij.resource.Resource;
 import com.oracle.oci.intellij.resource.cache.CachedResourceFactory;
+import com.oracle.oci.intellij.resource.cache.CachedResourceFactory.LRUCacheMBean;
 import com.oracle.oci.intellij.resource.provider.ListProvider;
 import com.oracle.oci.intellij.util.ServiceAdapter;
 
@@ -112,13 +113,16 @@ public class CompartmentListProviderTests {
     
     CachedResourceFactory<?> factory = 
       tenancyManager.getCacheManager(curData).getCache(Compartment.class);
-    CacheUtil.LRUCacheMBeanImpl mbean = new LRUCacheMBeanImpl(factory);
-    assertEquals(0, mbean.getHits());
-    assertEquals(1, mbean.getMisses());
+    LRUCacheMBean cacheBean = factory.getCache();
+//    CacheUtil.LRUCacheMBeanImpl cacheBean = new LRUCacheMBeanImpl(factory);
+    // add a pause so that stats thread runs to collect the info.
+    Thread.sleep(2000);
+    assertEquals(0, cacheBean.getHits());
+    assertEquals(1, cacheBean.getMisses());
 
     childCompartments = listProvider.list(rootComp);
     assertFalse(childCompartments.getContent().isEmpty());
-    assertEquals(1, mbean.getHits());
-    assertEquals(1, mbean.getMisses());
+    assertEquals(1, cacheBean.getHits());
+    assertEquals(1, cacheBean.getMisses());
   }
 }
