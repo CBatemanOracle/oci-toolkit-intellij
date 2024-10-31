@@ -22,6 +22,7 @@ public class TenancyManager {
     private TenancyData curTenancyData;
     @Transient
     private ConfigFileTenancyDataSource curTenancySource;
+    private String curRegion;
     public TenancyDataSource getCurTenancySource() {
       return curTenancySource;
     }
@@ -58,6 +59,12 @@ public class TenancyManager {
     public void setCurrentTenancy(TenancyData curTenancyData) {
       this.curTenancyData = curTenancyData;
     }
+    public String getCurrentRegion() {
+      return curRegion;
+    }
+    public void setCurrentRegion(String curRegion) {
+      this.curRegion = curRegion;
+    }
   }
 
   private LinkedHashMap<TenancyDataSource, TenancyData> tenancies =
@@ -86,6 +93,9 @@ public class TenancyManager {
   }
 
   public synchronized void setCurrentTenancy(@NotNull TenancyData data) {
+    if (!tenancies.values().contains(data)) {
+      throw new AssertionError("current tenancy must be tenancies map");
+    }
     this.state.setCurrentTenancy(data);
   }
 
@@ -93,6 +103,14 @@ public class TenancyManager {
     return this.state.getCurrentTenancy();
   }
 
+  public synchronized String getCurrentRegion() {
+    return this.state.getCurrentRegion();
+  }
+  
+  public synchronized void setCurrentRegion(String curRegion) {
+    this.state.setCurrentRegion(curRegion);
+  }
+  
   public synchronized CacheManager addCacheManager(TenancyData forThisTenancy,
                                                    CacheManager cacheManager) {
     return addCacheManager(forThisTenancy.getId(), cacheManager);
@@ -148,4 +166,6 @@ public class TenancyManager {
   public State getState() {
     return this.state;
   }
+
+
 }

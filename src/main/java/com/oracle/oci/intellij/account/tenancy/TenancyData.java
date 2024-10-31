@@ -10,7 +10,7 @@ public abstract class TenancyData {
   String description;
   String homeRegionKey;
   private AtomicBoolean disposed = new AtomicBoolean();
-  private String curRegion;
+
 //  java.util.Map<String, String> freeformTags,
 //  java.util.Map<String, java.util.Map<String, Object>> definedTags
   public String getId() {
@@ -37,13 +37,7 @@ public abstract class TenancyData {
   protected void setHomeRegionKey(String homeRegionKey) {
     this.homeRegionKey = homeRegionKey;
   }
-  public void setCurrentRegion(String regionName) {
-    this.curRegion = regionName;
-  }
-  public String getCurrentRegion() {
-    return this.curRegion;
-  }
-  public abstract TenancyDataSource getSource();
+ public abstract TenancyDataSource getSource();
   
   public void dispose() {
     if (this.disposed.compareAndSet(false, true)) {
@@ -51,6 +45,10 @@ public abstract class TenancyData {
     }
   }
 
+  @Override
+  public String toString() {
+    return getName();
+  }
   protected void doDispose() {
     // sub-classes should extend.
   }

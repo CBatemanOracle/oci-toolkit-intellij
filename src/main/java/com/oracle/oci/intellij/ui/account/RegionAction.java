@@ -44,6 +44,8 @@ public class RegionAction extends AnAction {
         put("ap-seoul-1", Icons.REGION_SOUTH_KOREA.getPath());
         put("ap-tokyo-1", Icons.REGION_JAPAN.getPath());
         put("eu-zurich-1", Icons.REGION_SWITZERLAND.getPath());
+        put("eu-dcc-zurich-1", Icons.REGION_SWITZERLAND.getPath());
+
         put("ap-sydney-1", Icons.REGION_AUSTRALIA.getPath());
 
 
@@ -71,6 +73,8 @@ public class RegionAction extends AnAction {
         put("mx-queretaro-1", Icons.REGION_MEXICO.getPath());
         put("sa-santiago-1", Icons.REGION_CHILE.getPath());
         put("ap-singapore-1", Icons.REGION_SINGAPORE.getPath());
+        put("ap-singapore-2", Icons.REGION_SINGAPORE.getPath());
+
         put("sa-vinhedo-1", Icons.REGION_BRAZIL.getPath());
 
         put("eu-milan-1", Icons.REGION_ITALY.getPath());
@@ -95,6 +99,18 @@ public class RegionAction extends AnAction {
         put("eu-madrid-2", Icons.REGION_SPAIN.getPath());
         put("eu-frankfurt-2", Icons.REGION_GERMANY.getPath());
         put("mx-monterrey-1", Icons.REGION_MEXICO.getPath());
+        
+        put("us-saltlake-2", Icons.REGION_US.getPath());
+        //put("sa-bogata-1", Icons.REGION_COLUMBIA.getPath());
+        put("sa-valparaiso-1", Icons.REGION_CHILE.getPath());
+        put("me-riyadh-1", Icons.REGION_SAUDI_ARABIA.getPath());
+//        put("me-dcc-doha-1", Icons.REGION_QATAR.getPath());
+        put("me-abudhabi-1", Icons.REGION_UNITED_ARABE_EMIRATES.getPath());
+        put("me-abudhabi-2", Icons.REGION_UNITED_ARABE_EMIRATES.getPath());
+        put("me-abudhabi-3", Icons.REGION_UNITED_ARABE_EMIRATES.getPath());
+        put("me-abudhabi-4", Icons.REGION_UNITED_ARABE_EMIRATES.getPath());
+        
+//        put("ap-dcc-gazipur-1", Icons.REGION_BANGLADESH.getPath());
       }
     };
     String regionName = SystemPreferences.getRegionName();

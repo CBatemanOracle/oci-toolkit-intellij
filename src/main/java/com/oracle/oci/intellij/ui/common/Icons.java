@@ -37,6 +37,7 @@ public enum Icons {
     REGION_AUSTRALIA("/icons/regions/australia-flag.png"),
     REGION_BRAZIL("/icons/regions/brazil-flag.png"),
     REGION_CHILE("/icons/regions/chile.png"),
+    //REGION_COLUMBIA("/icons/regions/colombia.png"),
     REGION_OMAN("/icons/regions/oman.png"),
     REGION_FRANCE("/icons/regions/france.png"),
     REGION_ISRAEL("/icons/regions/israel.png"),

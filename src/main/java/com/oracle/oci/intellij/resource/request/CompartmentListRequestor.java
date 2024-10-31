@@ -11,11 +11,13 @@ import com.oracle.bmc.identity.model.Compartment;
 import com.oracle.bmc.identity.requests.ListCompartmentsRequest;
 import com.oracle.bmc.identity.responses.ListCompartmentsResponse;
 import com.oracle.oci.intellij.account.tenancy.TenancyData;
+import com.oracle.oci.intellij.account.tenancy.TenancyManager;
+import com.oracle.oci.intellij.account.tenancy.TenancyService;
 import com.oracle.oci.intellij.resource.Resource;
 import com.oracle.oci.intellij.resource.ResourceFactory;
 import com.oracle.oci.intellij.resource.parameter.ParameterSet;
 import com.oracle.oci.intellij.resource.parameter.ParametersEnum;
-import com.oracle.oci.intellij.util.LogHandler;
+import com.oracle.oci.intellij.util.ServiceAdapter;
 
 public class CompartmentListRequestor extends OCIModelRequestor<List<Compartment>> {
 
@@ -30,7 +32,9 @@ public class CompartmentListRequestor extends OCIModelRequestor<List<Compartment
   public Resource<List<Compartment>> request(ParameterSet parent) throws Exception {
     BasicAuthenticationDetailsProvider authProvider = this.tenancy.toAuthProvider();
     Builder builder = IdentityClient.builder();
-    Optional.ofNullable(this.tenancy.getCurrentRegion()).ifPresent(curRegion -> builder.region(curRegion));
+    TenancyManager tenancyManager = 
+      ServiceAdapter.getInstance().getAppService(TenancyService.class).getTenancyManager();
+    Optional.ofNullable(tenancyManager.getCurrentRegion()).ifPresent(curRegion -> builder.region(curRegion));
     try(IdentityClient identityClient = builder.build(authProvider)){
         ListCompartmentsRequest request = ListCompartmentsRequest.builder().accessLevel(ListCompartmentsRequest.AccessLevel.Accessible)
                 .compartmentId(parent.getParameter(ParametersEnum.PARENT_COMPARTMENT)).limit(1024).build();
